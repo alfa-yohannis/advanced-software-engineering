@@ -1,0 +1,82 @@
+\chapter{Introduction}
+
+
+\section{Contents}
+
+\subsection*{Session 1 --- Running Systems Before Design}
+\textbf{Description:} This session introduces students to a real running software system to ground all later abstractions in concrete runtime behavior before any architectural or modeling concepts are introduced. 
+\textbf{Tools:} Docker. 
+\textbf{Non-IT Students:} Students run a containerized application, modify environment parameters, and observe behavioral changes while describing failures and configuration effects in natural language. 
+\textbf{IT Students:} Students build and run containers, adjust ports and environment variables, and diagnose runtime failures directly at the container level.
+
+\subsection*{Session 2 --- Observability Before Architecture}
+\textbf{Description:} Students learn to observe system behavior before reasoning about structure or design, treating runtime data as the primary source of understanding. 
+\textbf{Tools:} Prometheus, Grafana, and conceptual OpenTelemetry. 
+\textbf{Non-IT Students:} Students interpret dashboards, metrics, and logs and relate observed values to user-visible behavior and failures. 
+\textbf{IT Students:} Students configure basic telemetry, visualize logs and traces, and correlate runtime observability data with system events.
+
+\subsection*{Session 3 --- Runtime Control, Security, and Policies}
+\textbf{Description:} Security and compliance are introduced as mechanisms that actively constrain runtime behavior rather than as external audit activities. 
+\textbf{Tools:} Docker, introductory Kubernetes concepts, and conceptual Terraform. 
+\textbf{Non-IT Students:} Students identify security rules, constraints, and policy violations and explain their impact on system risk and compliance. 
+\textbf{IT Students:} Students apply basic container and deployment security controls and configure environment-level runtime constraints.
+
+\subsection*{Session 4 --- CI/CD and Script Explosion}
+\textbf{Description:} Students experience the limits of script-based automation through continuous integration and deployment pipelines, highlighting duplication and fragility. 
+\textbf{Tools:} CI/CD YAML and Bash. 
+\textbf{Non-IT Students:} Students trace pipeline execution steps and document automation maintenance problems. 
+\textbf{IT Students:} Students modify CI/CD pipelines across environments and observe how small script changes propagate runtime failures.
+
+\subsection*{Session 5 --- Runtime Models and Executable Behavior}
+\textbf{Description:} Runtime artefacts are made explicit as models and immediately treated as executable decision structures, unifying the transition from implicit configuration to controlled execution. 
+\textbf{Tools:} Conceptual modeling, YAML or JSON representations, and simple Python interpreters. 
+\textbf{Non-IT Students:} Students identify runtime structures as models and explain how execution follows from model decisions using step-by-step reasoning. 
+\textbf{IT Students:} Students externalize runtime decisions into explicit models and implement basic interpreters that execute those models.
+
+\subsection*{Session 6 --- Metamodeling Fundamentals}
+\textbf{Description:} Students define the structure of valid models by introducing metamodels as type systems that formalize runtime concerns and execution boundaries. 
+\textbf{Tools:} EMF and Ecore. 
+\textbf{Non-IT Students:} Students interpret metamodel diagrams and reason about whether example models are valid or invalid. 
+\textbf{IT Students:} Students design Ecore metamodels that formally capture runtime, pipeline, and policy concepts.
+
+\subsection*{Session 7 --- Textual DSL Engineering}
+\textbf{Description:} A textual domain-specific language is engineered to replace fragmented configuration and scripting practices with a coherent concrete syntax. 
+\textbf{Tools:} Xtext. 
+\textbf{Non-IT Students:} Students read and write DSL examples and evaluate whether the language clearly expresses domain intent. 
+\textbf{IT Students:} Students design grammars, implement parsing, and define scoping and linking rules.
+
+\subsection*{Session 8 --- Visual Language Engineering for Runtime Models}
+\textbf{Description:} Visual languages are introduced as executable concrete syntaxes over the same abstract syntax defined by the metamodel, emphasizing model editing and validation rather than documentation. 
+\textbf{Tools:} Sirius or Papyrus. 
+\textbf{Non-IT Students:} Students explore, edit, and validate runtime models using visual editors to reason about structure and constraints. 
+\textbf{IT Students:} Students define visual viewpoints, mappings, and constraints that bind metamodel elements to executable visual representations.
+
+\subsection*{Session 9 --- Projectional Language Engineering}
+\textbf{Description:} Projectional language engineering is introduced to demonstrate structure-aware language composition and evolution without parsing constraints. 
+\textbf{Tools:} JetBrains MPS. 
+\textbf{Non-IT Students:} Students compare textual, visual, and projectional languages and extend languages using structured editors. 
+\textbf{IT Students:} Students implement projectional language constructs and compose multiple DSLs into a unified language.
+
+\subsection*{Session 10 --- Semantic Design of Executable Models}
+\textbf{Description:} Models are given precise operational meaning by defining how model elements behave when executed, distinguishing interpretation from generation. 
+\textbf{Tools:} Java, Kotlin, or Python. 
+\textbf{Non-IT Students:} Students explain execution semantics using concrete runtime scenarios and structured reasoning. 
+\textbf{IT Students:} Students implement interpreters or semantic engines that execute models directly.
+
+\subsection*{Session 11 --- Model-to-Model Transformation and Refinement}
+\textbf{Description:} Models are systematically transformed and refined to support abstraction management, variability, and environment specialization while preserving semantics. 
+\textbf{Tools:} Epsilon ETL or equivalent model-to-model transformation tools. 
+\textbf{Non-IT Students:} Students reason about how models evolve across abstraction levels using examples. 
+\textbf{IT Students:} Students implement model-to-model transformations that refine abstract models into concrete, execution-ready variants.
+
+\subsection*{Session 12 --- Constraints and Model Validation}
+\textbf{Description:} Correctness, safety, and security constraints are enforced on models at design time to prevent invalid or dangerous runtime configurations. 
+\textbf{Tools:} OCL integrated with EMF-based models. 
+\textbf{Non-IT Students:} Students specify correctness and compliance rules and identify invalid model scenarios. 
+\textbf{IT Students:} Students implement OCL constraints and integrate validation into the modeling workflow.
+
+\subsection*{Session 13 --- Model-to-Text Generation and DevSecOps Execution}
+\textbf{Description:} Validated models are translated into executable artifacts, closing the loop between modeling and automated DevSecOps execution. 
+\textbf{Tools:} Epsilon EGL, Xtext or MPS generators, targeting CI/CD pipelines, Kubernetes, and Terraform. 
+\textbf{Non-IT Students:} Students trace how validated models are transformed into runtime artifacts and reason about traceability and correctness. 
+\textbf{IT Students:} Students implement model-to-text generators and integrate generated artifacts into automated execution pipelines.

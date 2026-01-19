@@ -1,0 +1,177 @@
+\documentclass[11pt,b5paper]{book}
+
+\usepackage{parskip}
+\setlength{\parskip}{0.8em}
+\setlength{\parindent}{1.5em}
+
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{fontspec}
+\setmainfont[
+Path = fonts/, 
+UprightFont = TitilliumWeb-Regular.ttf,
+BoldFont = TitilliumWeb-Bold.ttf,
+ItalicFont = TitilliumWeb-Italic.ttf,
+BoldItalicFont = TitilliumWeb-BoldItalic.ttf
+]{TitilliumWeb}
+
+%\usepackage[utf8]{inputenc}
+%\usepackage{listingsutf8}
+%\lstset{inputencoding=utf8}
+
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepgfplotslibrary{polar}
+\usetikzlibrary{shapes.geometric, 
+	positioning, shapes, backgrounds, arrows.meta, positioning, calc, fit, trees}
+
+\usepackage{amsmath}
+
+\usepackage{tabularx}
+\usepackage[b5paper,inner=2.5cm,
+  outer=2.0cm,
+  top=2.5cm,
+  bottom=2.5cm]{geometry}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\graphicspath{{images/}}
+\usepackage{svg}
+
+\usepackage{subcaption}
+
+\hyphenation{}
+
+\usepackage{listings}
+\lstdefinestyle{SqlStyle}{
+	language=SQL,
+	basicstyle=\ttfamily\footnotesize,
+	morekeywords={REAL, TEXT, REFERENCES},
+	keywordstyle=\color{blue},
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	breaklines=true,
+	showstringspaces=false,
+	tabsize=2,
+	captionpos=b,
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{gray}\ttfamily,
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	%	stringstyle=\color{teal}\ttfamily,
+	%	showstringspaces=false
+}
+
+
+\lstdefinelanguage{json}{
+	basicstyle=\ttfamily\footnotesize,
+	morekeywords={REAL, TEXT, REFERENCES},
+	keywordstyle=\color{blue},
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	breaklines=true,
+	showstringspaces=false,
+	tabsize=2,
+	captionpos=b,
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{gray}\ttfamily,
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	%	stringstyle=\color{teal}\ttfamily,
+	%	showstringspaces=false
+}
+
+\lstdefinelanguage{bash} {
+	keywords={},
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywords={iex},
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{\#},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
+% Define Java language style for listings
+\lstdefinestyle{JavaScript}{
+	language=Java,
+	basicstyle=\ttfamily\footnotesize,
+	keywordstyle=\color{blue},
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	breaklines=true,
+	showstringspaces=false,
+	tabsize=4,
+	captionpos=b,
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{gray}\ttfamily,
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	%	stringstyle=\color{teal}\ttfamily,
+	%	showstringspaces=false
+}
+
+\usepackage{plantuml}
+
+
+\newcommand{\authors}[1]{{\chapterauthor{#1}\addtocontents{toc}{#1\par}}}
+\newcommand{\HUGE}{\fontsize{40}{48}\selectfont}
+
+\renewcommand{\contentsname}{Daftar Isi}
+\renewcommand{\chaptername}{Bab}
+\renewcommand{\figurename}{Gambar}
+
+\definecolor{praditagreen}{RGB}{37, 113, 71}
+
+\makeatletter
+\newcommand{\chapterauthor}[1]{%
+	{\parindent0pt\vspace*{-25pt}%
+		\linespread{1.1}\large\scshape#1%
+		\par\nobreak\vspace*{35pt}}
+	\@afterheading%
+}
+\makeatother
+
+\begin{document}
+
+
+%	\include{titlepage}
+	
+	% Contents Page
+	\tableofcontents
+	
+	\include{pendahuluan}
+	\include{chapter01}
+
+	\backmatter
+	\addcontentsline{toc}{chapter}{Daftar Pustaka}
+	\bibliographystyle{plain}
+	\bibliography{references}
+	
+\end{document}
