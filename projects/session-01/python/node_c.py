@@ -1,67 +1,101 @@
-# node_c.py
-import os, time, json, io
+# node_c_bottle.py
+import json
+import threading
+import time
+from pathlib import Path
+
 import zmq
-from PIL import Image
+from bottle import Bottle, static_file, response, HTTPResponse, run
 
-BROKER_IP = "127.0.0.1"  # set to broker machine IP
+BROKER_IP = "127.0.0.1"
 SUB_ENDPOINT = f"tcp://{BROKER_IP}:5556"
-
 SUB_TOPIC = b"processed"
-OUT_DIR = "."
 
-def jpeg_bytes_to_pil(b: bytes) -> Image.Image:
-    return Image.open(io.BytesIO(b))
+HOST = "0.0.0.0"
+PORT = 8000
 
-def main(save_every_n: int = 1, show_tk: bool = False):
-    os.makedirs(OUT_DIR, exist_ok=True)
+STATIC_DIR = Path(__file__).parent / "static"
+INDEX_NAME = "index.html"
+
+latest_jpeg = None
+latest_meta = {}
+lock = threading.Lock()
+
+app = Bottle()
+
+@app.get("/")
+def index():
+    # serve separate HTML file
+    return static_file(INDEX_NAME, root=str(STATIC_DIR))
+
+@app.get("/frame.jpg")
+def frame():
+    with lock:
+        data = latest_jpeg
+    if not data:
+        return HTTPResponse("No frame yet", status=503)
+
+    response.content_type = "image/jpeg"
+    response.set_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+    response.set_header("Pragma", "no-cache")
+    response.set_header("Expires", "0")
+    return data
+
+@app.get("/meta.json")
+def meta():
+    with lock:
+        m = dict(latest_meta) if latest_meta else {}
+    response.content_type = "application/json"
+    response.set_header("Cache-Control", "no-store")
+    return json.dumps(m)
+
+def zmq_receiver():
+    global latest_jpeg, latest_meta
 
     ctx = zmq.Context.instance()
     sub = ctx.socket(zmq.SUB)
     sub.connect(SUB_ENDPOINT)
     sub.setsockopt(zmq.SUBSCRIBE, SUB_TOPIC)
 
-    print(f"Node C subscribed to {SUB_ENDPOINT} topic={SUB_TOPIC!r}")
-    print(f"Saving frames to: {OUT_DIR}/")
+    # Real-time: keep queues tiny (prefer drop over latency growth)
+    sub.setsockopt(zmq.RCVHWM, 2)
+
+    print(f"Node C (Bottle) subscribed to {SUB_ENDPOINT} topic={SUB_TOPIC!r}")
 
     last_log = time.time()
     frames = 0
 
-    # Optional Tkinter live view
-    if show_tk:
-        import tkinter as tk
-        from PIL import ImageTk
-        root = tk.Tk()
-        root.title("Node C - Processed Stream")
-        label = tk.Label(root)
-        label.pack()
-        tk_img = None
-
     while True:
         topic, header_b, jpeg_in = sub.recv_multipart()
         header = json.loads(header_b.decode("utf-8"))
-        img = jpeg_bytes_to_pil(jpeg_in)
+
+        with lock:
+            latest_jpeg = jpeg_in
+            latest_meta = {
+                "frame_id": header.get("frame_id"),
+                "w": header.get("w"),
+                "h": header.get("h"),
+                "mode": header.get("mode"),
+                "processed": header.get("processed"),
+                "ts": header.get("ts"),
+                "ts_processed": header.get("ts_processed"),
+            }
 
         frames += 1
-        if (header["frame_id"] % save_every_n) == 0:
-            out_path = os.path.join(OUT_DIR, f"frame_{header['frame_id']:06d}.jpg")
-            with open(out_path, "wb") as f:
-                f.write(jpeg_in)
-
-        # Update Tkinter preview if enabled
-        if show_tk:
-            from PIL import ImageTk
-            # Convert grayscale 'L' to RGB for Tk if needed
-            view = img.convert("RGB")
-            tk_img = ImageTk.PhotoImage(view)
-            label.configure(image=tk_img)
-            root.update_idletasks()
-            root.update()
-
         now = time.time()
         if now - last_log >= 1.0:
-            print(f"FPS≈{frames/(now-last_log):.1f}  last_frame={header['frame_id']}  size={header['w']}x{header['h']} mode={header.get('mode')}")
+            fps = frames / (now - last_log)
+            print(f"FPS≈{fps:.1f} last_frame={header.get('frame_id')} size={header.get('w')}x{header.get('h')} mode={header.get('mode')}")
             frames = 0
             last_log = now
 
+def main():
+    t = threading.Thread(target=zmq_receiver, daemon=True)
+    t.start()
+
+    print(f"HTTP: http://{HOST}:{PORT}/  (open in browser)")
+    print(f"Serving static from: {STATIC_DIR}")
+    run(app, host=HOST, port=PORT, quiet=True)
+
 if __name__ == "__main__":
-    main(save_every_n=1, show_tk=False)  # set show_tk=True to view
+    main()
