@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  broker:
+    build: ./broker
+    container_name: broker
+    ports:
+      - "5555:5555"
+      - "5556:5556"
+    environment:
+      BROKER_BIND_HOST: 0.0.0.0
+      PUB_PORT: "5555"
+      SUB_PORT: "5556"
+
+  capturer:
+    build: ./capturer
+    depends_on: [broker]
+    environment:
+      BROKER_HOST: broker
+      PUB_PORT: "5555"
+      TOPIC: raw
+      VIDEO_PATH: /data/input.mp4
+      PUBLISH_EVERY_SEC: "0.1"
+      JPEG_QUALITY: "80"
+      LOOP: "true"
+    volumes:
+      - ./input.mp4:/data/input.mp4:ro
+
+  transformer:
+    build: ./transformer
+    depends_on: [broker]
+    environment:
+      BROKER_HOST: broker
+      SUB_PORT: "5556"
+      PUB_PORT: "5555"
+      SUB_TOPIC: raw
+      PUB_TOPIC: processed
+      JPEG_QUALITY_OUT: "10"
+
+  web_server:
+    build: ./web_server
+    depends_on: [broker]
+    ports:
+      - "8000:8000"
+    environment:
+      BROKER_HOST: broker
+      SUB_PORT: "5556"
+      SUB_TOPIC: processed
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: "8000"
