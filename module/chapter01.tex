@@ -1,0 +1,1385 @@
+\chapter{Running Systems Before Design}
+
+\section*{Learning Objectives}
+\begin{itemize}
+  \item Execute a preconfigured software system and prepare the required runtime
+        environment without prior knowledge of its internal design.
+  \item Modify configuration parameters and observe, describe, and interpret the
+        resulting runtime behaviour, including normal operation and failure cases.
+  \item Reason about software systems based on observed execution and recognize the
+        limitations of behaviour-only understanding as a motivation for later design
+        and modeling concepts.
+\end{itemize}
+
+\section{Introduction}
+
+This chapter introduces software systems from the perspective of
+\emph{execution before abstraction}. Rather than beginning with architecture
+diagrams, models, or formal design concepts, a real, running software system is
+introduced as the primary object of study. The system can be executed,
+configured, and observed directly. The central idea of this chapter is that
+meaningful understanding of software systems should be grounded in concrete
+runtime behaviour before any design-level reasoning is introduced.
+
+Through early interaction with a running system, intuition is developed
+regarding how software behaves in response to configuration changes,
+environmental conditions, and failure scenarios. This approach deliberately
+postpones architectural terminology and modeling constructs, allowing mental
+models to emerge from observation, experimentation, and cause--effect reasoning.
+
+The chapter is structured to accommodate participants from diverse educational
+backgrounds. For non-IT participants, emphasis is placed on executing systems,
+modifying parameters, and describing observed behaviour in natural language. For
+IT-oriented participants, emphasis is placed on container execution, environment
+configuration, and runtime diagnostics. All activities are performed using the
+same running system, enabling comparison of observations across different levels
+of technical engagement.
+
+This chapter establishes an experiential foundation for subsequent chapters, in
+which observed runtime behaviours are progressively abstracted into
+architectural structures, formal models, and design principles.
+
+
+
+\section{Rationale for Starting from a Running System}
+
+Traditional software engineering education often begins with design artefacts
+such as requirement documents, architecture diagrams, or modeling notations.
+While these abstractions are essential for large-scale and long-term system
+development, meaningful interpretation may be difficult when intuition about
+runtime behaviour has not yet been established. In such cases, design concepts
+risk being treated as static or symbolic representations rather than as
+descriptions of real, executing systems.
+
+Beginning with a running system reverses this order. Rather than relying on
+imagined behaviour derived from diagrams or specifications, an observable and
+executable system is introduced as the primary object of study. The system can
+be executed, configured, and observed directly, and the consequences of
+configuration changes become immediately visible. This concrete experience
+provides a grounding reference for all subsequent abstractions introduced in
+later stages.
+
+A behaviour-first approach also reflects common conditions encountered in
+practical software contexts. Interaction with existing systems frequently occurs
+in the absence of complete or current design documentation. Understanding is
+therefore often constructed through observation of logs, outputs, performance
+characteristics, and failure modes. Early exposure to this mode of reasoning
+supports the development of practical diagnostic and analytical skills.
+
+For participants without an IT background, initial interaction with a running
+system reduces entry barriers. Engagement is possible through observation of
+behaviour, identification of cause-and-effect relationships, and verbal
+description of system responses, without requiring familiarity with programming
+syntax or formal modeling notations. This supports the development of systems
+thinking independently of technical fluency.
+
+For participants with an IT background, the same approach exposes the limits of
+design-first reasoning. Systems that appear correct at the design level may
+exhibit unexpected behaviour when deployed, misconfigured, or executed under
+different environmental conditions. Early encounters with such discrepancies
+emphasize the importance of runtime context, configuration management, and
+operational reasoning.
+
+Overall, starting from a running system establishes a shared experiential
+baseline across diverse educational backgrounds. The approach grounds theoretical
+concepts in observable behaviour and prepares the conceptual transition from
+concrete execution to formal design and modeling in subsequent chapters.
+
+
+\section{Overview of the Example Software System}
+
+The example software system presented is a small, distributed
+runtime pipeline composed of multiple cooperating nodes. Each node is executed
+as an independent process and communicates with other nodes at runtime. The
+system is intentionally designed to be observable, configurable, and easy to
+execute, while still representing a realistic multi-component software system.
+
+As illustrated in Figure~\ref{fig:running-system-3x2-grid}, the system consists
+of four main nodes:
+
+\begin{itemize}
+  \item \textbf{Broker:} Serves as a message relay between all other nodes. No
+        application data is produced or consumed by this node. Instead, messages
+        are routed between publishers and subscribers using a publish--subscribe
+        mechanism. This role enables loose coupling between components and allows
+        individual nodes to be started, stopped, or replaced independently.
+  \item \textbf{Capturer (Node-A):} Functions as the data source of the system.
+        Frames are read from a video input and periodically published as messages.
+        Each message contains image data together with metadata such as
+        timestamps and frame identifiers.
+  \item \textbf{Transformer (Node-B):} Subscribes to data produced by Node-A and
+        applies a processing step before republishing the result. In the example
+        system, this processing consists of image transformations such as
+        grayscale conversion.
+  \item \textbf{Web Server (Node-C):} Subscribes to the processed data and exposes
+        the output through a web interface. Processed images are streamed in real
+        time, enabling direct observation of the system’s runtime behaviour via
+        a browser.
+\end{itemize}
+
+Communication between nodes is implemented using a publish--subscribe messaging
+pattern. Data flows from the capturer to the broker and onward to the transformer
+under the \texttt{raw} topic. Processed data is subsequently routed back through
+the broker to the web server under the \texttt{processed} topic. Each node reacts
+independently to incoming messages, and overall system behaviour emerges from
+runtime interaction rather than from centralized control.
+
+
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[font=\small\bfseries,node distance=10mm and 14mm,
+box/.style={draw,rounded corners=2mm,align=center,minimum width=34mm,minimum height=10mm,fill=blue!10},
+brokerbox/.style={box,fill=orange!15},
+webbox/.style={box,fill=green!12},
+browserbox/.style={box,fill=gray!12},
+arrow/.style={-Latex,thick}]
+
+\node[brokerbox] (broker) {Broker\\(XSUB / XPUB)};
+\node[box,left=of broker,yshift=+10mm] (capturer) {Capturer\\(Node A)};
+\node[box,right=of broker,yshift=+10mm] (transformer) {Transformer\\(Node B)};
+
+\node[webbox,below=of broker,xshift=+30mm] (web) {Web Server\\(Node C)};
+\node[browserbox,below=of broker,xshift=-30mm] (browser) {Browser};
+
+\draw[arrow] (capturer) -- node[above,xshift=2mm]{PUB \texttt{raw}} (broker);
+\draw[arrow] (broker) -- node[above,xshift=-2mm]{SUB \texttt{raw}} (transformer);
+\draw[arrow] (transformer.south) |- node[below]{PUB \texttt{processed}} (broker.east);
+\draw[arrow] (broker.south) -- node[right,xshift=3mm]{SUB \texttt{processed}} (web.north);
+\draw[arrow] (web.west) -- node[above]{HTTP MJPEG} (browser.east);
+
+\end{tikzpicture}
+\caption{Runtime structure of the example system}
+\label{fig:running-system-3x2-grid}
+\end{figure}
+
+Execution is managed using containers, allowing each node to operate within an
+isolated environment with its own configuration. System behaviour is controlled
+through environment variables, including connection endpoints, publishing rates,
+and processing parameters. Modification of these parameters alters observable
+runtime behaviour without requiring changes to the underlying source code.
+
+This node-based structure enables observation of how data moves through a
+running system, how components interact and depend on one another at runtime,
+and how configuration choices and execution order influence overall behaviour.
+These observations are made without the introduction of architectural diagrams
+or modeling concepts at this stage, maintaining a focus on concrete execution
+and observable effects.
+
+
+\section{Tooling and Execution Environment}
+\subsection{Required Software and Platforms}
+
+To enable reliable execution of the example software system with minimal setup
+overhead, this chapter relies on a small set of widely used and well-supported
+tools. These tools provide a consistent execution environment across different
+operating systems and reduce the impact of platform-specific differences on
+runtime behaviour.
+
+The primary execution platform employed is container technology,
+specifically Docker. Docker allows the example system to be packaged together
+with all required dependencies and executed in a uniform manner on different
+machines. Through containerization, the same system can be executed on Windows,
+macOS, or Linux without requiring detailed system-level configuration.
+
+In addition to Docker, Python is used as the implementation language for the
+individual system nodes. Python is selected due to its readability, widespread
+adoption, and extensive ecosystem of supporting libraries. At this stage, full
+understanding of implementation details is not required; however, the use of
+Python establishes a familiar execution environment for later analysis and
+experimentation.
+
+For non-containerized execution scenarios, Python virtual environments are
+introduced to manage dependencies. Virtual environments allow each project to
+maintain an isolated set of Python packages, preventing interference between
+projects or system-wide installations. This mechanism reinforces the concept of
+environment isolation, which parallels the isolation provided by containers.
+
+A code editor or integrated development environment is also required to support
+interaction with the system. Visual Studio Code is recommended due to its
+cross-platform availability, extensive extension ecosystem, and built-in
+support for Python and Docker workflows. Within this chapter, the editor is used
+primarily for editing configuration files, inspecting logs, and executing
+commands, rather than for extensive code development.
+
+Collectively, these tools form a minimal yet complete execution environment.
+Docker provides isolation and reproducibility, Python supplies the runtime for
+the example system, virtual environments support local experimentation, and the
+editor facilitates interaction and observation. This tooling setup ensures that
+chapter activities remain focused on runtime execution and observable behaviour
+rather than on platform-specific setup concerns.
+
+\subsection{Role of Containerization}
+
+Containerization plays a central role by enabling interaction
+with a complete, running software system without requiring prior understanding
+of internal structure or implementation details. By packaging each system node
+together with its required libraries and runtime dependencies, containers provide
+a predictable and reproducible execution environment across different machines
+and operating systems.
+
+Within this chapter, containers are used as the primary mechanism for executing
+the individual nodes of the example system. Each node—namely the broker,
+Node~A (capturer), Node~B (transformer), and Node~C (web server)—is executed as an
+independent process within its own container. This separation makes it possible
+to observe concurrent operation and runtime interaction between components
+without manual management of processes or dependencies.
+
+Containerization also makes configuration explicit. Rather than modifying source
+code, system behaviour is adjusted through environment variables supplied at
+container startup. Parameters such as connection endpoints, network ports,
+publishing intervals, and processing options can be modified without rebuilding
+application images. This execution model emphasizes that observed system
+behaviour is influenced not only by code, but also by configuration and runtime
+environment.
+
+From an instructional perspective, containers act as clear execution boundaries.
+For non-IT contexts, containers can be treated as executable units that can be
+started, stopped, and configured, allowing focus to remain on observable system
+behaviour. For IT-oriented contexts, containerization exposes practical runtime
+concerns such as image construction, container networking, and execution-time
+diagnostics.
+
+Finally, containerization highlights the distinction between design-time and
+runtime perspectives. Although architectural diagrams and formal models are
+intentionally excluded at this stage, the running system exhibits an implicit
+structure through container interactions and communication patterns.
+Container-based execution therefore provides a concrete foundation for later
+chapters, in which architectural concepts, deployment considerations, and
+modeling techniques are introduced based on prior runtime observation.
+
+
+
+\section{Installation and Environment Preparation}
+\label{sec:installation_and_environment_preparation}
+
+\subsection{Installing Python and Managing Versions}
+
+Python is required as the runtime environment for executing the individual nodes
+of the example software system. To ensure consistent behaviour across different
+machines, a specific Python version must be installed and verified before any
+execution activities are performed. For this chapter, Python version 3.12 is
+recommended.
+
+This subsection provides step-by-step installation guidance for two commonly
+used platforms: Windows and Ubuntu Linux.
+
+\subsubsection{Installing Python on Windows}
+
+On Windows systems, Python should be installed using the official installer
+provided by the Python Software Foundation.
+
+The installation process consists of the following steps:
+
+\begin{itemize}
+  \item Navigate to the official Python website at \texttt{https://www.python.org}.
+  \item Download the Windows installer for Python~3.12 (64-bit).
+  \item Launch the installer executable.
+  \item Enable the option \texttt{Add Python to PATH} before starting the
+        installation.
+  \item Select the default installation options and complete the installation.
+\end{itemize}
+
+After installation, verification should be performed by opening a Command Prompt
+and executing:
+
+\begin{lstlisting}[language=bash]
+python --version
+\end{lstlisting}
+
+The command output should indicate Python~3.12.x. If a different version is
+reported or the command is not recognized, the system PATH configuration should
+be reviewed.
+
+\subsubsection{Installing Python on Ubuntu Linux}
+
+On Ubuntu systems, Python may already be installed by default; however, the
+preinstalled version may not match the required version for this chapter.
+Installation of Python~3.12 is therefore recommended.
+
+The installation procedure involves the following steps:
+
+\begin{itemize}
+  \item Open a terminal.
+  \item Update the package index:
+\end{itemize}
+
+\begin{lstlisting}[language=bash]
+sudo apt update
+\end{lstlisting}
+
+\begin{itemize}
+  \item Install Python~3.12 and supporting tools:
+\end{itemize}
+
+\begin{lstlisting}[language=bash]
+sudo apt install python3.12 python3.12-venv python3.12-dev
+\end{lstlisting}
+
+After installation, verification should be performed by executing:
+
+\begin{lstlisting}[language=bash]
+python3.12 --version
+\end{lstlisting}
+
+The output should confirm that Python~3.12.x is available.
+
+\subsubsection{Managing Multiple Python Versions}
+
+When multiple Python versions coexist on the same system, explicit invocation of
+the desired interpreter is required. On Windows, this may involve using
+\texttt{python} or \texttt{py -3.12}. On Ubuntu, the interpreter should be invoked
+explicitly as \texttt{python3.12}.
+
+Ensuring that the correct Python version is installed and accessible establishes
+a stable foundation for subsequent steps, including virtual environment creation
+and dependency installation, which are introduced later.
+
+
+\subsection{Creating and Using Virtual Environments}
+
+Virtual environments provide an isolated Python execution context in which
+dependencies can be installed and managed independently of the system-wide
+Python installation. This isolation prevents version conflicts between projects
+and ensures that experiments conducted do not affect other
+software on the same machine. In the context of this chapter, virtual
+environments are used for local execution and inspection of the system outside
+of containers.
+
+A virtual environment consists of a dedicated directory that contains a Python
+interpreter and a private package repository. When the environment is active,
+all Python-related commands, including package installation and script
+execution, are scoped to this directory.
+
+\subsubsection{Purpose of Virtual Environments}
+
+The use of virtual environments serves several purposes within this chapter.
+First, it ensures reproducibility by fixing the set of installed libraries to
+those explicitly required by the example system. Second, it provides a clean
+execution context for observing runtime behaviour without interference from
+previous projects or global package installations. Third, it introduces an
+execution isolation concept that parallels, at a smaller scale, the isolation
+provided by containers.
+
+\subsubsection{Creating a Virtual Environment}
+
+Before creating a virtual environment, a compatible Python interpreter must be
+installed and accessible, as described in the previous subsection. The virtual
+environment should be created in the root directory of the project to maintain
+a clear association between the environment and the codebase.
+
+On Windows systems, a virtual environment can be created using the following
+command:
+
+\begin{lstlisting}[language=bash]
+python -m venv .venv
+\end{lstlisting}
+
+On Ubuntu Linux systems, explicit invocation of the required Python version is
+recommended:
+
+\begin{lstlisting}[language=bash]
+python3.12 -m venv .venv
+\end{lstlisting}
+
+Execution of these commands creates a directory named \texttt{.venv} containing
+the isolated Python runtime, package manager, and supporting configuration
+files.
+
+\subsubsection{Activating the Virtual Environment}
+
+After creation, the virtual environment must be activated to make use of the
+isolated interpreter and dependency set. Activation modifies the current shell
+environment so that Python and package management commands resolve to the
+virtual environment rather than the system installation.
+
+On Windows:
+
+\begin{lstlisting}[language=bash]
+.venv\Scripts\activate
+\end{lstlisting}
+
+On Ubuntu Linux:
+
+\begin{lstlisting}[language=bash]
+source .venv/bin/activate
+\end{lstlisting}
+
+Once activated, the command prompt typically indicates the active environment by
+displaying the environment name. All subsequent commands are executed within
+this isolated context.
+
+\subsubsection{Installing Dependencies}
+
+With the virtual environment active, required Python packages can be installed
+locally using the package manager. Installing dependencies at this stage ensures
+that all required libraries are available without modifying the system-wide
+Python environment.
+
+\begin{lstlisting}[language=bash]
+pip install --upgrade pip
+pip install pyzmq pillow bottle waitress opencv-python-headless
+\end{lstlisting}
+
+These packages remain confined to the virtual environment and are accessible
+only while the environment is active.
+
+\subsubsection{Using the Virtual Environment for Execution}
+
+When running Python scripts associated with the example system, the virtual
+environment must remain active. This ensures that the correct interpreter and
+library versions are used. Execution from within the virtual environment mirrors
+the behaviour observed in containerized execution, with the primary difference
+being the absence of full operating system isolation.
+
+\subsubsection{Deactivating the Virtual Environment}
+
+After completing local execution or experimentation, the virtual environment can
+be deactivated to restore the shell to its original state.
+
+\begin{lstlisting}[language=bash]
+deactivate
+\end{lstlisting}
+
+\subsubsection{Relation to Container-Based Execution}
+
+Virtual environments provide a lightweight mechanism for dependency isolation
+and local experimentation. Although less comprehensive than container-based
+isolation, virtual environments reinforce the same underlying principle: runtime
+behaviour depends on a controlled combination of code, dependencies, and
+configuration. This principle is revisited later in the chapter when execution
+is performed using containers.
+
+\subsection{Installing and Configuring Visual Studio Code}
+
+Visual Studio Code is used as the primary environment for
+interacting with the example software system. Its role is limited to editing
+configuration files, inspecting logs, navigating project files, and executing
+commands. Deep code development or debugging is intentionally deferred to later
+chapters.
+
+Visual Studio Code is selected due to its cross-platform availability, lightweight
+architecture, and strong support for Python, Docker, and terminal-based
+workflows.
+
+\subsubsection{Installing Visual Studio Code}
+
+Visual Studio Code should be installed using the official distribution provided
+by Microsoft.
+
+On all platforms, installation begins by navigating to the official website:
+
+\texttt{https://code.visualstudio.com}
+
+\paragraph{Installation on Windows}
+
+On Windows systems, installation proceeds as follows:
+
+\begin{itemize}
+  \item Download the Windows installer from the official website.
+  \item Launch the installer executable.
+  \item Enable the options to add Visual Studio Code to the system PATH and to
+        register it as an editor for supported file types.
+  \item Complete the installation using the default settings.
+\end{itemize}
+
+After installation, Visual Studio Code can be launched from the Start Menu or
+via the command line using:
+
+\begin{lstlisting}[language=bash]
+code
+\end{lstlisting}
+
+\paragraph{Installation on Ubuntu Linux}
+
+On Ubuntu systems, Visual Studio Code can be installed using the official
+package repository. The following commands should be executed in a terminal:
+
+\begin{lstlisting}[language=bash]
+sudo apt update
+sudo apt install code
+\end{lstlisting}
+
+After installation, the editor can be launched from the application menu or
+directly from the terminal:
+
+\begin{lstlisting}[language=bash]
+code
+\end{lstlisting}
+
+\subsubsection{Initial Configuration}
+
+After installation, minimal configuration is required for use.
+The focus is on enabling terminal access and basic language support rather than
+advanced customization.
+
+The following features should be verified:
+
+\begin{itemize}
+  \item Integrated terminal access
+  \item File explorer visibility
+  \item Support for opening folders containing project files
+\end{itemize}
+
+The integrated terminal is used to execute Python commands, activate virtual
+environments, and run container-related commands. It can be opened from the
+menu or using the keyboard shortcut provided by the editor.
+
+\subsubsection{Recommended Extensions}
+
+Although optional, installation of a small set of extensions simplifies
+interaction with the execution environment:
+
+\begin{itemize}
+  \item \textbf{Python}: Provides syntax highlighting and basic language support
+        for Python files.
+  \item \textbf{Docker}: Enables inspection of running containers, images, and
+        logs directly from the editor interface.
+\end{itemize}
+
+Extensions can be installed through the built-in extension marketplace within
+the editor.
+
+\subsubsection{Role of the Editor}
+
+Visual Studio Code serves as a lightweight interface for
+observing and interacting with the running system. The editor is used to view
+project structure, modify configuration files, inspect runtime output, and
+execute commands in a controlled environment. Its use supports a clear focus on
+execution and observation rather than on design or implementation details,
+aligning with the chapter’s emphasis on running systems before formal design.
+
+\subsection{Installing Docker and Docker Compose}
+
+Docker is used as the primary platform for executing the example
+software system in a consistent and reproducible manner. Through containerization,
+all system components can be executed with their required dependencies, reducing
+the impact of differences between host operating systems. Docker Compose is used
+to coordinate the execution of multiple containers that together form the
+runtime system.
+
+\subsubsection{Installing Docker on Windows}
+
+On Windows systems, Docker is installed using Docker Desktop, which provides an
+integrated environment for container execution.
+
+The installation process consists of the following steps:
+
+\begin{itemize}
+  \item Navigate to the official Docker website at
+        \texttt{https://www.docker.com}.
+  \item Download Docker Desktop for Windows.
+  \item Launch the installer and follow the on-screen instructions.
+  \item Enable required virtualization features when prompted.
+\end{itemize}
+
+After installation, Docker Desktop should be started and allowed to complete its
+initial setup. Verification of the installation can be performed by opening a
+Command Prompt or PowerShell window and executing:
+
+\begin{lstlisting}[language=bash]
+docker --version
+docker compose version
+\end{lstlisting}
+
+Successful execution of these commands confirms that both Docker and Docker
+Compose are available.
+
+\subsubsection{Installing Docker on Ubuntu Linux}
+
+On Ubuntu systems, Docker can be installed using the official Docker package
+repository. The following commands should be executed in a terminal:
+
+\begin{lstlisting}[language=bash]
+sudo apt update
+sudo apt install docker.io docker-compose-plugin
+\end{lstlisting}
+
+After installation, the Docker service should be started and enabled:
+
+\begin{lstlisting}[language=bash]
+sudo systemctl enable docker
+sudo systemctl start docker
+\end{lstlisting}
+
+Verification of the installation can be performed by executing:
+
+\begin{lstlisting}[language=bash]
+docker --version
+docker compose version
+\end{lstlisting}
+
+\subsubsection{Managing Docker Permissions}
+
+On Ubuntu systems, Docker commands require elevated privileges by default.
+To allow Docker usage without prefixing commands with \texttt{sudo}, the current
+user can be added to the \texttt{docker} group:
+
+\begin{lstlisting}[language=bash]
+sudo usermod -aG docker $USER
+\end{lstlisting}
+
+After executing this command, a logout and login is required for the change to
+take effect.
+
+\subsubsection{Role of Docker Compose}
+
+Docker Compose is used to define and run the multi-container example system as a
+single unit. Each node of the system is described as a service within a Compose
+configuration file, including its image, environment variables, network
+configuration, and startup dependencies.
+
+By using Docker Compose, the entire system can be started, stopped, and
+reconfigured using a small set of commands. This approach emphasizes runtime
+composition and configuration over manual container management and aligns with
+the chapter’s focus on observing system behaviour through execution rather than
+through design artefacts.
+
+\section{Development and Execution Flow}
+
+This section outlines the development and execution flow adopted in this
+chapter, progressing from direct code-level execution to fully automated,
+container-based system orchestration. The sequence reflects a gradual transition
+from manual control to reproducible and scalable execution, highlighting the
+practical challenges encountered at each stage (Figure \ref{fig:development-execution-flow}).
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  node distance=8mm,
+  box/.style={
+    draw,
+    rounded corners=2mm,
+    align=center,
+    minimum width=60mm,
+    minimum height=8mm
+  },
+  arrow/.style={-Latex, thick}
+]
+
+\node[box] (code) {Development with Python Code\\(Broker, Node A, Node B, Node C)};
+\node[box, below=of code] (manual) {Manual Execution\\Multiple Terminals, Explicit Order};
+\node[box, below=of manual] (config) {External Configuration\\Environment Variables / Files / Bash Scripts};
+\node[box, below=of config] (docker) {Docker Containers\\Consistent Runtime Environment};
+\node[box, below=of docker] (compose) {Docker Compose\\Automated Multi-Node Execution};
+
+\draw[arrow] (code) -- node[right]{} (manual);
+\draw[arrow] (manual) -- node[right]{manual execution} (config);
+\draw[arrow] (config) -- node[right]{dependency problems} (docker);
+\draw[arrow] (docker) -- node[right]{manual execution} (compose);
+
+\end{tikzpicture}
+\caption{Development and execution flow from code-level execution to container orchestration}
+\label{fig:development-execution-flow}
+\end{figure}
+
+\subsection{Constructing System Nodes Using Python}
+
+Development begins at the code level, where each system node is implemented as
+an independent Python program. Separate scripts are created for the broker,
+Node~A (capturer), Node~B (transformer), and Node~C (web server). At this stage,
+all communication endpoints, ports, and execution parameters are typically
+embedded directly in the code or provided through command-line arguments.
+
+This phase establishes functional correctness at the level of individual
+components. Each node can be executed independently, and basic runtime behaviour
+can be verified in isolation.
+
+\subsection{Manual Execution of Python Programs}
+
+After implementation, the system is executed by manually starting each Python
+process from the command line. Nodes are launched in a specific order to ensure
+that communication endpoints are available when required. Environment variables
+or command-line parameters are used to configure connections and execution
+behaviour.
+
+Although this approach provides fine-grained control and transparency, it
+introduces operational complexity. Multiple terminals are required, startup
+order must be managed explicitly, and execution becomes error-prone as the
+number of components increases.
+
+\subsection{Centralising Configuration for Automated Execution}
+
+To reduce manual effort, configuration values such as ports, topics, and host
+addresses are externalised into configuration files or environment variable
+definitions. This allows nodes to be launched more consistently and reduces the
+need for code modification when adjusting runtime parameters.
+
+However, this approach introduces new challenges when execution is moved to a
+different machine. Differences in operating systems, installed libraries, and
+runtime environments can lead to inconsistent behaviour, even when
+configuration files remain unchanged.
+
+\subsection{Containerising Nodes for Execution Consistency}
+
+To address environment inconsistency, each node is packaged into a Docker
+container. Container images encapsulate the application code together with all
+required dependencies, ensuring that execution behaviour remains consistent
+across machines.
+
+At this stage, containers are typically built and executed manually. Although
+environment consistency is achieved, configuration and startup still require
+explicit commands for each container. Execution order, network configuration,
+and environment variables must be managed manually, limiting scalability and
+ease of use.
+
+\subsection{System Orchestration Using Docker Compose}
+
+Docker Compose is introduced to automate the execution of the entire system.
+Each node is defined as a service within a single configuration file, including
+its image, environment variables, exposed ports, and dependencies on other
+services.
+
+With Docker Compose, the complete multi-node system can be started, stopped, and
+reconfigured using a small number of commands. This approach eliminates manual
+startup ordering, simplifies configuration management, and ensures consistent
+execution across machines. Docker Compose therefore represents the culmination
+of the development flow in this chapter, providing an execution model that is
+both reproducible and operationally efficient.
+
+
+\section{Initial System Execution}
+\subsection{Running a Prebuilt Container}
+\label{sec:initial_system_execution}
+
+Before executing the system, the source code must be obtained locally. The
+complete implementation of the example software system is publicly available in
+the following repository:
+
+\noindent\url{https://github.com/alfa-yohannis/advanced-software-engineering}
+
+The source code can be acquired using either a graphical interface or
+command-line tools.
+
+Using a web browser, the repository can be downloaded as a compressed archive by
+selecting the \texttt{Code} button on the repository page and choosing the
+\texttt{Download ZIP} option from the \texttt{Local} tab. After the download
+completes, the archive should be extracted into a local working directory.
+
+Alternatively, the repository can be cloned directly using the Git version
+control system. From a terminal, the following command retrieves the complete
+repository contents:
+
+\begin{lstlisting}[language=bash]
+git clone https://github.com/alfa-yohannis/advanced-software-engineering.git
+\end{lstlisting}
+
+After downloading or cloning the repository, the project directory structure
+should be inspected. The materials used for the initial system execution are
+located in the following path within the repository:
+
+\texttt{advanced-software-engineering/projects/session-01/python/}
+
+All commands described in this subsection should be executed from this
+directory, as it contains the Python source code, container definitions, and
+configuration files required to run the system.
+
+Execution at this stage relies on prebuilt container images rather than manual
+invocation of individual Python scripts. This execution mode assumes that the
+required tooling, including Docker and Docker Compose, has already been
+installed and configured as described in
+Section~\ref{sec:installation_and_environment_preparation}.
+
+To start the system using the provided container configuration, navigate to the
+project directory and execute the following command:
+
+\begin{lstlisting}[language=bash]
+cd advanced-software-engineering/projects/session-01/python
+docker compose up
+\end{lstlisting}
+
+This command starts all required system components, including the broker,
+Node~A (capturer), Node~B (transformer), and Node~C (web server), according to
+the definitions in the Compose configuration file. Network setup, environment
+variables, and container startup order are handled automatically.
+
+During execution, runtime logs from all containers are streamed to the terminal,
+providing direct visibility into system activity. Once startup completes, the
+system begins processing data and producing observable output without requiring
+manual coordination.
+
+Running the system using prebuilt containers establishes a consistent baseline
+for observing runtime behaviour. Local dependency management and process
+orchestration are abstracted away, allowing focus to remain on execution,
+interaction between components, and observable system output rather than on
+setup complexity.
+
+\subsection{Verifying Successful Execution}
+
+After the system has been started using Docker Compose, successful execution
+should be verified before proceeding with further activities. Verification
+focuses on confirming that all containers are running, that inter-node
+communication has been established, and that observable output is produced as
+expected.
+
+\subsubsection{Verifying Container Status}
+
+The first verification step consists of checking that all required containers
+are running. From the project directory, the following command can be used to
+inspect the current container status:
+
+\begin{lstlisting}[language=bash]
+docker compose ps
+\end{lstlisting}
+
+The output should list all services defined in the Compose configuration,
+including the broker, Node~A (capturer), Node~B (transformer), and Node~C (web
+server), with their state reported as \texttt{running}. Any container shown as
+\texttt{exited} or \texttt{restarting} indicates a startup or configuration
+problem that must be resolved before continuing.
+
+\subsubsection{Inspecting Runtime Logs}
+
+Runtime logs provide immediate insight into the behaviour of each system
+component. Logs from all containers are displayed automatically when the system
+is started using \texttt{docker compose up}. If the system was started in
+detached mode, logs can be inspected using:
+
+\begin{lstlisting}[language=bash]
+docker compose logs
+\end{lstlisting}
+
+The log output should indicate that each node has started successfully and has
+established connections to the broker. Messages indicating successful binding
+or connection to communication endpoints confirm that inter-node communication
+is active.
+
+\subsubsection{Observing Web-Based Output}
+
+Successful execution can also be verified through the web interface exposed by
+Node~C (web server). Once the containers are running, a web browser can be used
+to access the following address:
+
+\url{http://localhost:8000}
+
+The browser should display a live view of the processed output produced by the
+system. The presence of a continuously updating visual stream confirms that
+data is being captured by Node~A, processed by Node~B, and delivered to the web
+server through the broker.
+
+If the interface loads but no output is visible, runtime logs should be reviewed
+to confirm that data is flowing through all nodes and that no configuration
+errors are present.
+
+\subsubsection{Confirming End-to-End Data Flow}
+
+End-to-end verification is achieved when all of the following conditions are
+met:
+
+\begin{itemize}
+  \item All containers are running without errors.
+  \item Runtime logs show successful startup and message exchange.
+  \item The web interface displays continuously updated output.
+\end{itemize}
+
+Satisfying these conditions confirms that the system is operating as a complete
+runtime pipeline. At this point, the system is considered successfully executed
+and ready for further experimentation, configuration changes, or observation of
+runtime behaviour.
+
+\section{Activities for IT Students}
+
+This section defines hands-on activities focused on direct execution, runtime
+configuration, and operational reasoning at the process and container level.
+Emphasis is placed on manual execution using Python, controlled modification of
+processing quality parameters, and scaling the web serving layer to handle
+multiple concurrent clients.
+
+
+\subsection{Raw Python Execution}
+
+\subsubsection{Activity 1: Manual Execution Using Python Processes}
+
+The system is executed by running each node as a separate Python process. This
+activity requires multiple terminals and explicit startup ordering.
+
+\textbf{Step 1: Open the Project Directory}
+
+Execution should be performed from the project directory:
+
+\texttt{advanced-software-engineering/projects/session-01/python/}
+
+\textbf{Step 2: Create and Activate a Virtual Environment}
+
+On Ubuntu:
+
+\begin{lstlisting}[language=bash]
+source .venv/bin/activate
+\end{lstlisting}
+
+On Windows (PowerShell):
+
+\begin{lstlisting}[language=bash]
+.venv\Scripts\activate
+\end{lstlisting}
+
+\textbf{Step 3: Install Dependencies}
+
+\begin{lstlisting}[language=bash]
+pip install --upgrade pip
+pip install pyzmq pillow bottle waitress opencv-python-headless
+\end{lstlisting}
+
+\textbf{Step 4: Run the Nodes in Separate Terminals}
+Open 4 terminals. Terminal 1 (Broker):
+
+\begin{lstlisting}[language=bash]
+python broker.py
+\end{lstlisting}
+
+Terminal 2 (Capturer / Node-A):
+
+\begin{lstlisting}[language=bash]
+BROKER_HOST=127.0.0.1 PUB_PORT=5555 TOPIC=raw VIDEO_PATH=input.mp4 PUBLISH_EVERY_SEC=0.1 JPEG_QUALITY=80 LOOP=true python capturer.py
+\end{lstlisting}
+
+Terminal 3 (Transformer / Node-B):
+
+\begin{lstlisting}[language=bash]
+BROKER_HOST=127.0.0.1 SUB_PORT=5556 PUB_PORT=5555 SUB_TOPIC=raw PUB_TOPIC=processed JPEG_QUALITY_OUT=85 python transformer.py
+\end{lstlisting}
+
+Terminal 4 (Web Server / Node-C):
+
+\begin{lstlisting}[language=bash]
+BROKER_HOST=127.0.0.1 SUB_PORT=5556 SUB_TOPIC=processed HTTP_HOST=0.0.0.0 HTTP_PORT=8000 HTTP_THREADS=8 python web_server.py
+\end{lstlisting}
+
+Successful execution is confirmed when the browser displays output at:
+
+\texttt{http://localhost:8000}
+
+\subsubsection{Activity 2: Modifying Transformer Output Quality}
+
+This activity modifies the output JPEG quality of the transformer (Node-B) and
+observes the impact on visual fidelity, bandwidth, and runtime performance.
+
+\textbf{Step 1: Identify the Quality Parameter}
+
+The transformer uses an environment variable (or runtime parameter) controlling
+output JPEG quality. The parameter is assumed to be:
+
+\texttt{JPEG\_QUALITY\_OUT}
+
+\textbf{Step 2: Run Multiple Quality Settings}
+
+Restart Node-B with different quality settings and observe the differences.
+
+Low quality (smaller bandwidth, more artifacts):
+
+\begin{lstlisting}[language=bash]
+BROKER_HOST=127.0.0.1 SUB_PORT=5556 PUB_PORT=5555 SUB_TOPIC=raw PUB_TOPIC=processed JPEG_QUALITY_OUT=40 python transformer.py
+\end{lstlisting}
+
+High quality (larger bandwidth, fewer artifacts):
+
+\begin{lstlisting}[language=bash]
+BROKER_HOST=127.0.0.1 SUB_PORT=5556 PUB_PORT=5555 SUB_TOPIC=raw PUB_TOPIC=processed JPEG_QUALITY_OUT=95 python transformer.py
+\end{lstlisting}
+
+Observation targets include:
+\begin{itemize}
+  \item Visible artifacts in the browser output.
+  \item Changes in responsiveness (frame delivery smoothness).
+  \item Log indicators of processing rate (FPS) if available.
+\end{itemize}
+
+
+\subsubsection{Activity 3: Scaling the Web Server Layer to Two Instances}
+
+The web server layer can be scaled using raw Python execution by running the same
+program multiple times with different HTTP port configurations. Each instance
+subscribes to the same processed data stream but exposes its service on a
+different port.
+
+\textbf{Run the First Web Server Instance}
+
+In a terminal, execute:
+
+\begin{lstlisting}[language=bash]
+BROKER_HOST=127.0.0.1 \
+SUB_PORT=5556 \
+SUB_TOPIC=processed \
+HTTP_HOST=0.0.0.0 \
+HTTP_PORT=8000 \
+python web_server.py
+\end{lstlisting}
+
+Access the service at:
+
+\texttt{http://localhost:8000}
+
+\textbf{Run the Second Web Server Instance}
+
+In a separate terminal, execute:
+
+\begin{lstlisting}[language=bash]
+BROKER_HOST=127.0.0.1 \
+SUB_PORT=5556 \
+SUB_TOPIC=processed \
+HTTP_HOST=0.0.0.0 \
+HTTP_PORT=8001 \
+python web_server.py
+\end{lstlisting}
+
+Access the service at:
+
+\texttt{http://localhost:8001}
+
+Both web server instances run concurrently, receive the same processed data, and
+serve requests independently using different ports.
+
+
+\subsection{Using Docker Commands}
+
+This section demonstrates how the system can be executed and modified using
+direct Docker commands without relying on Docker Compose. Each node is started
+explicitly, making container lifecycle management and configuration visible.
+
+\subsubsection{Activity 1: Running All the Nodes}
+
+In this activity, all system nodes are started manually as individual Docker
+containers. Containers are connected through the default Docker network, and
+each node is configured using environment variables.
+
+\textbf{Run the Broker}
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  --name broker \
+  -p 5555:5555 -p 5556:5556 \
+  broker
+\end{lstlisting}
+
+\textbf{Run the Capturer (Node A)}
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  --name capturer \
+  -e BROKER_HOST=broker \
+  -e PUB_PORT=5555 \
+  capturer
+\end{lstlisting}
+
+\textbf{Run the Transformer (Node B)}
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  --name transformer \
+  -e BROKER_HOST=broker \
+  -e SUB_PORT=5556 \
+  -e PUB_PORT=5555 \
+  -e SUB_TOPIC=raw \
+  -e PUB_TOPIC=processed \
+  -e JPEG_QUALITY_OUT=85 \
+  transformer
+\end{lstlisting}
+
+\textbf{Run the Web Server (Node C)}
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  --name web \
+  -p 8000:8000 \
+  -e BROKER_HOST=broker \
+  -e SUB_PORT=5556 \
+  -e SUB_TOPIC=processed \
+  -e HTTP_HOST=0.0.0.0 \
+  -e HTTP_PORT=8000 \
+  web_server
+\end{lstlisting}
+
+The system output can be observed at \url{http://localhost:8000}.
+
+\subsubsection{Activity 2: Modifying Transformer Output Quality}
+
+This activity modifies the output quality of the transformer by changing the
+JPEG compression level. The container must be restarted with a different
+environment variable value.
+
+\textbf{Run Transformer with Lower Quality}
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  --name transformer \
+  -e BROKER_HOST=broker \
+  -e SUB_PORT=5556 \
+  -e PUB_PORT=5555 \
+  -e SUB_TOPIC=raw \
+  -e PUB_TOPIC=processed \
+  -e JPEG_QUALITY_OUT=40 \
+  transformer
+\end{lstlisting}
+
+\textbf{Run Transformer with Higher Quality}
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  --name transformer \
+  -e BROKER_HOST=broker \
+  -e SUB_PORT=5556 \
+  -e PUB_PORT=5555 \
+  -e SUB_TOPIC=raw \
+  -e PUB_TOPIC=processed \
+  -e JPEG_QUALITY_OUT=95 \
+  transformer
+\end{lstlisting}
+
+Changes in visual quality and responsiveness can be observed through the web
+interface.
+
+\subsubsection{Activity 3: Scaling the Web Server Layer to Two Instances}
+
+Two web server containers can be started manually as separate instances. Each
+instance subscribes to the same processed stream and exposes a distinct host
+port.
+
+Example: start two instances mapping to ports 8000 and 8001.
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  -p 8000:8000 \
+  -e BROKER_HOST=broker \
+  -e SUB_PORT=5556 \
+  -e SUB_TOPIC=processed \
+  -e HTTP_HOST=0.0.0.0 \
+  -e HTTP_PORT=8000 \
+  web_server
+\end{lstlisting}
+
+\begin{lstlisting}[language=bash]
+docker run --rm \
+  -p 8001:8000 \
+  -e BROKER_HOST=broker \
+  -e SUB_PORT=5556 \
+  -e SUB_TOPIC=processed \
+  -e HTTP_HOST=0.0.0.0 \
+  -e HTTP_PORT=8000 \
+  web_server
+\end{lstlisting}
+
+Each container serves independently at
+\url{http://localhost:8000} and \url{http://localhost:8001}.
+
+This approach allows multiple instances to run concurrently but requires manual
+container management and explicit port assignment.
+
+
+\subsection{Docker Compose Way}
+
+This subsection demonstrates execution and modification of the system using
+Docker Compose. In contrast to direct Docker commands, Docker Compose centralises
+configuration in a single file and allows the entire multi-node system to be
+managed declaratively.
+
+\subsubsection{Activity 1: Running All the Nodes}
+
+All system nodes are defined as services in a \texttt{docker-compose.yml} file.
+A minimal fragment illustrating the structure is shown below.
+
+\begin{lstlisting}[language=bash]
+services:
+  broker:
+    image: broker
+    ports:
+      - "5555:5555"
+      - "5556:5556"
+
+  capturer:
+    image: capturer
+    environment:
+      - BROKER_HOST=broker
+      - PUB_PORT=5555
+    depends_on:
+      - broker
+
+  transformer:
+    image: transformer
+    environment:
+      - BROKER_HOST=broker
+      - SUB_PORT=5556
+      - PUB_PORT=5555
+      - SUB_TOPIC=raw
+      - PUB_TOPIC=processed
+      - JPEG_QUALITY_OUT=85
+    depends_on:
+      - broker
+
+  web:
+    image: web_server
+    ports:
+      - "8000:8000"
+    environment:
+      - BROKER_HOST=broker
+      - SUB_PORT=5556
+      - SUB_TOPIC=processed
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=8000
+    depends_on:
+      - broker
+\end{lstlisting}
+
+The complete system can be started using:
+
+\begin{lstlisting}[language=bash]
+docker compose up
+\end{lstlisting}
+
+\subsubsection{Activity 2: Modifying Transformer Output Quality}
+
+To modify the output quality of the transformer, only a configuration change is
+required. The Python code remains unchanged.
+
+The following fragment shows the relevant environment variable:
+
+\begin{lstlisting}[language=bash]
+transformer:
+  image: transformer
+  environment:
+    - JPEG_QUALITY_OUT=40
+\end{lstlisting}
+
+After modifying the value, the system is restarted:
+
+\begin{lstlisting}[language=bash]
+docker compose down
+docker compose up
+\end{lstlisting}
+
+Changes in visual quality and runtime behaviour can be observed immediately in
+the web interface.
+
+\subsubsection{Activity 3: Scaling the Web Server Layer to Two Instances}
+
+To run two web server instances, an additional service with a different port
+mapping can be added. Each service subscribes to the same processed data stream.
+
+\begin{lstlisting}[language=bash]
+web1:
+  image: web_server
+  ports:
+    - "8000:8000"
+  environment:
+    - BROKER_HOST=broker
+    - SUB_PORT=5556
+    - SUB_TOPIC=processed
+    - HTTP_HOST=0.0.0.0
+    - HTTP_PORT=8000
+  depends_on:
+    - broker
+
+web2:
+  image: web_server
+  ports:
+    - "8001:8000"
+  environment:
+    - BROKER_HOST=broker
+    - SUB_PORT=5556
+    - SUB_TOPIC=processed
+    - HTTP_HOST=0.0.0.0
+    - HTTP_PORT=8000
+  depends_on:
+    - broker
+\end{lstlisting}
+
+After updating the Compose file, both instances can be started with:
+
+\begin{lstlisting}[language=bash]
+docker compose up
+\end{lstlisting}
+
+The two web servers are accessible at:
+
+\begin{itemize}
+  \item \url{http://localhost:8000}
+  \item \url{http://localhost:8001}
+\end{itemize}
+
+Both instances operate independently while consuming the same processed data
+stream. This approach illustrates how Docker Compose simplifies replication and
+configuration by expressing execution structure declaratively rather than
+through repeated command-line invocations.
+
+
+\subsection{Comparison: Docker CLI vs Docker Compose}
+
+Manual scaling using Docker CLI requires explicit repetition of commands, manual
+port mapping, and manual lifecycle management for each container instance.
+Docker Compose centralises configuration and enables multi-service orchestration
+and scaling through a small number of commands.
+
+Under the same scaling objective (two web servers), Docker Compose provides the
+simpler operational workflow due to:
+\begin{itemize}
+  \item Centralised configuration in a single file.
+  \item Automated service discovery and shared networking.
+  \item One-command lifecycle control (\texttt{up}, \texttt{down}, \texttt{logs},
+        \texttt{ps}).
+  \item Built-in service scaling for replicated instances.
+\end{itemize}
+
+These activities provide concrete experience with manual runtime execution,
+parameter-driven quality control, and service replication, establishing an
+operational foundation for later topics such as deployment topology, runtime
+scaling, and system observability.
+
+
+\section{Activities for Non-IT Students}
+
+This section is organised as a collaborative reflection activity. Non-IT
+students work in small groups and are required to team up with at least one
+student who has an IT background. The purpose of this collaboration is to bring
+together different perspectives when observing and reasoning about a running
+software system.
+
+The activity does not require non-IT students to write code or understand
+technical implementation details. Instead, the focus is on shared observation,
+discussion, and explanation using clear and everyday language.
+
+\subsection{Group Activity: Observing and Reasoning About a Running System}
+
+Based on observation and discussion within the mixed group, answer the following
+five questions. The questions are intended to guide reflection toward the core
+ideas of model-driven engineering, including abstraction, simplification,
+automation, and generation.
+
+\begin{enumerate}
+  \item Which variables or parameters of the system change frequently, and which
+        parts remain static and repeatable across executions?
+  \item Which activities or steps are repeated when running or configuring the
+        system?
+  \item Can these repeated activities be automated, and would code or
+        configuration generation reduce effort or errors during development?
+  \item What are the most important attributes of the system introduced here
+        (for example, nodes, connections, parameters, or execution order)?
+  \item Would representing the system in a more familiar or higher-level form,
+        such as a configuration file, a small domain-specific language, or a
+        visual representation, make it easier to focus on what is important?
+\end{enumerate}
+
+
+\section{Closing Remarks}
+
+This chapter has established a behaviour-first foundation for understanding
+software systems by treating execution as the primary object of study. A
+distributed runtime pipeline consisting of a broker, a capturer (Node A), a
+transformer (Node B), and a web server (Node C) has been executed, configured,
+and observed as a running system. Practical interaction has emphasized that
+observable behaviour is shaped not only by source code, but also by runtime
+configuration, environment isolation, and execution context, as reflected in
+differences between raw Python execution, direct Docker commands, and Docker
+Compose orchestration.
+
+The limitations of behaviour-only understanding have also been made explicit.
+While observation supports intuition about data flow, dependencies, and failure
+effects, complete understanding cannot be derived solely from visible outcomes
+and logs. These limits motivate the transition toward design-level reasoning in
+subsequent chapters, where observed runtime behaviour can be progressively
+mapped to architectural structures, formal models, and systematic design
+principles, enabling explanation, prediction, and deliberate construction of
+software systems beyond experimentation alone.
+
+
+
+

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   broker:
     build: ./broker
@@ -35,7 +33,7 @@ services:
       PUB_PORT: "5555"
       SUB_TOPIC: raw
       PUB_TOPIC: processed
-      JPEG_QUALITY_OUT: "10"
+      JPEG_QUALITY_OUT: "80"
 
   web_server:
     build: ./web_server
