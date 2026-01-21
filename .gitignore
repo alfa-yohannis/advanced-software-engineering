@@ -544,3 +544,4 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 module/advanced-software-engineering.pdf
+slides/session01/session01.pdf
