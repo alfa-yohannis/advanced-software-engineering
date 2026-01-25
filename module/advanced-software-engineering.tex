@@ -45,6 +45,25 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 \hyphenation{}
 
 \usepackage{listings}
+
+
+% Define Python language style for listings
+\lstdefinestyle{PythonStyle}{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    backgroundcolor=\color{lightgray!10},
+    tabsize=2,
+    captionpos=b
+}
+
 \lstdefinestyle{SqlStyle}{
 	language=SQL,
 	basicstyle=\ttfamily\footnotesize,
@@ -168,9 +187,9 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	% Contents Page
 	\tableofcontents
 	
-%	\include{pendahuluan}
+	\include{pendahuluan}
 %	\include{chapter01}
-	\include{chapter02}
+%	\include{chapter02}
 
 	\backmatter
 	\addcontentsline{toc}{chapter}{Daftar Pustaka}

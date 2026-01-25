@@ -171,120 +171,488 @@ Dengan demikian, Grafana berfungsi sebagai lapisan visualisasi observabilitas ya
 
 \section{OpenTelemetry}
 
+OpenTelemetry merupakan standar terbuka untuk pengumpulan dan representasi telemetri yang mencakup metrik, log, dan trace. Dalam konteks studi kasus ini, OpenTelemetry diposisikan sebagai kerangka konseptual yang menyatukan berbagai jenis sinyal observabilitas, terutama untuk memahami alur eksekusi lintas node dalam sistem terdistribusi.
+
+Berbeda dengan Prometheus yang berfokus pada pengumpulan metrik berbasis \emph{pull}, OpenTelemetry menekankan konsistensi semantik dalam pembangkitan dan propagasi data telemetri. OpenTelemetry menyediakan model data dan mekanisme instrumentasi yang memungkinkan peristiwa runtime direpresentasikan secara seragam, terlepas dari bahasa pemrograman atau platform yang digunakan.
+
+Dalam arsitektur studi kasus ini, OpenTelemetry relevan terutama untuk konsep \emph{distributed tracing}. Melalui trace, satu alur pemrosesan data dapat diikuti sejak data dihasilkan oleh Capturer, diteruskan melalui Broker, diproses oleh Transformer, hingga akhirnya disajikan oleh Web Server. Setiap tahapan direpresentasikan sebagai \emph{span} yang saling terhubung dalam satu konteks trace.
+
+Penggunaan OpenTelemetry membantu mengaitkan metrik kuantitatif dengan konteks eksekusi yang lebih kaya. Ketika terjadi lonjakan latensi atau penurunan throughput yang terdeteksi melalui metrik Prometheus, trace yang dihasilkan melalui OpenTelemetry dapat digunakan untuk menelusuri titik keterlambatan atau bottleneck pada node tertentu.
+
+Dalam demo ini, OpenTelemetry tidak selalu diaktifkan secara penuh sebagai sistem terpisah, melainkan diperkenalkan sebagai kerangka konseptual untuk memahami relasi antara metrik, log, dan trace. Pendekatan ini menekankan bahwa observabilitas modern tidak hanya bergantung pada satu jenis sinyal, tetapi pada kombinasi berbagai bentuk telemetri yang saling melengkapi.
+
+Dengan memperkenalkan OpenTelemetry, peserta didorong untuk memahami observabilitas sebagai praktik lintas lapisan, yang menghubungkan sinyal runtime dengan alur eksekusi sistem terdistribusi. Pemahaman ini memperkuat pendekatan observabilitas \emph{bottom-up}, di mana sistem dianalisis melalui jejak perilaku aktual yang muncul selama eksekusi.
+
+
 
 \section{Eksperimen Observabilitas}
+
+Bagian ini menjelaskan eksperimen observabilitas yang dilakukan menggunakan sistem studi kasus berbasis arsitektur broker--capturer--transformer--web server. Seluruh kode sumber eksperimen tersedia secara terbuka pada repositori berikut:
+
+\noindent\url{https://github.com/alfa-yohannis/advanced-software-engineering/tree/main/projects/session-02/python}
+
+Eksperimen ini bertujuan untuk memperlihatkan bagaimana perilaku sistem terdistribusi dapat diamati melalui data runtime, tanpa harus melakukan analisis kode atau desain secara langsung. Fokus utama eksperimen adalah integrasi metrik, orkestrasi layanan observabilitas, serta interpretasi hasil pengamatan.
+
+\subsection{Tahapan Eksperimen}
+
+Eksperimen observabilitas dilakukan melalui beberapa tahapan berikut:
+
+\begin{enumerate}
+  \item \textbf{Instalasi dan Konfigurasi Prometheus}  
+
+Prometheus ditambahkan sebagai komponen observabilitas eksternal yang bertugas mengumpulkan metrik runtime dari seluruh node aplikasi. Prometheus dijalankan sebagai container dan dikonfigurasi untuk melakukan \emph{scraping} terhadap endpoint metrik yang diekspor oleh masing-masing node.
+
+Untuk memungkinkan setiap node aplikasi berbasis Python mengekspor metrik, digunakan library \texttt{prometheus-client}. Library ini dipasang pada seluruh node aplikasi, baik Capturer, Broker, Transformer, maupun Web Server.
+
+\begin{lstlisting}[language=bash]
+pip install prometheus-client
+\end{lstlisting}
+
+Setelah library terpasang, setiap node menyediakan endpoint \texttt{/metrics} yang berisi metrik runtime dan dapat diakses oleh Prometheus eksternal. Endpoint ini tidak memengaruhi alur data utama sistem dan hanya berfungsi sebagai sumber observasi.
+
+Prometheus dijalankan sebagai layanan terpisah menggunakan Docker. Konfigurasi ini memungkinkan Prometheus mengumpulkan metrik dari seluruh node tanpa harus diinstal langsung pada host sistem.
+
+
+Pendekatan ini memastikan bahwa mekanisme observabilitas terisolasi dari alur data utama aplikasi, namun tetap mampu merekam perilaku sistem secara menyeluruh untuk keperluan analisis dan eksperimen observabilitas.
+
+
+  \item \textbf{Pembaruan Kode pada Seluruh Node Aplikasi}  
+
+Kode pada node Capturer, Broker, Transformer, dan Web Server diperbarui untuk mengekspor metrik runtime menggunakan library \texttt{prometheus-client}. Pola implementasi yang digunakan pada demo ini adalah menjalankan HTTP endpoint \texttt{/metrics} pada port yang berbeda untuk setiap node, sehingga Prometheus eksternal dapat melakukan \emph{scraping} secara terpisah per komponen.
+
+Selain itu, ditambahkan \emph{shared library} metrik untuk memastikan konsistensi definisi metrik antar node, misalnya konsistensi penamaan metrik, label yang digunakan, serta tipe metrik (\texttt{Counter}, \texttt{Gauge}, \texttt{Histogram}). Shared library ini bertujuan mencegah duplikasi definisi metrik dan mengurangi risiko inkonsistensi antar node.
+
+Berikut contoh struktur minimal shared library metrik (misal: \texttt{shared/obs.py}):
+
+\begin{lstlisting}[style=PythonStyle]
+# shared/metrics2.py
+from prometheus_client import Counter, Gauge, Histogram
+
+# Throughput / volume counters
+frames_in_total = Counter(
+    "frames_in_total",
+    "Total frames received/consumed by a node",
+    ["service"]
+)
+
+frames_out_total = Counter(
+    "frames_out_total",
+    "Total frames produced/published by a node",
+    ["service"]
+)
+
+# Runtime gauges
+queue_size = Gauge(
+    "queue_size",
+    "Approximate queue size (if applicable)",
+    ["service", "queue"]
+)
+
+# Latency histograms (seconds)
+processing_seconds = Histogram(
+    "processing_seconds",
+    "Processing latency per frame/message in seconds",
+    ["service", "stage"]
+)
+\end{lstlisting}
+
+Setiap node kemudian mengimpor shared library ini dan menjalankan server metrik. Contoh berikut menunjukkan pola umum yang dapat digunakan pada seluruh node:
+
+\begin{lstlisting}[style=PythonStyle]
+# contoh potongan umum pada node (capturer/broker/transformer/web)
+from prometheus_client import start_http_server
+from shared.metrics2 import frames_in_total, frames_out_total, processing_seconds
+
+SERVICE = "capturer"  # ganti sesuai node: broker/transformer/web_server
+
+def init_metrics_server(metrics_port: int) -> None:
+    # Menjalankan endpoint /metrics pada port tertentu
+    start_http_server(metrics_port)
+
+# Panggil sekali pada startup node
+init_metrics_server(9101)  # contoh untuk capturer
+\end{lstlisting}
+
+Dengan pola ini, ekspor metrik menjadi seragam: setiap node menjalankan endpoint \texttt{/metrics} dan menggunakan definisi metrik yang sama melalui shared library.
+
+\item \textbf{Penambahan Metrik Runtime}  
+
+Setiap node dilengkapi dengan metrik tambahan yang merepresentasikan perilaku utama sistem, seperti jumlah frame yang diproses, laju publikasi data, serta aktivitas pemrosesan dan penyajian data. Metrik dipilih agar mudah dikaitkan dengan fenomena runtime pada sistem terdistribusi, misalnya throughput, latensi, serta indikasi penumpukan (backpressure) atau bottleneck.
+
+Berikut contoh penambahan metrik pada masing-masing node (cuplikan minimal):
+
+\begin{enumerate}
+  \item \textbf{Capturer (Node A):} menghitung frame yang dihasilkan dan waktu akuisisi/publish.
+\begin{lstlisting}[style=PythonStyle]
+# di loop utama capturer
+from time import time
+from shared.metrics2 import frames_out_total, processing_seconds
+
+t0 = time()
+# ... capture frame ...
+# ... publish raw frame ...
+frames_out_total.labels(service="capturer").inc()
+processing_seconds.labels(service="capturer", stage="capture_publish").observe(time() - t0)
+\end{lstlisting}
+
+  \item \textbf{Broker:} menghitung pesan yang diteruskan (raw/processed) dan (opsional) ukuran antrean internal jika ada.
+\begin{lstlisting}[style=PythonStyle]
+from shared.metrics2 import frames_in_total, frames_out_total
+
+# saat menerima raw dari capturer
+frames_in_total.labels(service="broker").inc()
+
+# saat meneruskan ke subscriber (raw atau processed)
+frames_out_total.labels(service="broker").inc()
+\end{lstlisting}
+
+  \item \textbf{Transformer (Node B):} menghitung frame yang dikonsumsi dan yang diproduksi, serta latensi pemrosesan transformasi.
+\begin{lstlisting}[style=PythonStyle]
+from time import time
+from shared.metrics2 import frames_in_total, frames_out_total, processing_seconds
+
+# saat menerima raw
+frames_in_total.labels(service="transformer").inc()
+
+t0 = time()
+# ... transform frame ...
+frames_out_total.labels(service="transformer").inc()
+processing_seconds.labels(service="transformer", stage="transform").observe(time() - t0)
+\end{lstlisting}
+
+  \item \textbf{Web Server (Node C):} menghitung frame yang disajikan dan (opsional) latensi penyajian/streaming.
+\begin{lstlisting}[style=PythonStyle]
+from shared.metrics2 import frames_in_total, frames_out_total
+
+# saat menerima processed dari broker
+frames_in_total.labels(service="web_server").inc()
+
+# saat frame dipublikasikan ke stream MJPEG (per frame terkirim)
+frames_out_total.labels(service="web_server").inc()
+\end{lstlisting}
+\end{enumerate}
+
+Dengan penambahan metrik tersebut, peserta dapat melakukan pengamatan lintas node: misalnya membandingkan laju \texttt{frames\_out\_total} pada Capturer dengan \texttt{frames\_in\_total} pada Transformer, atau mengamati distribusi \texttt{processing\_seconds} untuk mengidentifikasi bottleneck pemrosesan. Kombinasi metrik ini juga memudahkan korelasi antara gejala yang terlihat di dashboard dengan peristiwa runtime pada sistem.
+
+
+  \item \textbf{Penambahan Node Prometheus dan Grafana serta Konfigurasi Docker Compose}  
+
+Dua node baru ditambahkan ke dalam arsitektur sistem, yaitu \textbf{Prometheus} sebagai pengumpul metrik dan \textbf{Grafana} sebagai lapisan visualisasi. Keduanya dijalankan sebagai container terpisah dari node aplikasi, sehingga mekanisme observabilitas tetap terisolasi dari alur pemrosesan data utama.
+
+Berkas \texttt{docker-compose.yml} diperbarui untuk menyertakan layanan Prometheus dan Grafana, serta mendefinisikan relasi jaringan antar seluruh container. Dengan pendekatan ini, seluruh sistem (node aplikasi + observabilitas) dapat dijalankan secara terorkestrasi melalui satu perintah.
+
+
+Berikut cuplikan konfigurasi layanan \texttt{prometheus} dan \texttt{grafana} pada \texttt{docker-compose.yml}. Prometheus memuat konfigurasi \texttt{prometheus.yml} melalui \emph{volume mount}, sedangkan Grafana disiapkan untuk berjalan sebagai container visualisasi.
+
+\begin{lstlisting}[language=bash]
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - capturer
+      - broker
+      - transformer
+      - web
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+\end{lstlisting}
+
+Konfigurasi di atas mengasumsikan node aplikasi (capturer, broker, transformer, web\_server) telah didefinisikan sebagai layanan lain dalam file \texttt{docker-compose.yml} yang sama, serta setiap node telah mengekspor endpoint \texttt{/metrics} pada port masing-masing.
+
+
+Berkas \texttt{prometheus.yml} mendefinisikan interval scraping serta daftar target endpoint metrik dari seluruh node aplikasi. Karena Prometheus berjalan di dalam jaringan Docker Compose, target diakses menggunakan \textbf{nama service} (bukan \texttt{localhost}).
+
+\begin{lstlisting}[language=bash]
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: "capturer"
+    static_configs:
+      - targets: ["capturer:9101"]
+
+  - job_name: "broker"
+    static_configs:
+      - targets: ["broker:9102"]
+
+  - job_name: "transformer"
+    static_configs:
+      - targets: ["transformer:9103"]
+
+  - job_name: "web_server"
+    static_configs:
+      - targets: ["web:9104"]
+\end{lstlisting}
+
+Dengan konfigurasi ini, Prometheus secara periodik mengumpulkan metrik dari endpoint masing-masing node dan menyimpannya sebagai \emph{time-series}. Pengumpulan metrik dilakukan tanpa mengganggu alur data utama sistem.
+
+
+
+Grafana dikonfigurasi agar terhubung ke Prometheus sebagai \emph{data source}. Karena Grafana berjalan dalam jaringan Docker Compose yang sama, alamat yang digunakan adalah \texttt{http://prometheus:9090} (nama service Prometheus di dalam jaringan Docker), bukan \texttt{http://localhost:9090}.
+
+Konfigurasi data source dapat dilakukan melalui antarmuka Grafana:
+\begin{enumerate}
+  \item Buka Grafana pada \url{http://localhost:3000}.
+  \item Masuk menggunakan kredensial default (umumnya \texttt{admin/admin}, kemudian diminta mengganti kata sandi).
+  \item Pilih \texttt{Connections} $\rightarrow$ \texttt{Data sources} $\rightarrow$ \texttt{Add data source}.
+  \item Pilih tipe \texttt{Prometheus}.
+  \item Isi URL menjadi \texttt{http://prometheus:9090}.
+  \item Klik \texttt{Save \& Test} untuk memastikan koneksi berhasil.
+\end{enumerate}
+
+Setelah data source aktif, metrik yang telah dikumpulkan Prometheus dapat divisualisasikan langsung melalui dashboard Grafana, sehingga peserta dapat melakukan observasi perilaku sistem secara \emph{bottom-up} berdasarkan data runtime.
+
+\end{enumerate}
+
+\subsection{Titik Observasi dan Antarmuka Sistem}
+
+Setelah seluruh layanan dijalankan, eksperimen observabilitas dapat diamati melalui beberapa endpoint berikut:
+
 \begin{itemize}
-  \item Main interface:
+  \item \textbf{Antarmuka Utama Aplikasi}
     \begin{itemize}
-      \item \url{http://localhost:8000/}
-      \item \url{http://localhost:8000/stream.mjpg}
+      \item \url{http://localhost:8000/}  
+            Menampilkan antarmuka web utama.
+      \item \url{http://localhost:8000/stream.mjpg}  
+            Menyediakan aliran video MJPEG hasil pemrosesan sistem.
     \end{itemize}
 
-  \item Metrics endpoints:
+  \item \textbf{Endpoint Metrik Runtime}
     \begin{itemize}
       \item Capturer: \url{http://localhost:9101/metrics}
       \item Broker: \url{http://localhost:9102/metrics}
       \item Transformer: \url{http://localhost:9103/metrics}
-      \item Web server: \url{http://localhost:9104/metrics}
+      \item Web Server: \url{http://localhost:9104/metrics}
     \end{itemize}
 
-	\item Monitoring:
-	\begin{itemize}
-		\item Prometheus: \url{http://localhost:9090}
-		\item Grafana: \url{http://grafana:3000}
-	\end{itemize}
-
+  \item \textbf{Layanan Observabilitas}
+    \begin{itemize}
+      \item Prometheus: \url{http://localhost:9090}  
+            Digunakan untuk melakukan kueri dan eksplorasi metrik secara langsung.
+      \item Grafana: \url{http://localhost:3000}  
+            Digunakan untuk memvisualisasikan metrik melalui dashboard.
+    \end{itemize}
 \end{itemize}
 
+Melalui eksperimen ini, peserta dapat mengamati bagaimana perubahan beban, alur data, dan aktivitas pemrosesan pada masing-masing node tercermin secara langsung pada metrik dan visualisasi. Pendekatan ini menegaskan peran observabilitas sebagai sarana utama untuk memahami perilaku sistem secara \emph{bottom-up} berdasarkan data runtime.
+
+
+\section{Hasil Eksperimen}
+
+Bagian ini menyajikan hasil eksperimen observabilitas yang diperoleh dari sistem studi kasus berbasis pipeline Capturer--Broker--Transformer--Web Server. Hasil eksperimen dirangkum dalam dua tabel utama yang merepresentasikan karakteristik komponen pipeline dan dampak peningkatan jumlah klien pada sisi penyajian data.
+
+\subsection*{Analisis Komponen Pipeline}
 
 
 \begin{table}[htbp]
 \centering
-\small
-\caption{Summary and comparison of pipeline components}
-\label{tab:pipeline-comparison}
+\caption{Ringkasan Peran dan Beban Kerja Setiap Komponen Sistem}
+\label{tab:pipeline-comparison-simple}
 \begin{tabular}{|
-p{0.10\linewidth}|
-p{0.18\linewidth}|
-p{0.12\linewidth}|
-p{0.12\linewidth}|
-p{0.10\linewidth}|
-p{0.12\linewidth}|
+p{0.14\linewidth}|
+p{0.25\linewidth}|
+p{0.16\linewidth}|
+p{0.14\linewidth}|
+p{0.14\linewidth}|
 }
 \hline
-\textbf{Component} &
-\textbf{Primary Role} &
-\textbf{Frames (in $\rightarrow$ out)} &
-\textbf{Avg Payload Size} &
-\textbf{CPU Usage} &
-\textbf{RSS Memory} \\
+\textbf{Komponen} &
+\textbf{Fungsi Utama} &
+\textbf{Jumlah Data Diproses} &
+\textbf{Beban CPU} &
+\textbf{Penggunaan Memori} \\
 \hline
 Capturer &
-Video ingest and JPEG encoding &
--- $\rightarrow$ 8\,473 &
-$\sim$102 KB &
-$\sim$54\% &
-$\sim$128 MB \\
+Mengambil video dan mengubahnya menjadi gambar JPEG &
+8.473 gambar dihasilkan &
+Tinggi (\textasciitilde 54\%) &
+Sedang (\textasciitilde 128 MB) \\
 \hline
 Broker &
-XSUB/XPUB message forwarding &
-17\,030 $\rightarrow$ 17\,030 (ZMQ frames) &
-$\sim$100 KB (data frames) &
-$\sim$2\% &
-$\sim$32 MB \\
+Meneruskan data antar komponen (tanpa memproses isi data) &
+17.030 pesan diteruskan &
+Sangat rendah (\textasciitilde 2\%) &
+Rendah (\textasciitilde 32 MB) \\
 \hline
 Transformer &
-JPEG decode, grayscale transform, re-encode &
-8\,641 $\rightarrow$ 8\,641 &
-Input $\sim$102 KB, Output $\sim$99 KB &
-$\sim$21\% &
-$\sim$45--52 MB \\
+Mengolah gambar (decode, ubah ke grayscale, encode ulang) &
+8.641 gambar masuk dan keluar &
+Sedang (\textasciitilde 21\%) &
+Sedang (45--52 MB) \\
 \hline
 Web Server &
-ZMQ receive and HTTP/MJPEG delivery &
-8\,819 $\rightarrow$ -- &
-$\sim$98.5 KB &
-$\sim$0\% (at scrape) &
-$\sim$193 MB \\
+Menyajikan hasil akhir ke pengguna melalui web &
+8.819 gambar dikirim ke pengguna &
+Sangat rendah (\textasciitilde 0\%) &
+Tinggi (\textasciitilde 193 MB) \\
 \hline
 \end{tabular}
 \end{table}
+
+
+Tabel~\ref{tab:pipeline-comparison-simple} menyajikan ringkasan dan perbandingan karakteristik setiap komponen dalam pipeline pemrosesan data. Setiap komponen menunjukkan pola perilaku runtime yang berbeda sesuai dengan peran fungsionalnya.
+
+Node \textbf{Capturer} berperan sebagai sumber data utama, bertanggung jawab atas pengambilan video dan pengkodean JPEG. Aktivitas ini tercermin dari penggunaan CPU yang relatif tinggi dibandingkan komponen lain, serta konsumsi memori yang stabil. Jumlah frame keluaran menunjukkan laju produksi data yang konsisten selama eksperimen.
+
+Node \textbf{Broker} berfungsi sebagai perantara komunikasi berbasis XSUB/XPUB. Meskipun broker menangani jumlah frame yang besar, penggunaan CPU dan memori relatif rendah. Hal ini menunjukkan bahwa broker terutama melakukan \emph{message forwarding} tanpa operasi pemrosesan data yang berat, sehingga overhead komputasinya minimal.
+
+Node \textbf{Transformer} melakukan operasi pemrosesan yang lebih kompleks, yaitu dekode JPEG, transformasi citra (grayscale), dan enkode ulang. Aktivitas ini tercermin dari penggunaan CPU yang lebih tinggi dibandingkan broker, serta konsumsi memori yang moderat. Jumlah frame masuk dan keluar yang seimbang menunjukkan bahwa tidak terjadi kehilangan data selama proses transformasi.
+
+Node \textbf{Web Server} berfungsi sebagai komponen penyaji hasil akhir melalui HTTP/MJPEG. Konsumsi memori relatif lebih tinggi dibandingkan komponen lain, yang dapat dikaitkan dengan pengelolaan buffer streaming dan koneksi klien. Penggunaan CPU yang rendah pada saat \emph{scraping} metrik menunjukkan bahwa beban utama web server tidak selalu tercermin secara langsung dalam snapshot CPU tunggal, melainkan dipengaruhi oleh pola akses klien.
+
+Secara keseluruhan, tabel ini menunjukkan bahwa observabilitas memungkinkan pemetaan peran fungsional setiap komponen ke karakteristik penggunaan sumber daya yang terukur.
+
+\subsection*{Dampak Jumlah Klien MJPEG}
 
 
 \begin{table}[htbp]
 \centering
-\caption{Performance Comparison of Web Server Under Different Numbers of MJPEG Clients}
-\label{tab:webserver_clients}
-\begin{tabular}{lrrr}
+\caption{Performa Web Server saat Jumlah Pengguna Bertambah}
+\label{tab:webserver_clients_simple}
+\begin{tabular}{|
+p{0.25\linewidth}|
+p{0.15\linewidth}|
+p{0.15\linewidth}|
+p{0.25\linewidth}|
+}
 \hline
-\textbf{Metric} & \textbf{1 Browser} & \textbf{6 Browsers} & \textbf{Change} \\
+\textbf{Yang Diukur} &
+\textbf{1 Pengguna} &
+\textbf{6 Pengguna} &
+\textbf{Perubahan} \\
 \hline
-Active MJPEG clients            & 1       & 6       & $\times 6$ \\
-Frames received                 & 7{,}070 & 7{,}517 & +6.3\% \\
-Bytes received (MB)             & 697     & 741     & +6.3\% \\
-Average JPEG size (KB)          & 98.6    & 98.6    & 0\% \\
+Jumlah pengguna yang terhubung &
+1 &
+6 &
+Naik 6 kali \\
 \hline
-Mean end-to-end latency (ms)    & 30.1    & 30.2    & $\approx 0$ \\
-95--100\% latency bound (ms)    & $\le$100 & $\le$100 & unchanged \\
+Jumlah gambar yang diterima server &
+7.070 &
+7.517 &
+Naik sedikit (+6\%) \\
 \hline
-CPU utilisation (\%)            & 1       & 4       & +3 pp \\
-Resident memory (MB)            & 133     & 157     & +24 \\
-Open file descriptors           & 18      & 23      & +5 \\
+Total data yang diterima (MB) &
+697 &
+741 &
+Naik sedikit (+6\%) \\
+\hline
+Ukuran rata-rata gambar (KB) &
+98,6 &
+98,6 &
+Tidak berubah \\
+\hline
+Waktu rata-rata gambar sampai ke pengguna (ms) &
+30,1 &
+30,2 &
+Hampir sama \\
+\hline
+Waktu terlama yang dirasakan pengguna (ms) &
+$\le$ 100 &
+$\le$ 100 &
+Tidak berubah \\
+\hline
+Penggunaan CPU server (\%) &
+1 &
+4 &
+Naik sedikit \\
+\hline
+Penggunaan memori server (MB) &
+133 &
+157 &
+Naik 24 MB \\
+\hline
+Jumlah koneksi/file yang terbuka &
+18 &
+23 &
+Naik 5 \\
 \hline
 \end{tabular}
 \end{table}
+
+
+Tabel~\ref{tab:webserver_clients_simple} menyajikan perbandingan performa Web Server ketika jumlah klien MJPEG meningkat dari satu menjadi enam browser secara bersamaan. Hasil ini digunakan untuk mengevaluasi skalabilitas dan stabilitas sistem pada sisi penyajian data.
+
+Perlu dicatat bahwa pengambilan cuplikan data untuk skenario enam pengguna dilakukan pada waktu yang sedikit lebih belakangan dibandingkan skenario satu pengguna. Akibatnya, jumlah gambar yang diterima serta total data yang diterima pada skenario enam pengguna tercatat lebih besar. Perbedaan ini mencerminkan durasi pengamatan yang lebih panjang, bukan semata-mata peningkatan laju pemrosesan atau perubahan perilaku sistem.
+
+Peningkatan jumlah klien dari satu menjadi enam tidak menyebabkan perubahan signifikan pada ukuran rata-rata JPEG maupun latensi end-to-end. Nilai latensi rata-rata dan batas atas latensi tetap berada dalam rentang yang sama, menunjukkan bahwa sistem mampu mempertahankan kualitas layanan meskipun jumlah klien meningkat.
+
+Dari sisi sumber daya, peningkatan jumlah klien menyebabkan kenaikan penggunaan CPU dan memori pada Web Server, serta bertambahnya jumlah \emph{file descriptor} terbuka. Namun, peningkatan tersebut bersifat linier dan masih dalam batas yang dapat diterima untuk skenario eksperimen ini. Tidak terlihat adanya gejala degradasi performa yang signifikan atau bottleneck kritis.
+
+Hasil ini mengindikasikan bahwa arsitektur pipeline dan mekanisme penyajian MJPEG yang digunakan cukup efektif untuk menangani peningkatan jumlah klien dalam skala kecil hingga menengah. Observabilitas berbasis metrik memungkinkan interpretasi hasil eksperimen secara lebih akurat, termasuk membedakan dampak peningkatan beban nyata dengan perbedaan waktu pengamatan.
+
+
 
 \section{Sudut Pandang Mahasiswa Non-IT}
 
+Bagian ini bertujuan melatih kemampuan membaca dan menalar perilaku sistem berdasarkan representasi visual dan konsep model, tanpa harus memahami kode sumber.
+
+\begin{enumerate}
+  \item Amati salah satu dashboard Grafana yang menampilkan metrik sistem.  
+  Jelaskan perilaku sistem yang Anda amati menggunakan bahasa sehari-hari.  
+  
+
+  \item Identifikasi satu metrik yang menurut Anda paling penting bagi pengguna akhir (misalnya latensi atau jumlah data yang diproses).  
+  Jelaskan mengapa metrik tersebut relevan dari sudut pandang pengguna.  
+  
+
+  \item Bandingkan dua kondisi sistem (misalnya jumlah pengguna sedikit dan banyak).  
+  Apa perubahan yang terlihat, dan apa yang tidak berubah?  
+  
+\end{enumerate}
+
 \section{Sudut Pandang Mahasiswa IT}
 
+Bagian ini berfokus pada hubungan antara implementasi teknis, metrik runtime, dan representasi model sistem.
 
+\begin{enumerate}
+  \item Pilih satu metrik Prometheus yang diekspor oleh salah satu node.  
+  Jelaskan bagian kode mana yang bertanggung jawab menghasilkan metrik tersebut.  
+  
+
+  \item Buat sketsa sederhana (diagram atau teks) yang memodelkan alur data dari Capturer hingga Web Server.  
+  Tandai di mana metrik dihasilkan pada setiap komponen.  
+  
+
+  \item Jika Anda diminta menambahkan satu node baru (misalnya \emph{Filter}), metrik apa saja yang perlu ditambahkan agar node tersebut tetap dapat diamati dengan baik?  
+	
+\end{enumerate}
 
 \section{Diskusi dan Refleksi}
 
+Bagian ini mendorong refleksi lintas disiplin dan pengaitan langsung dengan prinsip Model-Driven Engineering.
+
+\begin{enumerate}
+  \item Diskusikan bagaimana dashboard Grafana dapat dipandang sebagai \emph{abstraksi} dari sistem yang sedang berjalan.  
+  Apa keuntungan menggunakan abstraksi seperti ini dibandingkan membaca kode atau log secara langsung?
+
+  \item Jelaskan perbedaan antara:
+  \begin{itemize}
+    \item sistem sebagai implementasi, dan
+    \item sistem sebagai model atau representasi yang diamati melalui metrik dan visualisasi.
+  \end{itemize}
+
+  \item Refleksikan peran observabilitas dalam tahapan-tahapan rekayasa perangkat lunak (requirements gathering, analysis, desain,  pengujian, deployment, operasi).  
+  Menurut Anda, pada tahap mana observabilitas memberikan nilai paling besar?
+\end{enumerate}
 
 \section{Ringkasan}
 
+Bab ini memperkenalkan observabilitas sebagai pendekatan untuk memahami sistem terdistribusi melalui data runtime, bukan melalui inspeksi statis terhadap kode atau asumsi desain awal. Peserta mempelajari perbedaan antara monitoring dan observabilitas, serta peran metrik, log, dan trace sebagai sinyal utama untuk menalar perilaku sistem. Melalui pendekatan bottom-up, pemahaman dibangun dari apa yang benar-benar terjadi saat sistem berjalan, termasuk perubahan beban, keterlambatan, penumpukan data, dan dampaknya terhadap pengalaman pengguna.
 
+Studi kasus yang digunakan adalah pipeline terdistribusi berbasis broker dengan komponen Capturer, Broker, Transformer, dan Web Server, yang dilengkapi layanan Prometheus tertanam pada setiap node. Prometheus eksternal mengumpulkan metrik melalui scraping dan Grafana memvisualisasikannya melalui dashboard. Eksperimen menunjukkan bahwa tiap komponen memiliki karakteristik beban kerja berbeda sesuai fungsinya, serta peningkatan jumlah pengguna MJPEG dapat diamati melalui perubahan penggunaan sumber daya tanpa perubahan signifikan pada latensi. Melalui tugas dan refleksi, peserta diajak mengaitkan observabilitas dengan prinsip-prinsip MDE, terutama gagasan bahwa dashboard dan metrik dapat dipandang sebagai model tingkat tinggi yang membantu menjembatani implementasi, eksekusi, dan perbaikan sistem secara iteratif.
 
 

@@ -79,3 +79,105 @@
 \textbf{Alat:} Epsilon EGL, generator Xtext atau MPS, dengan target pipeline CI/CD, Kubernetes, dan Terraform.  
 \textbf{Mahasiswa Non-IT:} Mahasiswa menelusuri bagaimana model tervalidasi diubah menjadi artefak runtime dan menalar keterlacakan serta kebenarannya.  
 \textbf{Mahasiswa IT:} Mahasiswa mengimplementasikan generator model-ke-teks dan mengintegrasikan artefak hasil generasi ke dalam pipeline eksekusi otomatis.
+
+
+\section{Tugas Mata Kuliah: {Pilihan 1}}
+
+Tugas mata kuliah ini dirancang dalam bentuk studi kasus pemodelan sistem nyata yang berasal dari lingkungan kerja mahasiswa. Sistem yang dikaji, selanjutnya disebut sebagai \textit{Sistem X}, dapat berupa sistem manual, sistem berbasis teknologi informasi, maupun kombinasi keduanya. Tujuan utama tugas ini bukanlah implementasi teknis, melainkan pengembangan kemampuan mahasiswa dalam memahami, memodelkan, dan menalar perilaku sistem berdasarkan observasi runtime. Integrasikan teknologi-teknologi terbaru, seperti 3D printers, Artificial Intelligence, Business Intelligence, Information Systems, Internet of Things, Sensors, DevOps, atau teknologi lama yang dapat meningkatkan kualitas sistem tersebut (lebih murah, lebih cepat, lebih akurat, mempunyai kemampuan baru, dsb).
+
+\subsection{Deskripsi Tugas}
+
+Mahasiswa diminta untuk mengidentifikasi sebuah proses bisnis nyata (manual, menggunakan teknologi, atau kombinasi keduanya) yang dijalankan di kantor atau unit kerja tempat mahasiswa bekerja. Proses tersebut kemudian dianalisis dengan langkah-langkah berikut:
+
+\begin{itemize}
+    \item Mengidentifikasi aktor (manusia atau non-manusia yang memiliki peran tertentu) yang terlibat (manusia dan/atau sistem).
+    \item Mendeskripsikan interaksi antar aktor beserta aliran pesan atau data yang dipertukarkan.	
+    \item Mengklasifikasikan elemen proses yang bersifat tetap (invariant), berulang, dan bervariasi.
+	\item MEngidentifikasi aktivitas manual yang dapat di-otomasi dan tidak dapat di-otomasi.
+	\item Mengamati perilaku sistem dalam kondisi normal maupun ketika terjadi gangguan, keterlambatan, atau pengecualian, elemen-elemen mana yang sering bermasalah dan bagaimana solusinya.
+    \item Menyusun model \textit{AS-IS} yang merepresentasikan kondisi sistem saat ini.
+    \item Mengusulkan model \textit{TO-BE} yang memperkenalkan element baru, penghapusan elemen lama, penggantian, atau tingkat otomatisasi yang lebih tinggi dengan tetap mempertimbangkan batasan operasional, risiko, dan tanggung jawab manusia.
+	\item Evaluasi kedua model \textit{AS-IS} dan \textit{TO-BE} dengan menggunakan metode di bawah.
+\end{itemize}
+
+Model yang dihasilkan tidak ditujukan sebagai dokumentasi statis, melainkan sebagai artefak analitis untuk menjelaskan perilaku runtime Sistem X serta mendukung penalaran terhadap perubahan dan keputusan otomasi.
+
+\subsection{Research Questions}
+
+Tugas ini diarahkan untuk menjawab dua \textit{research questions} berikut:
+
+\begin{enumerate}
+    \item \textbf{RQ1:} 
+    Sejauh mana model perilaku runtime Sistem X yang disusun berdasarkan observasi lapangan memenuhi kriteria kelengkapan, konsistensi, dan keterlacakan terhadap kondisi nyata?
+
+    \item \textbf{RQ2:} 
+    Apakah penggunaan model runtime yang eksplisit menghasilkan peningkatan kualitas penalaran terhadap kegagalan, risiko, dan dampak perubahan pada Sistem X dibandingkan dengan deskripsi informal?
+\end{enumerate}
+
+Kedua pertanyaan penelitian ini berfokus pada kualitas model yang dihasilkan serta dampaknya terhadap kemampuan penalaran mahasiswa, tanpa mensyaratkan keahlian pemrograman atau implementasi teknis.
+
+\subsection{Metode Evaluasi}
+
+Untuk menjawab kedua \textit{research questions} tersebut, digunakan dua metode evaluasi yang bersifat sederhana, terstruktur, dan dapat direplikasi. Keduanya membutuhkan responden pakar paling sedikit 5 orang.
+
+\subsubsection{Evaluasi Kualitas Model (RQ1)}
+
+Evaluasi terhadap RQ1 dilakukan menggunakan rubrik penilaian kualitas model. Setiap model \textit{AS-IS} dan \textit{TO-BE} dinilai berdasarkan beberapa kriteria berikut:
+
+\begin{itemize}
+    \item \textit{Completeness}: sejauh mana seluruh aktor dan aktivitas utama Sistem X direpresentasikan.
+    \item \textit{Consistency}: tidak adanya kontradiksi logis dalam alur proses.
+    \item \textit{Traceability}: keterlacakan elemen model terhadap hasil observasi nyata.
+    \item \textit{Clarity of variability}: kejelasan pembedaan antara elemen tetap dan elemen variabel.
+    \item \textit{Automation rationale}: kejelasan alasan di balik keputusan manual, semi-otomatis, atau otomatis.
+\end{itemize}
+
+Cari referensi yang menyebutkan bahwa kelima dimensi tersebut adalah penting. Setiap kriteria dinilai menggunakan skala ordinal (misalnya 1--5), disertai catatan kualitatif untuk menjelaskan kekuatan dan kelemahan model.
+
+\subsubsection{Evaluasi Dukungan Penalaran Berbasis Model (RQ2)}
+
+Evaluasi terhadap RQ2 dilakukan melalui analisis komparatif terhadap artefak model \textit{AS-IS} dan \textit{TO-BE} Sistem X. Evaluasi ini bertujuan untuk menilai sejauh mana masing-masing model menyediakan struktur dan informasi yang memadai untuk mendukung penalaran yang sistematis terhadap kegagalan, risiko, dan dampak perubahan sistem, dibandingkan dengan deskripsi informal proses.
+
+Penilaian dilakukan dengan menganalisis kemampuan masing-masing representasi dalam menjawab sejumlah pertanyaan analitis yang difokuskan pada karakteristik artefak model, antara lain:
+\begin{enumerate}
+    \item Deskripsikan tujuan sistem dan apa yang dilakukan oleh masing-masing model! Dan apa yang membedakan keduanya?
+    \item Masalah apa yang yang kemungkinan besar dapat terjadi pada masing-masing model? Seberapa krusial masalah tersebut?
+    \item Model mana yang menurut Anda lebih baik dalam mencapai tujuan? Mengapa? (pertimbangkan dari berbagai sisi, misalnya biaya, kecepatan, kapasitas, kelengkapan, dsb.)
+\end{enumerate}
+
+Model \textit{AS-IS}, model \textit{TO-BE}, dan deskripsi informal dibandingkan secara kualitatif berdasarkan tingkat eksplisitasi perilaku, kejelasan hubungan antar elemen, dan konsistensi representasi analitis. Hasil perbandingan ini digunakan untuk menilai sejauh mana model runtime yang eksplisit memberikan dukungan penalaran yang lebih kuat dibandingkan pendekatan deskriptif.
+
+\subsection{Struktur Makalah IEEE}
+
+Hasil tugas ini disusun dalam bentuk makalah ilmiah dengan struktur standar IEEE conference sebagai berikut:
+
+\begin{itemize}
+    \item \textbf{Introduction}: latar belakang masalah dan motivasi penelitian.
+    \item \textbf{Background and Related Work}: ringkasan singkat konsep pemodelan proses dan sistem sosio-teknis.
+    \item \textbf{Case Study Description}: deskripsi Sistem X dan konteks operasionalnya.
+    \item \textbf{Modeling Approach}: metode observasi dan konstruksi model \textit{AS-IS} dan \textit{TO-BE}.
+    \item \textbf{Evaluation}: penjelasan metode evaluasi dan hasil yang diperoleh.
+    \item \textbf{Discussion}: interpretasi hasil, implikasi, dan keterbatasan.
+    \item \textbf{Threats to Validity}: potensi bias dan keterbatasan metodologis.
+    \item \textbf{Conclusion and Future Work}: kesimpulan dan arah pengembangan selanjutnya.
+\end{itemize}
+
+Struktur ini memastikan bahwa hasil tugas mahasiswa tidak hanya bernilai pedagogis, tetapi juga memenuhi standar pelaporan ilmiah untuk publikasi pada konferensi IEEE tingkat regional.
+
+
+\section{Tugas Mata Kuliah: Pilihan 2}
+
+Tugas ini berupa studi komparasi dua perangkat lunak, library, atau format data yang digunakan untuk tujuan serupa. Studi dilakukan melalui eksperimen performa yang dapat dijalankan pada satu komputer tanpa melibatkan responden manusia. Evaluasi difokuskan pada pengukuran waktu eksekusi, penggunaan memori, ukuran data, dan throughput, dengan konfigurasi eksperimen yang terkontrol dan dapat direplikasi.
+
+Tujuan studi bukan untuk mengklaim keunggulan universal suatu teknologi, melainkan untuk mengamati dan melaporkan perilaku performa pada konteks beban kerja tertentu yang jarang dibahas secara eksplisit dalam literatur.
+
+Contoh topik studi komparasi yang dapat dilakukan secara mandiri dan berpotensi memberikan kebaruan penelitian antara lain:
+\begin{enumerate}
+    \item Perbandingan format JSON dan MessagePack untuk komunikasi data berukuran besar, dengan pengukuran waktu serialisasi, deserialisasi, ukuran payload, dan penggunaan memori.
+    \item Perbandingan format CSV dan Parquet untuk analisis data tabular berulang, dengan fokus pada waktu baca/tulis, ukuran berkas, dan konsumsi memori.
+    \item Perbandingan SQLite dan PostgreSQL untuk beban kerja analitik ringan hingga menengah pada satu mesin, dengan pengukuran waktu kueri agregasi dan penggunaan memori.
+    \item Perbandingan REST API berbasis JSON dan REST API dengan payload biner (misalnya MessagePack) terhadap latensi dan ukuran data yang ditransmisikan.
+    \item Perbandingan OpenCV dan Pillow untuk operasi pemrosesan citra sederhana (misalnya \textit{resize} dan \textit{encoding}), dengan pengukuran waktu proses dan konsumsi memori.
+    \item Perbandingan algoritma kompresi \texttt{gzip} dan \texttt{zstd} untuk berkas log, dengan pengukuran waktu kompresi, dekompresi, dan rasio kompresi.
+	\item PostgreSQLvs MongoDB dalam hal penyimpanan gambar atau gambar time-series.
+\end{enumerate}
