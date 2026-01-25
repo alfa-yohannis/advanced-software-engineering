@@ -19,11 +19,13 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 %\usepackage{listingsutf8}
 %\lstset{inputencoding=utf8}
 
-\usepackage{tikz}
 \usepackage{pgfplots}
 \usepgfplotslibrary{polar}
+\pgfplotsset{compat=1.18}
+
+\usepackage{tikz}
 \usetikzlibrary{shapes.geometric, 
-	positioning, shapes, backgrounds, arrows.meta, positioning, calc, fit, trees}
+	positioning, shapes, shapes.multipart, backgrounds, arrows.meta, calc, fit, trees}
 
 \usepackage{amsmath}
 
@@ -161,13 +163,14 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 \begin{document}
 
 
-	\include{titlepage}
+%	\include{titlepage}
 	
 	% Contents Page
 	\tableofcontents
 	
-	\include{pendahuluan}
-	\include{chapter01}
+%	\include{pendahuluan}
+%	\include{chapter01}
+	\include{chapter02}
 
 	\backmatter
 	\addcontentsline{toc}{chapter}{Daftar Pustaka}

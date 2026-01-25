@@ -1,0 +1,108 @@
+services:
+  broker:
+    build:
+      context: .
+      dockerfile: broker/Dockerfile
+    image: broker:latest
+    container_name: broker
+    environment:
+      SERVICE: broker
+      BROKER_BIND_HOST: 0.0.0.0
+      PUB_PORT: 5555
+      SUB_PORT: 5556
+      METRICS_PORT: 9102
+    ports:
+      - "5555:5555"
+      - "5556:5556"
+      - "9102:9102"
+
+  capturer:
+    build:
+      context: .
+      dockerfile: capturer/Dockerfile
+    image: capturer:latest
+    container_name: capturer
+    environment:
+      SERVICE: capturer
+      BROKER_HOST: broker
+      PUB_PORT: 5555
+      TOPIC: raw
+      VIDEO_PATH: /data/input.mp4
+      PUBLISH_EVERY_SEC: 0.1
+      JPEG_QUALITY: 80
+      LOOP: "true"
+      FALLBACK_FPS: 25
+      METRICS_PORT: 9101
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      - broker
+    ports:
+      - "9101:9101"
+
+  transformer:
+    build:
+      context: .
+      dockerfile: transformer/Dockerfile
+    image: transformer:latest
+    container_name: transformer
+    environment:
+      SERVICE: transformer
+      BROKER_HOST: broker
+      SUB_PORT: 5556
+      PUB_PORT: 5555
+      SUB_TOPIC: raw
+      PUB_TOPIC: processed
+      JPEG_QUALITY_OUT: 85
+      METRICS_PORT: 9103
+    depends_on:
+      - broker
+    ports:
+      - "9103:9103"
+
+  web_server:
+    build:
+      context: .
+      dockerfile: web_server/Dockerfile
+    image: web_server:latest
+    container_name: web_server
+    environment:
+      SERVICE: web_server
+      BROKER_HOST: broker
+      SUB_PORT: 5556
+      SUB_TOPIC: processed
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: 8000
+      HTTP_THREADS: 8
+      METRICS_PORT: 9104
+    depends_on:
+      - broker
+      - transformer
+    ports:
+      - "8000:8000"
+      - "9104:9104"
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - broker
+      - capturer
+      - transformer
+      - web_server
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+

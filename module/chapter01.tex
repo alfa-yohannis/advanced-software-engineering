@@ -1,146 +1,129 @@
-\chapter{Running Systems Before Design}
+\chapter{Sistem yang Berjalan}
 
-\section*{Learning Objectives}
+\section*{Tujuan Pembelajaran}
 \begin{itemize}
-  \item Execute a preconfigured software system and prepare the required runtime
-        environment without prior knowledge of its internal design.
-  \item Modify configuration parameters and observe, describe, and interpret the
-        resulting runtime behaviour, including normal operation and failure cases.
-  \item Reason about software systems based on observed execution and recognize the
-        limitations of behaviour-only understanding as a motivation for later design
-        and modeling concepts.
+  \item Menjalankan sebuah sistem perangkat lunak yang telah dikonfigurasi dan
+        menyiapkan lingkungan runtime yang diperlukan tanpa pengetahuan awal
+        mengenai desain internal sistem tersebut.
+  \item Memodifikasi parameter konfigurasi serta mengamati, mendeskripsikan, dan
+        menafsirkan perilaku runtime yang dihasilkan, termasuk kondisi operasi
+        normal maupun skenario kegagalan.
+  \item Menalar sistem perangkat lunak berdasarkan eksekusi yang diamati dan
+        mengenali keterbatasan pemahaman yang hanya berbasis perilaku sebagai
+        motivasi untuk memperkenalkan konsep desain dan pemodelan pada tahap
+        berikutnya.
 \end{itemize}
 
-\section{Introduction}
+\section{Pendahuluan}
 
-This chapter introduces software systems from the perspective of
-\emph{execution before abstraction}. Rather than beginning with architecture
-diagrams, models, or formal design concepts, a real, running software system is
-introduced as the primary object of study. The system can be executed,
-configured, and observed directly. The central idea of this chapter is that
-meaningful understanding of software systems should be grounded in concrete
-runtime behaviour before any design-level reasoning is introduced.
+Bab ini memperkenalkan sistem perangkat lunak dari sudut pandang
+\emph{eksekusi sebelum abstraksi}. Alih-alih memulai dengan diagram arsitektur,
+model, atau konsep desain formal, sebuah sistem perangkat lunak nyata yang
+sedang berjalan diperkenalkan sebagai objek kajian utama. Sistem ini dapat
+dijalankan, dikonfigurasi, dan diamati secara langsung. Gagasan inti dari bab
+ini adalah bahwa pemahaman yang bermakna terhadap sistem perangkat lunak perlu
+berakar pada perilaku runtime yang konkret sebelum penalaran pada tingkat desain
+diperkenalkan.
 
-Through early interaction with a running system, intuition is developed
-regarding how software behaves in response to configuration changes,
-environmental conditions, and failure scenarios. This approach deliberately
-postpones architectural terminology and modeling constructs, allowing mental
-models to emerge from observation, experimentation, and cause--effect reasoning.
+Melalui interaksi awal dengan sistem yang berjalan, intuisi dibangun mengenai
+bagaimana perangkat lunak bereaksi terhadap perubahan konfigurasi, kondisi
+lingkungan, serta skenario kegagalan. Pendekatan ini secara sengaja menunda
+penggunaan terminologi arsitektur dan konstruksi pemodelan, sehingga model mental
+mahasiswa berkembang melalui observasi, eksperimen, dan penalaran sebab–akibat.
 
-The chapter is structured to accommodate participants from diverse educational
-backgrounds. For non-IT participants, emphasis is placed on executing systems,
-modifying parameters, and describing observed behaviour in natural language. For
-IT-oriented participants, emphasis is placed on container execution, environment
-configuration, and runtime diagnostics. All activities are performed using the
-same running system, enabling comparison of observations across different levels
-of technical engagement.
+Bab ini dirancang untuk mengakomodasi peserta dengan latar belakang pendidikan
+yang beragam. Bagi peserta non-IT, penekanan diberikan pada menjalankan sistem,
+mengubah parameter, serta mendeskripsikan perilaku yang diamati menggunakan
+bahasa alami. Bagi peserta dengan latar belakang IT, penekanan diberikan pada
+eksekusi container, konfigurasi lingkungan, dan diagnosis runtime. Seluruh
+aktivitas dilakukan menggunakan sistem yang sama, sehingga memungkinkan
+perbandingan observasi pada berbagai tingkat keterlibatan teknis.
 
-This chapter establishes an experiential foundation for subsequent chapters, in
-which observed runtime behaviours are progressively abstracted into
-architectural structures, formal models, and design principles.
+Bab ini membangun fondasi pengalaman yang akan digunakan pada bab-bab berikutnya,
+di mana perilaku runtime yang telah diamati secara bertahap diabstraksikan
+menjadi struktur arsitektur, model formal, dan prinsip desain.
 
+\section{Alasan Memulai dari Sistem yang Berjalan}
 
+Pendidikan rekayasa perangkat lunak secara tradisional sering dimulai dari
+artefak desain seperti dokumen kebutuhan, diagram arsitektur, atau notasi
+pemodelan. Meskipun abstraksi tersebut sangat penting untuk pengembangan sistem
+berskala besar dan jangka panjang, pemaknaannya dapat menjadi sulit apabila
+intuisi terhadap perilaku runtime belum terbentuk. Dalam kondisi seperti ini,
+konsep desain berisiko diperlakukan sebagai representasi statis atau simbolik,
+bukan sebagai deskripsi dari sistem yang benar-benar dieksekusi.
 
-\section{Rationale for Starting from a Running System}
+Memulai dari sistem yang berjalan membalik urutan tersebut. Alih-alih
+mengandalkan perilaku yang dibayangkan dari diagram atau spesifikasi, sistem yang
+dapat diamati dan dieksekusi diperkenalkan sebagai objek kajian utama. Sistem
+dapat dijalankan, dikonfigurasi, dan diamati secara langsung, sehingga konsekuensi
+dari perubahan konfigurasi dapat terlihat secara segera. Pengalaman konkret ini
+menyediakan titik acuan yang kuat bagi seluruh abstraksi yang akan diperkenalkan
+pada tahap selanjutnya.
 
-Traditional software engineering education often begins with design artefacts
-such as requirement documents, architecture diagrams, or modeling notations.
-While these abstractions are essential for large-scale and long-term system
-development, meaningful interpretation may be difficult when intuition about
-runtime behaviour has not yet been established. In such cases, design concepts
-risk being treated as static or symbolic representations rather than as
-descriptions of real, executing systems.
+Pendekatan yang berfokus pada perilaku juga mencerminkan kondisi yang umum
+dijumpai dalam praktik rekayasa perangkat lunak. Interaksi dengan sistem yang
+sudah ada sering kali terjadi tanpa dokumentasi desain yang lengkap atau mutakhir.
+Pemahaman kemudian dibangun melalui observasi terhadap log, keluaran sistem,
+karakteristik performa, dan mode kegagalan. Paparan awal terhadap pola penalaran
+ini mendukung pengembangan kemampuan diagnosis dan analisis yang bersifat
+praktis.
 
-Beginning with a running system reverses this order. Rather than relying on
-imagined behaviour derived from diagrams or specifications, an observable and
-executable system is introduced as the primary object of study. The system can
-be executed, configured, and observed directly, and the consequences of
-configuration changes become immediately visible. This concrete experience
-provides a grounding reference for all subsequent abstractions introduced in
-later stages.
+Bagi peserta tanpa latar belakang IT, interaksi awal dengan sistem yang berjalan
+mengurangi hambatan masuk. Keterlibatan dimungkinkan melalui pengamatan perilaku,
+identifikasi hubungan sebab–akibat, serta deskripsi respons sistem secara verbal,
+tanpa memerlukan pemahaman sintaks pemrograman atau notasi pemodelan formal. Hal
+ini mendukung pengembangan cara berpikir sistem tanpa bergantung pada kefasihan
+teknis.
 
-A behaviour-first approach also reflects common conditions encountered in
-practical software contexts. Interaction with existing systems frequently occurs
-in the absence of complete or current design documentation. Understanding is
-therefore often constructed through observation of logs, outputs, performance
-characteristics, and failure modes. Early exposure to this mode of reasoning
-supports the development of practical diagnostic and analytical skills.
+Bagi peserta dengan latar belakang IT, pendekatan yang sama justru menyingkap
+keterbatasan penalaran yang berangkat dari desain semata. Sistem yang tampak benar
+pada level desain dapat menunjukkan perilaku yang tidak terduga ketika
+dideploy, salah dikonfigurasi, atau dijalankan dalam kondisi lingkungan yang
+berbeda. Pengalaman awal dengan perbedaan tersebut menekankan pentingnya konteks
+runtime, manajemen konfigurasi, dan penalaran operasional.
 
-For participants without an IT background, initial interaction with a running
-system reduces entry barriers. Engagement is possible through observation of
-behaviour, identification of cause-and-effect relationships, and verbal
-description of system responses, without requiring familiarity with programming
-syntax or formal modeling notations. This supports the development of systems
-thinking independently of technical fluency.
+Secara keseluruhan, memulai dari sistem yang berjalan membangun landasan
+pengalaman bersama bagi peserta dengan latar belakang yang beragam. Pendekatan
+ini membumikan konsep teoretis pada perilaku yang dapat diamati dan mempersiapkan
+transisi konseptual dari eksekusi konkret menuju desain formal dan pemodelan pada
+bab-bab berikutnya.
 
-For participants with an IT background, the same approach exposes the limits of
-design-first reasoning. Systems that appear correct at the design level may
-exhibit unexpected behaviour when deployed, misconfigured, or executed under
-different environmental conditions. Early encounters with such discrepancies
-emphasize the importance of runtime context, configuration management, and
-operational reasoning.
+\section{Gambaran Umum Sistem Perangkat Lunak Contoh}
 
-Overall, starting from a running system establishes a shared experiential
-baseline across diverse educational backgrounds. The approach grounds theoretical
-concepts in observable behaviour and prepares the conceptual transition from
-concrete execution to formal design and modeling in subsequent chapters.
+Sistem perangkat lunak contoh yang digunakan dalam bab ini merupakan sebuah
+pipeline runtime terdistribusi berskala kecil yang terdiri dari beberapa node
+yang saling bekerja sama. Setiap node dijalankan sebagai proses independen dan
+berkomunikasi dengan node lain pada saat runtime. Sistem ini dirancang secara
+sengaja agar mudah diamati, mudah dikonfigurasi, dan mudah dijalankan, namun tetap
+mewakili sistem perangkat lunak multi-komponen yang realistis.
 
-
-\section{Overview of the Example Software System}
-
-The example software system presented is a small, distributed
-runtime pipeline composed of multiple cooperating nodes. Each node is executed
-as an independent process and communicates with other nodes at runtime. The
-system is intentionally designed to be observable, configurable, and easy to
-execute, while still representing a realistic multi-component software system.
-
-As illustrated in Figure~\ref{fig:running-system-3x2-grid}, the system consists
-of four main nodes:
-
-\begin{itemize}
-  \item \textbf{Broker:} Serves as a message relay between all other nodes. No
-        application data is produced or consumed by this node. Instead, messages
-        are routed between publishers and subscribers using a publish--subscribe
-        mechanism. This role enables loose coupling between components and allows
-        individual nodes to be started, stopped, or replaced independently.
-  \item \textbf{Capturer (Node-A):} Functions as the data source of the system.
-        Frames are read from a video input and periodically published as messages.
-        Each message contains image data together with metadata such as
-        timestamps and frame identifiers.
-  \item \textbf{Transformer (Node-B):} Subscribes to data produced by Node-A and
-        applies a processing step before republishing the result. In the example
-        system, this processing consists of image transformations such as
-        grayscale conversion.
-  \item \textbf{Web Server (Node-C):} Subscribes to the processed data and exposes
-        the output through a web interface. Processed images are streamed in real
-        time, enabling direct observation of the system’s runtime behaviour via
-        a browser.
-\end{itemize}
-
-Communication between nodes is implemented using a publish--subscribe messaging
-pattern. Data flows from the capturer to the broker and onward to the transformer
-under the \texttt{raw} topic. Processed data is subsequently routed back through
-the broker to the web server under the \texttt{processed} topic. Each node reacts
-independently to incoming messages, and overall system behaviour emerges from
-runtime interaction rather than from centralized control.
-
-
-
-\begin{figure}
+\begin{figure}[htbp]
 \centering
-\begin{tikzpicture}[font=\small\bfseries,node distance=10mm and 14mm,
-box/.style={draw,rounded corners=2mm,align=center,minimum width=34mm,minimum height=10mm,fill=blue!10},
-brokerbox/.style={box,fill=orange!15},
-webbox/.style={box,fill=green!12},
-browserbox/.style={box,fill=gray!12},
-arrow/.style={-Latex,thick}]
+\scalebox{1.1}{
+\begin{tikzpicture}[
+  font=\small\bfseries,
+  node distance=9mm and 12mm,
+  box/.style={
+    draw,
+    rounded corners=2mm,
+    align=center,
+    minimum width=32mm,
+    minimum height=9mm,
+    fill=blue!10
+  },
+  brokerbox/.style={box,fill=orange!15},
+  webbox/.style={box,fill=green!12},
+  browserbox/.style={box,fill=gray!12},
+  arrow/.style={-Latex,thick}
+]
 
 \node[brokerbox] (broker) {Broker\\(XSUB / XPUB)};
-\node[box,left=of broker,yshift=+10mm] (capturer) {Capturer\\(Node A)};
-\node[box,right=of broker,yshift=+10mm] (transformer) {Transformer\\(Node B)};
+\node[box,left=of broker,yshift=+9mm] (capturer) {Capturer\\(Node A)};
+\node[box,right=of broker,yshift=+9mm] (transformer) {Transformer\\(Node B)};
 
-\node[webbox,below=of broker,xshift=+30mm] (web) {Web Server\\(Node C)};
-\node[browserbox,below=of broker,xshift=-30mm] (browser) {Browser};
+\node[webbox,below=of broker,xshift=+28mm] (web) {Web Server\\(Node C)};
+\node[browserbox,below=of broker,xshift=-28mm] (browser) {Browser};
 
 \draw[arrow] (capturer) -- node[above,xshift=2mm]{PUB \texttt{raw}} (broker);
 \draw[arrow] (broker) -- node[above,xshift=-2mm]{SUB \texttt{raw}} (transformer);
@@ -149,159 +132,192 @@ arrow/.style={-Latex,thick}]
 \draw[arrow] (web.west) -- node[above]{HTTP MJPEG} (browser.east);
 
 \end{tikzpicture}
-\caption{Runtime structure of the example system}
-\label{fig:running-system-3x2-grid}
+}
+\caption{Data flow architecture using broker-based publish--subscribe communication}
+\label{fig:broker-pubsub-architecture}
 \end{figure}
 
-Execution is managed using containers, allowing each node to operate within an
-isolated environment with its own configuration. System behaviour is controlled
-through environment variables, including connection endpoints, publishing rates,
-and processing parameters. Modification of these parameters alters observable
-runtime behaviour without requiring changes to the underlying source code.
 
-This node-based structure enables observation of how data moves through a
-running system, how components interact and depend on one another at runtime,
-and how configuration choices and execution order influence overall behaviour.
-These observations are made without the introduction of architectural diagrams
-or modeling concepts at this stage, maintaining a focus on concrete execution
-and observable effects.
-
-
-\section{Tooling and Execution Environment}
-\subsection{Required Software and Platforms}
-
-To enable reliable execution of the example software system with minimal setup
-overhead, this chapter relies on a small set of widely used and well-supported
-tools. These tools provide a consistent execution environment across different
-operating systems and reduce the impact of platform-specific differences on
-runtime behaviour.
-
-The primary execution platform employed is container technology,
-specifically Docker. Docker allows the example system to be packaged together
-with all required dependencies and executed in a uniform manner on different
-machines. Through containerization, the same system can be executed on Windows,
-macOS, or Linux without requiring detailed system-level configuration.
-
-In addition to Docker, Python is used as the implementation language for the
-individual system nodes. Python is selected due to its readability, widespread
-adoption, and extensive ecosystem of supporting libraries. At this stage, full
-understanding of implementation details is not required; however, the use of
-Python establishes a familiar execution environment for later analysis and
-experimentation.
-
-For non-containerized execution scenarios, Python virtual environments are
-introduced to manage dependencies. Virtual environments allow each project to
-maintain an isolated set of Python packages, preventing interference between
-projects or system-wide installations. This mechanism reinforces the concept of
-environment isolation, which parallels the isolation provided by containers.
-
-A code editor or integrated development environment is also required to support
-interaction with the system. Visual Studio Code is recommended due to its
-cross-platform availability, extensive extension ecosystem, and built-in
-support for Python and Docker workflows. Within this chapter, the editor is used
-primarily for editing configuration files, inspecting logs, and executing
-commands, rather than for extensive code development.
-
-Collectively, these tools form a minimal yet complete execution environment.
-Docker provides isolation and reproducibility, Python supplies the runtime for
-the example system, virtual environments support local experimentation, and the
-editor facilitates interaction and observation. This tooling setup ensures that
-chapter activities remain focused on runtime execution and observable behaviour
-rather than on platform-specific setup concerns.
-
-\subsection{Role of Containerization}
-
-Containerization plays a central role by enabling interaction
-with a complete, running software system without requiring prior understanding
-of internal structure or implementation details. By packaging each system node
-together with its required libraries and runtime dependencies, containers provide
-a predictable and reproducible execution environment across different machines
-and operating systems.
-
-Within this chapter, containers are used as the primary mechanism for executing
-the individual nodes of the example system. Each node—namely the broker,
-Node~A (capturer), Node~B (transformer), and Node~C (web server)—is executed as an
-independent process within its own container. This separation makes it possible
-to observe concurrent operation and runtime interaction between components
-without manual management of processes or dependencies.
-
-Containerization also makes configuration explicit. Rather than modifying source
-code, system behaviour is adjusted through environment variables supplied at
-container startup. Parameters such as connection endpoints, network ports,
-publishing intervals, and processing options can be modified without rebuilding
-application images. This execution model emphasizes that observed system
-behaviour is influenced not only by code, but also by configuration and runtime
-environment.
-
-From an instructional perspective, containers act as clear execution boundaries.
-For non-IT contexts, containers can be treated as executable units that can be
-started, stopped, and configured, allowing focus to remain on observable system
-behaviour. For IT-oriented contexts, containerization exposes practical runtime
-concerns such as image construction, container networking, and execution-time
-diagnostics.
-
-Finally, containerization highlights the distinction between design-time and
-runtime perspectives. Although architectural diagrams and formal models are
-intentionally excluded at this stage, the running system exhibits an implicit
-structure through container interactions and communication patterns.
-Container-based execution therefore provides a concrete foundation for later
-chapters, in which architectural concepts, deployment considerations, and
-modeling techniques are introduced based on prior runtime observation.
-
-
-
-\section{Installation and Environment Preparation}
-\label{sec:installation_and_environment_preparation}
-
-\subsection{Installing Python and Managing Versions}
-
-Python is required as the runtime environment for executing the individual nodes
-of the example software system. To ensure consistent behaviour across different
-machines, a specific Python version must be installed and verified before any
-execution activities are performed. For this chapter, Python version 3.12 is
-recommended.
-
-This subsection provides step-by-step installation guidance for two commonly
-used platforms: Windows and Ubuntu Linux.
-
-\subsubsection{Installing Python on Windows}
-
-On Windows systems, Python should be installed using the official installer
-provided by the Python Software Foundation.
-
-The installation process consists of the following steps:
+Seperti ditunjukkan pada Gambar~\ref{fig:broker-pubsub-architecture}, sistem ini
+terdiri atas empat node utama:
 
 \begin{itemize}
-  \item Navigate to the official Python website at \texttt{https://www.python.org}.
-  \item Download the Windows installer for Python~3.12 (64-bit).
-  \item Launch the installer executable.
-  \item Enable the option \texttt{Add Python to PATH} before starting the
-        installation.
-  \item Select the default installation options and complete the installation.
+  \item \textbf{Broker:} Berfungsi sebagai perantara pesan antara seluruh node
+        lainnya. Node ini tidak menghasilkan maupun mengonsumsi data aplikasi,
+        melainkan merutekan pesan antara publisher dan subscriber menggunakan
+        mekanisme publish–subscribe. Peran ini memungkinkan keterlepasan
+        (loose coupling) antar komponen serta memungkinkan setiap node untuk
+        dijalankan, dihentikan, atau digantikan secara independen.
+  \item \textbf{Capturer (Node-A):} Berfungsi sebagai sumber data sistem. Frame
+        dibaca dari masukan video dan dipublikasikan secara periodik sebagai pesan.
+        Setiap pesan memuat data citra beserta metadata seperti timestamp dan
+        identitas frame.
+  \item \textbf{Transformer (Node-B):} Berlangganan data yang dihasilkan oleh
+        Node-A dan menerapkan langkah pemrosesan sebelum mempublikasikan ulang
+        hasilnya. Pada sistem contoh, pemrosesan ini berupa transformasi citra,
+        seperti konversi ke grayscale.
+  \item \textbf{Web Server (Node-C):} Berlangganan data yang telah diproses dan
+        menyajikan keluaran melalui antarmuka web. Citra hasil pemrosesan
+        disiarkan secara real time, sehingga perilaku runtime sistem dapat diamati
+        langsung melalui peramban.
 \end{itemize}
 
-After installation, verification should be performed by opening a Command Prompt
-and executing:
+Komunikasi antar node diimplementasikan menggunakan pola pesan publish–subscribe.
+Data mengalir dari capturer ke broker dan selanjutnya ke transformer melalui topik
+\texttt{raw}. Data yang telah diproses kemudian dirutekan kembali melalui broker
+ke web server menggunakan topik \texttt{processed}. Setiap node bereaksi secara
+mandiri terhadap pesan yang diterima, dan perilaku keseluruhan sistem muncul dari
+interaksi runtime, bukan dari kontrol terpusat.
+
+Eksekusi sistem dikelola menggunakan container, sehingga setiap node beroperasi
+dalam lingkungan terisolasi dengan konfigurasi masing-masing. Perilaku sistem
+dikendalikan melalui environment variable, termasuk endpoint koneksi, laju
+publikasi, dan parameter pemrosesan. Perubahan parameter tersebut mengubah
+perilaku runtime yang dapat diamati tanpa memerlukan perubahan pada kode sumber.
+
+Struktur berbasis node ini memungkinkan pengamatan terhadap bagaimana data
+bergerak di dalam sistem yang berjalan, bagaimana komponen saling berinteraksi
+dan bergantung satu sama lain pada saat runtime, serta bagaimana pilihan
+konfigurasi dan urutan eksekusi memengaruhi perilaku keseluruhan sistem.
+Pengamatan ini dilakukan tanpa memperkenalkan diagram arsitektur atau konsep
+pemodelan pada tahap ini, sehingga fokus tetap pada eksekusi konkret dan efek
+yang dapat diamati.
+
+
+\section{Perangkat dan Lingkungan Eksekusi}
+\subsection{Perangkat Lunak dan Platform yang Diperlukan}
+
+Untuk memungkinkan eksekusi sistem perangkat lunak contoh secara andal dengan
+upaya penyiapan yang minimal, bab ini menggunakan sejumlah kecil alat yang
+digunakan secara luas dan didukung dengan baik. Alat-alat ini menyediakan
+lingkungan eksekusi yang konsisten pada berbagai sistem operasi dan mengurangi
+pengaruh perbedaan platform terhadap perilaku runtime.
+
+Platform eksekusi utama yang digunakan adalah teknologi container, khususnya
+Docker. Docker memungkinkan sistem contoh dikemas bersama seluruh dependensi yang
+dibutuhkan dan dijalankan secara seragam pada berbagai mesin. Melalui
+containerization, sistem yang sama dapat dijalankan pada Windows, macOS, maupun
+Linux tanpa memerlukan konfigurasi sistem tingkat rendah yang rumit.
+
+Selain Docker, Python digunakan sebagai bahasa implementasi untuk masing-masing
+node sistem. Python dipilih karena keterbacaannya, tingkat adopsinya yang luas,
+serta ekosistem pustaka pendukung yang kaya. Pada tahap ini, pemahaman penuh
+terhadap detail implementasi tidak diperlukan; namun penggunaan Python
+menyediakan lingkungan eksekusi yang familier untuk analisis dan eksperimen pada
+tahap selanjutnya.
+
+Untuk skenario eksekusi tanpa container, lingkungan virtual Python diperkenalkan
+untuk mengelola dependensi. Lingkungan virtual memungkinkan setiap proyek
+memiliki kumpulan paket Python yang terisolasi, sehingga mencegah interferensi
+antar proyek atau dengan instalasi sistem secara global. Mekanisme ini
+memperkuat konsep isolasi lingkungan, yang paralel dengan isolasi yang disediakan
+oleh container.
+
+Editor kode atau lingkungan pengembangan terintegrasi juga diperlukan untuk
+mendukung interaksi dengan sistem. Visual Studio Code direkomendasikan karena
+ketersediaannya lintas platform, ekosistem ekstensi yang luas, serta dukungan
+bawaan untuk alur kerja Python dan Docker. Dalam bab ini, editor terutama
+digunakan untuk mengedit berkas konfigurasi, memeriksa log, dan mengeksekusi
+perintah, bukan untuk pengembangan kode secara intensif.
+
+Secara kolektif, alat-alat ini membentuk lingkungan eksekusi yang minimal namun
+lengkap. Docker menyediakan isolasi dan reprodusibilitas, Python menyediakan
+runtime sistem contoh, lingkungan virtual mendukung eksperimen lokal, dan editor
+memfasilitasi interaksi serta observasi. Dengan demikian, aktivitas dalam bab ini
+tetap berfokus pada eksekusi runtime dan perilaku yang dapat diamati, bukan pada
+permasalahan penyiapan platform.
+
+\subsection{Peran Containerization}
+
+Containerization memainkan peran sentral dengan memungkinkan interaksi terhadap
+sebuah sistem perangkat lunak lengkap yang sedang berjalan tanpa memerlukan
+pemahaman awal mengenai struktur internal atau detail implementasinya. Dengan
+mengemas setiap node sistem beserta pustaka dan dependensi runtime yang
+dibutuhkan, container menyediakan lingkungan eksekusi yang dapat diprediksi dan
+direproduksi pada berbagai mesin dan sistem operasi.
+
+Dalam bab ini, container digunakan sebagai mekanisme utama untuk mengeksekusi
+masing-masing node pada sistem contoh. Setiap node—yaitu broker, Node~A
+(capturer), Node~B (transformer), dan Node~C (web server)—dijalankan sebagai proses
+independen di dalam container tersendiri. Pemisahan ini memungkinkan pengamatan
+terhadap operasi paralel dan interaksi runtime antar komponen tanpa pengelolaan
+proses atau dependensi secara manual.
+
+Containerization juga membuat konfigurasi menjadi eksplisit. Alih-alih
+memodifikasi kode sumber, perilaku sistem diatur melalui environment variable
+yang diberikan pada saat container dijalankan. Parameter seperti endpoint
+koneksi, port jaringan, interval publikasi, dan opsi pemrosesan dapat diubah
+tanpa membangun ulang image aplikasi. Model eksekusi ini menekankan bahwa
+perilaku sistem yang diamati dipengaruhi tidak hanya oleh kode, tetapi juga oleh
+konfigurasi dan lingkungan runtime.
+
+Dari sudut pandang pembelajaran, container bertindak sebagai batas eksekusi yang
+jelas. Dalam konteks non-IT, container dapat diperlakukan sebagai unit eksekusi
+yang dapat dijalankan, dihentikan, dan dikonfigurasi, sehingga fokus tetap pada
+perilaku sistem yang dapat diamati. Dalam konteks IT, containerization membuka
+pembahasan mengenai isu runtime praktis seperti pembangunan image, jaringan
+container, dan diagnosis pada saat eksekusi.
+
+Akhirnya, containerization menyoroti perbedaan antara perspektif desain dan
+runtime. Meskipun diagram arsitektur dan model formal sengaja tidak diperkenalkan
+pada tahap ini, sistem yang berjalan tetap menunjukkan struktur implisit melalui
+interaksi container dan pola komunikasi. Oleh karena itu, eksekusi berbasis
+container menyediakan fondasi konkret bagi bab-bab berikutnya, di mana konsep
+arsitektur, pertimbangan deployment, dan teknik pemodelan akan diperkenalkan
+berdasarkan hasil observasi runtime sebelumnya.
+
+\section{Instalasi dan Persiapan Lingkungan}
+\label{sec:installation_and_environment_preparation}
+
+\subsection{Instalasi Python dan Manajemen Versi}
+
+Python diperlukan sebagai lingkungan runtime untuk mengeksekusi node-node
+individual dalam sistem perangkat lunak contoh. Untuk memastikan perilaku yang
+konsisten pada berbagai mesin, versi Python tertentu harus dipasang dan
+diverifikasi sebelum aktivitas eksekusi dilakukan. Untuk bab ini, Python versi
+3.12 direkomendasikan.
+
+Subbagian ini memberikan panduan instalasi langkah demi langkah untuk dua
+platform yang umum digunakan, yaitu Windows dan Ubuntu Linux.
+
+\subsubsection{Instalasi Python pada Windows}
+
+Pada sistem Windows, Python sebaiknya diinstal menggunakan installer resmi yang
+disediakan oleh Python Software Foundation.
+
+Proses instalasi meliputi langkah-langkah berikut:
+
+\begin{itemize}
+  \item Buka situs resmi Python di \texttt{https://www.python.org}.
+  \item Unduh installer Windows untuk Python~3.12 (64-bit).
+  \item Jalankan berkas installer.
+  \item Aktifkan opsi \texttt{Add Python to PATH} sebelum memulai instalasi.
+  \item Pilih opsi instalasi bawaan dan selesaikan proses instalasi.
+\end{itemize}
+
+Setelah instalasi selesai, verifikasi dilakukan dengan membuka Command Prompt dan
+menjalankan perintah berikut:
 
 \begin{lstlisting}[language=bash]
 python --version
 \end{lstlisting}
 
-The command output should indicate Python~3.12.x. If a different version is
-reported or the command is not recognized, the system PATH configuration should
-be reviewed.
+Keluaran perintah tersebut seharusnya menampilkan Python~3.12.x. Jika versi yang
+ditampilkan berbeda atau perintah tidak dikenali, konfigurasi PATH pada sistem
+perlu diperiksa kembali.
 
-\subsubsection{Installing Python on Ubuntu Linux}
 
-On Ubuntu systems, Python may already be installed by default; however, the
-preinstalled version may not match the required version for this chapter.
-Installation of Python~3.12 is therefore recommended.
+\subsubsection{Instalasi Python pada Ubuntu Linux}
 
-The installation procedure involves the following steps:
+Pada sistem Ubuntu, Python sering kali sudah terpasang secara bawaan. Namun,
+versi yang tersedia belum tentu sesuai dengan versi yang dibutuhkan pada bab ini.
+Karena itu, instalasi Python~3.12 direkomendasikan.
+
+Prosedur instalasi meliputi langkah-langkah berikut:
 
 \begin{itemize}
-  \item Open a terminal.
-  \item Update the package index:
+  \item Buka terminal.
+  \item Perbarui indeks paket:
 \end{itemize}
 
 \begin{lstlisting}[language=bash]
@@ -309,339 +325,338 @@ sudo apt update
 \end{lstlisting}
 
 \begin{itemize}
-  \item Install Python~3.12 and supporting tools:
+  \item Instal Python~3.12 beserta alat pendukungnya:
 \end{itemize}
 
 \begin{lstlisting}[language=bash]
 sudo apt install python3.12 python3.12-venv python3.12-dev
 \end{lstlisting}
 
-After installation, verification should be performed by executing:
+Setelah instalasi selesai, lakukan verifikasi dengan menjalankan:
 
 \begin{lstlisting}[language=bash]
 python3.12 --version
 \end{lstlisting}
 
-The output should confirm that Python~3.12.x is available.
+Keluaran perintah tersebut seharusnya mengonfirmasi bahwa Python~3.12.x telah
+tersedia.
 
-\subsubsection{Managing Multiple Python Versions}
+\subsubsection{Mengelola Banyak Versi Python}
 
-When multiple Python versions coexist on the same system, explicit invocation of
-the desired interpreter is required. On Windows, this may involve using
-\texttt{python} or \texttt{py -3.12}. On Ubuntu, the interpreter should be invoked
-explicitly as \texttt{python3.12}.
+Ketika beberapa versi Python hidup berdampingan pada satu sistem, pemanggilan
+interpreter yang diinginkan harus dilakukan secara eksplisit. Di Windows, hal ini
+dapat dilakukan dengan \texttt{python} atau \texttt{py -3.12}. Di Ubuntu, interpreter
+sebaiknya dipanggil secara eksplisit sebagai \texttt{python3.12}.
 
-Ensuring that the correct Python version is installed and accessible establishes
-a stable foundation for subsequent steps, including virtual environment creation
-and dependency installation, which are introduced later.
+Memastikan versi Python yang benar terinstal dan dapat diakses membangun fondasi
+yang stabil untuk langkah-langkah berikutnya, termasuk pembuatan virtual
+environment dan instalasi dependensi, yang akan diperkenalkan setelah ini.
 
+\subsection{Membuat dan Menggunakan Virtual Environment}
 
-\subsection{Creating and Using Virtual Environments}
+Virtual environment menyediakan konteks eksekusi Python yang terisolasi, sehingga
+dependensi dapat dipasang dan dikelola secara terpisah dari instalasi Python pada
+tingkat sistem. Isolasi ini mencegah konflik versi antar proyek dan memastikan
+bahwa eksperimen yang dilakukan tidak mengganggu perangkat lunak lain pada mesin
+yang sama. Dalam konteks bab ini, virtual environment digunakan untuk eksekusi
+lokal dan inspeksi sistem di luar container.
 
-Virtual environments provide an isolated Python execution context in which
-dependencies can be installed and managed independently of the system-wide
-Python installation. This isolation prevents version conflicts between projects
-and ensures that experiments conducted do not affect other
-software on the same machine. In the context of this chapter, virtual
-environments are used for local execution and inspection of the system outside
-of containers.
+Sebuah virtual environment berupa direktori khusus yang berisi interpreter Python
+serta repositori paket privat. Ketika environment aktif, seluruh perintah terkait
+Python, termasuk instalasi paket dan eksekusi skrip, akan dibatasi pada direktori
+ini.
 
-A virtual environment consists of a dedicated directory that contains a Python
-interpreter and a private package repository. When the environment is active,
-all Python-related commands, including package installation and script
-execution, are scoped to this directory.
+\subsubsection{Tujuan Virtual Environment}
 
-\subsubsection{Purpose of Virtual Environments}
+Penggunaan virtual environment memiliki beberapa tujuan dalam bab ini. Pertama,
+mendukung reprodusibilitas dengan menetapkan himpunan pustaka yang terinstal
+hanya pada yang dibutuhkan sistem contoh. Kedua, menyediakan konteks eksekusi
+yang bersih untuk mengamati perilaku runtime tanpa interferensi dari proyek
+sebelumnya atau paket global. Ketiga, memperkenalkan konsep isolasi eksekusi yang
+sejalan (meski dalam skala lebih kecil) dengan isolasi yang disediakan container.
 
-The use of virtual environments serves several purposes within this chapter.
-First, it ensures reproducibility by fixing the set of installed libraries to
-those explicitly required by the example system. Second, it provides a clean
-execution context for observing runtime behaviour without interference from
-previous projects or global package installations. Third, it introduces an
-execution isolation concept that parallels, at a smaller scale, the isolation
-provided by containers.
+\subsubsection{Membuat Virtual Environment}
 
-\subsubsection{Creating a Virtual Environment}
+Sebelum membuat virtual environment, interpreter Python yang kompatibel harus
+sudah terinstal dan dapat diakses, sebagaimana dijelaskan pada subbagian
+sebelumnya. Virtual environment sebaiknya dibuat di direktori akar proyek agar
+asosiasi antara environment dan codebase tetap jelas.
 
-Before creating a virtual environment, a compatible Python interpreter must be
-installed and accessible, as described in the previous subsection. The virtual
-environment should be created in the root directory of the project to maintain
-a clear association between the environment and the codebase.
-
-On Windows systems, a virtual environment can be created using the following
-command:
+Pada Windows, virtual environment dapat dibuat dengan perintah berikut:
 
 \begin{lstlisting}[language=bash]
 python -m venv .venv
 \end{lstlisting}
 
-On Ubuntu Linux systems, explicit invocation of the required Python version is
-recommended:
+Pada Ubuntu Linux, disarankan memanggil versi Python yang dibutuhkan secara
+eksplisit:
 
 \begin{lstlisting}[language=bash]
 python3.12 -m venv .venv
 \end{lstlisting}
 
-Execution of these commands creates a directory named \texttt{.venv} containing
-the isolated Python runtime, package manager, and supporting configuration
-files.
+Eksekusi perintah tersebut akan membuat direktori bernama \texttt{.venv} yang
+memuat runtime Python terisolasi, package manager, serta berkas konfigurasi
+pendukung.
 
-\subsubsection{Activating the Virtual Environment}
+\subsubsection{Mengaktifkan Virtual Environment}
 
-After creation, the virtual environment must be activated to make use of the
-isolated interpreter and dependency set. Activation modifies the current shell
-environment so that Python and package management commands resolve to the
-virtual environment rather than the system installation.
+Setelah dibuat, virtual environment harus diaktifkan agar interpreter dan set
+dependensi terisolasi dapat digunakan. Aktivasi akan memodifikasi environment
+shell saat ini sehingga perintah Python dan manajemen paket mengarah ke virtual
+environment, bukan ke instalasi sistem.
 
-On Windows:
+Pada Windows:
 
 \begin{lstlisting}[language=bash]
 .venv\Scripts\activate
 \end{lstlisting}
 
-On Ubuntu Linux:
+Pada Ubuntu Linux:
 
 \begin{lstlisting}[language=bash]
 source .venv/bin/activate
 \end{lstlisting}
 
-Once activated, the command prompt typically indicates the active environment by
-displaying the environment name. All subsequent commands are executed within
-this isolated context.
+Setelah aktif, prompt terminal biasanya menampilkan nama environment sebagai
+penanda. Seluruh perintah berikutnya akan dieksekusi dalam konteks terisolasi ini.
 
-\subsubsection{Installing Dependencies}
+\subsubsection{Menginstal Dependensi}
 
-With the virtual environment active, required Python packages can be installed
-locally using the package manager. Installing dependencies at this stage ensures
-that all required libraries are available without modifying the system-wide
-Python environment.
+Saat virtual environment aktif, paket Python yang diperlukan dapat diinstal
+secara lokal menggunakan package manager. Instalasi dependensi pada tahap ini
+memastikan seluruh pustaka yang dibutuhkan tersedia tanpa mengubah environment
+Python pada tingkat sistem.
 
 \begin{lstlisting}[language=bash]
 pip install --upgrade pip
 pip install pyzmq pillow bottle waitress opencv-python-headless
 \end{lstlisting}
 
-These packages remain confined to the virtual environment and are accessible
-only while the environment is active.
+Paket-paket tersebut akan tetap terkurung di dalam virtual environment dan hanya
+dapat diakses ketika environment aktif.
 
-\subsubsection{Using the Virtual Environment for Execution}
+\subsubsection{Menggunakan Virtual Environment untuk Eksekusi}
 
-When running Python scripts associated with the example system, the virtual
-environment must remain active. This ensures that the correct interpreter and
-library versions are used. Execution from within the virtual environment mirrors
-the behaviour observed in containerized execution, with the primary difference
-being the absence of full operating system isolation.
+Ketika menjalankan skrip Python yang terkait dengan sistem contoh, virtual
+environment harus tetap dalam keadaan aktif. Hal ini memastikan interpreter dan
+versi pustaka yang digunakan sesuai. Eksekusi dari dalam virtual environment
+pada dasarnya mencerminkan perilaku yang diamati saat menjalankan sistem dalam
+container, dengan perbedaan utama yaitu tidak adanya isolasi sistem operasi
+secara penuh.
 
-\subsubsection{Deactivating the Virtual Environment}
+\subsubsection{Menonaktifkan Virtual Environment}
 
-After completing local execution or experimentation, the virtual environment can
-be deactivated to restore the shell to its original state.
+Setelah eksekusi lokal atau eksperimen selesai, virtual environment dapat
+dinonaktifkan untuk mengembalikan shell ke kondisi semula.
 
 \begin{lstlisting}[language=bash]
 deactivate
 \end{lstlisting}
 
-\subsubsection{Relation to Container-Based Execution}
+\subsubsection{Keterkaitan dengan Eksekusi Berbasis Container}
 
-Virtual environments provide a lightweight mechanism for dependency isolation
-and local experimentation. Although less comprehensive than container-based
-isolation, virtual environments reinforce the same underlying principle: runtime
-behaviour depends on a controlled combination of code, dependencies, and
-configuration. This principle is revisited later in the chapter when execution
-is performed using containers.
+Virtual environment menyediakan mekanisme ringan untuk isolasi dependensi dan
+eksperimen lokal. Meskipun tidak sekomprehensif isolasi berbasis container,
+virtual environment menegaskan prinsip yang sama: perilaku runtime ditentukan
+oleh kombinasi terkontrol antara kode, dependensi, dan konfigurasi. Prinsip ini
+akan kembali ditekankan pada bagian berikutnya ketika eksekusi dilakukan
+menggunakan container.
 
-\subsection{Installing and Configuring Visual Studio Code}
+\subsection{Instalasi dan Konfigurasi Visual Studio Code}
 
-Visual Studio Code is used as the primary environment for
-interacting with the example software system. Its role is limited to editing
-configuration files, inspecting logs, navigating project files, and executing
-commands. Deep code development or debugging is intentionally deferred to later
-chapters.
+Visual Studio Code digunakan sebagai lingkungan utama untuk berinteraksi dengan
+sistem perangkat lunak contoh. Perannya dibatasi pada pengeditan berkas
+konfigurasi, inspeksi log, navigasi berkas proyek, dan eksekusi perintah. Aktivitas
+pengembangan kode secara mendalam atau debugging sengaja ditunda ke bab-bab
+selanjutnya.
 
-Visual Studio Code is selected due to its cross-platform availability, lightweight
-architecture, and strong support for Python, Docker, and terminal-based
-workflows.
+Visual Studio Code dipilih karena tersedia lintas platform, ringan, dan memiliki
+dukungan kuat untuk Python, Docker, dan alur kerja berbasis terminal.
 
-\subsubsection{Installing Visual Studio Code}
+\subsubsection{Instalasi Visual Studio Code}
 
-Visual Studio Code should be installed using the official distribution provided
-by Microsoft.
+Visual Studio Code sebaiknya diinstal melalui distribusi resmi yang disediakan
+oleh Microsoft.
 
-On all platforms, installation begins by navigating to the official website:
+Pada semua platform, instalasi dimulai dengan mengunjungi situs resmi berikut:
 
 \texttt{https://code.visualstudio.com}
 
-\paragraph{Installation on Windows}
+\paragraph{Instalasi pada Windows}
 
-On Windows systems, installation proceeds as follows:
+Pada Windows, instalasi dilakukan sebagai berikut:
 
 \begin{itemize}
-  \item Download the Windows installer from the official website.
-  \item Launch the installer executable.
-  \item Enable the options to add Visual Studio Code to the system PATH and to
-        register it as an editor for supported file types.
-  \item Complete the installation using the default settings.
+  \item Unduh installer Windows dari situs resmi.
+  \item Jalankan berkas installer.
+  \item Aktifkan opsi untuk menambahkan Visual Studio Code ke PATH dan
+        mendaftarkannya sebagai editor untuk tipe berkas yang didukung.
+  \item Selesaikan instalasi menggunakan pengaturan bawaan.
 \end{itemize}
 
-After installation, Visual Studio Code can be launched from the Start Menu or
-via the command line using:
+Setelah terinstal, Visual Studio Code dapat dijalankan melalui Start Menu atau
+melalui command line dengan:
 
 \begin{lstlisting}[language=bash]
 code
 \end{lstlisting}
 
-\paragraph{Installation on Ubuntu Linux}
+\paragraph{Instalasi pada Ubuntu Linux}
 
-On Ubuntu systems, Visual Studio Code can be installed using the official
-package repository. The following commands should be executed in a terminal:
+Pada Ubuntu, Visual Studio Code dapat diinstal menggunakan repository paket resmi.
+Jalankan perintah berikut di terminal:
 
 \begin{lstlisting}[language=bash]
 sudo apt update
 sudo apt install code
 \end{lstlisting}
 
-After installation, the editor can be launched from the application menu or
-directly from the terminal:
+Setelah terinstal, editor dapat dijalankan dari menu aplikasi atau langsung dari
+terminal:
 
 \begin{lstlisting}[language=bash]
 code
 \end{lstlisting}
 
-\subsubsection{Initial Configuration}
+\subsubsection{Konfigurasi Awal}
 
-After installation, minimal configuration is required for use.
-The focus is on enabling terminal access and basic language support rather than
-advanced customization.
+Setelah instalasi, hanya diperlukan konfigurasi minimal. Fokusnya adalah
+memastikan akses terminal dan dukungan bahasa dasar, bukan kustomisasi tingkat
+lanjut.
 
-The following features should be verified:
-
-\begin{itemize}
-  \item Integrated terminal access
-  \item File explorer visibility
-  \item Support for opening folders containing project files
-\end{itemize}
-
-The integrated terminal is used to execute Python commands, activate virtual
-environments, and run container-related commands. It can be opened from the
-menu or using the keyboard shortcut provided by the editor.
-
-\subsubsection{Recommended Extensions}
-
-Although optional, installation of a small set of extensions simplifies
-interaction with the execution environment:
+Hal-hal berikut sebaiknya dipastikan tersedia:
 
 \begin{itemize}
-  \item \textbf{Python}: Provides syntax highlighting and basic language support
-        for Python files.
-  \item \textbf{Docker}: Enables inspection of running containers, images, and
-        logs directly from the editor interface.
+  \item Akses integrated terminal
+  \item Tampilan file explorer
+  \item Dukungan untuk membuka folder yang berisi berkas proyek
 \end{itemize}
 
-Extensions can be installed through the built-in extension marketplace within
-the editor.
+Integrated terminal digunakan untuk menjalankan perintah Python, mengaktifkan
+virtual environment, dan menjalankan perintah terkait container. Terminal ini
+dapat dibuka melalui menu atau menggunakan pintasan keyboard yang disediakan
+editor.
 
-\subsubsection{Role of the Editor}
+\subsubsection{Ekstensi yang Direkomendasikan}
 
-Visual Studio Code serves as a lightweight interface for
-observing and interacting with the running system. The editor is used to view
-project structure, modify configuration files, inspect runtime output, and
-execute commands in a controlled environment. Its use supports a clear focus on
-execution and observation rather than on design or implementation details,
-aligning with the chapter’s emphasis on running systems before formal design.
-
-\subsection{Installing Docker and Docker Compose}
-
-Docker is used as the primary platform for executing the example
-software system in a consistent and reproducible manner. Through containerization,
-all system components can be executed with their required dependencies, reducing
-the impact of differences between host operating systems. Docker Compose is used
-to coordinate the execution of multiple containers that together form the
-runtime system.
-
-\subsubsection{Installing Docker on Windows}
-
-On Windows systems, Docker is installed using Docker Desktop, which provides an
-integrated environment for container execution.
-
-The installation process consists of the following steps:
+Meskipun opsional, pemasangan beberapa ekstensi berikut akan mempermudah
+interaksi dengan lingkungan eksekusi:
 
 \begin{itemize}
-  \item Navigate to the official Docker website at
-        \texttt{https://www.docker.com}.
-  \item Download Docker Desktop for Windows.
-  \item Launch the installer and follow the on-screen instructions.
-  \item Enable required virtualization features when prompted.
+  \item \textbf{Python}: Menyediakan syntax highlighting dan dukungan bahasa dasar
+        untuk berkas Python.
+  \item \textbf{Docker}: Memungkinkan inspeksi container yang sedang berjalan,
+        image, dan log langsung dari antarmuka editor.
 \end{itemize}
 
-After installation, Docker Desktop should be started and allowed to complete its
-initial setup. Verification of the installation can be performed by opening a
-Command Prompt or PowerShell window and executing:
+Ekstensi dapat diinstal melalui marketplace ekstensi bawaan pada editor.
+
+\subsubsection{Peran Editor}
+
+Visual Studio Code berfungsi sebagai antarmuka ringan untuk mengamati dan
+berinteraksi dengan sistem yang berjalan. Editor digunakan untuk melihat struktur
+proyek, memodifikasi berkas konfigurasi, memeriksa keluaran runtime, serta
+mengeksekusi perintah dalam lingkungan yang terkontrol. Penggunaan editor ini
+mendukung fokus pada eksekusi dan observasi, bukan pada detail desain atau
+implementasi, selaras dengan penekanan bab ini: menjalankan sistem sebelum desain
+formal.
+
+\subsection{Instalasi Docker dan Docker Compose}
+
+Docker digunakan sebagai platform utama untuk mengeksekusi sistem perangkat lunak
+contoh secara konsisten dan dapat direproduksi. Melalui containerization, seluruh
+komponen sistem dapat dijalankan beserta dependensi yang diperlukan, sehingga
+perbedaan sistem operasi host menjadi kurang berpengaruh. Docker Compose digunakan
+untuk mengoordinasikan eksekusi beberapa container yang bersama-sama membentuk
+sistem runtime.
+
+\subsubsection{Instalasi Docker pada Windows}
+
+Pada Windows, Docker diinstal melalui Docker Desktop, yang menyediakan lingkungan
+terintegrasi untuk eksekusi container.
+
+Proses instalasi meliputi langkah-langkah berikut:
+
+\begin{itemize}
+  \item Kunjungi situs resmi Docker di \texttt{https://www.docker.com}.
+  \item Unduh Docker Desktop untuk Windows.
+  \item Jalankan installer dan ikuti instruksi pada layar.
+  \item Aktifkan fitur virtualisasi yang diperlukan jika diminta.
+\end{itemize}
+
+Setelah instalasi, Docker Desktop harus dijalankan dan dibiarkan menyelesaikan
+setup awal. Verifikasi instalasi dapat dilakukan dengan membuka Command Prompt
+atau PowerShell dan menjalankan:
 
 \begin{lstlisting}[language=bash]
 docker --version
 docker compose version
 \end{lstlisting}
 
-Successful execution of these commands confirms that both Docker and Docker
-Compose are available.
+Keberhasilan eksekusi perintah tersebut mengonfirmasi bahwa Docker dan Docker
+Compose telah tersedia.
 
-\subsubsection{Installing Docker on Ubuntu Linux}
+\subsubsection{Instalasi Docker pada Ubuntu Linux}
 
-On Ubuntu systems, Docker can be installed using the official Docker package
-repository. The following commands should be executed in a terminal:
+Pada Ubuntu, Docker dapat diinstal menggunakan repository paket Docker. Jalankan
+perintah berikut di terminal:
 
 \begin{lstlisting}[language=bash]
 sudo apt update
 sudo apt install docker.io docker-compose-plugin
 \end{lstlisting}
 
-After installation, the Docker service should be started and enabled:
+Setelah instalasi, layanan Docker perlu dijalankan dan diaktifkan:
 
 \begin{lstlisting}[language=bash]
 sudo systemctl enable docker
 sudo systemctl start docker
 \end{lstlisting}
 
-Verification of the installation can be performed by executing:
+Verifikasi instalasi dapat dilakukan dengan menjalankan:
 
 \begin{lstlisting}[language=bash]
 docker --version
 docker compose version
 \end{lstlisting}
 
-\subsubsection{Managing Docker Permissions}
+\subsubsection{Mengelola Izin Docker}
 
-On Ubuntu systems, Docker commands require elevated privileges by default.
-To allow Docker usage without prefixing commands with \texttt{sudo}, the current
-user can be added to the \texttt{docker} group:
+Pada Ubuntu, perintah Docker secara bawaan memerlukan hak akses elevated
+(\texttt{sudo}). Agar Docker dapat digunakan tanpa awalan \texttt{sudo}, pengguna
+aktif dapat ditambahkan ke grup \texttt{docker}:
 
 \begin{lstlisting}[language=bash]
 sudo usermod -aG docker $USER
 \end{lstlisting}
 
-After executing this command, a logout and login is required for the change to
-take effect.
+Setelah perintah tersebut dijalankan, pengguna perlu logout dan login kembali
+agar perubahan izin berlaku.
 
-\subsubsection{Role of Docker Compose}
 
-Docker Compose is used to define and run the multi-container example system as a
-single unit. Each node of the system is described as a service within a Compose
-configuration file, including its image, environment variables, network
-configuration, and startup dependencies.
+\subsubsection{Peran Docker Compose}
 
-By using Docker Compose, the entire system can be started, stopped, and
-reconfigured using a small set of commands. This approach emphasizes runtime
-composition and configuration over manual container management and aligns with
-the chapter’s focus on observing system behaviour through execution rather than
-through design artefacts.
+Docker Compose digunakan untuk mendefinisikan dan menjalankan sistem contoh
+multi-container sebagai satu kesatuan. Setiap node pada sistem didefinisikan
+sebagai sebuah \emph{service} di dalam berkas konfigurasi Compose, termasuk
+\emph{image} yang digunakan, environment variable, konfigurasi jaringan, serta
+ketergantungan urutan startup.
 
-\section{Development and Execution Flow}
+Dengan Docker Compose, seluruh sistem dapat dijalankan, dihentikan, dan
+dikonfigurasi ulang menggunakan sedikit perintah. Pendekatan ini menekankan
+komposisi dan konfigurasi pada level runtime, bukan pengelolaan container secara
+manual. Hal ini juga selaras dengan fokus bab ini: memahami perilaku sistem
+melalui eksekusi dan observasi, bukan melalui artefak desain.
 
-This section outlines the development and execution flow adopted in this
-chapter, progressing from direct code-level execution to fully automated,
-container-based system orchestration. The sequence reflects a gradual transition
-from manual control to reproducible and scalable execution, highlighting the
-practical challenges encountered at each stage (Figure \ref{fig:development-execution-flow}).
+\section{Alur Pengembangan dan Eksekusi}
+
+Bagian ini menjelaskan alur pengembangan dan eksekusi yang digunakan pada bab
+ini, yang bergerak dari eksekusi langsung pada level kode menuju orkestrasi
+sistem berbasis container yang sepenuhnya otomatis. Urutan ini merefleksikan
+transisi bertahap dari kontrol manual ke eksekusi yang reprodusibel dan mudah
+diskalakan, sekaligus menyoroti tantangan praktis yang muncul pada tiap tahap
+(Gambar~\ref{fig:development-execution-flow}).
 
 \begin{figure}[htbp]
 \centering
@@ -658,271 +673,261 @@ practical challenges encountered at each stage (Figure \ref{fig:development-exec
   arrow/.style={-Latex, thick}
 ]
 
-\node[box] (code) {Development with Python Code\\(Broker, Node A, Node B, Node C)};
-\node[box, below=of code] (manual) {Manual Execution\\Multiple Terminals, Explicit Order};
-\node[box, below=of manual] (config) {External Configuration\\Environment Variables / Files / Bash Scripts};
-\node[box, below=of config] (docker) {Docker Containers\\Consistent Runtime Environment};
-\node[box, below=of docker] (compose) {Docker Compose\\Automated Multi-Node Execution};
+\node[box] (code) {Pengembangan dengan Kode Python\\(Broker, Node A, Node B, Node C)};
+\node[box, below=of code] (manual) {Eksekusi Manual\\Banyak Terminal, Urutan Eksplisit};
+\node[box, below=of manual] (config) {Konfigurasi Dieksternalisasi\\Environment Variable / File / Skrip Bash};
+\node[box, below=of config] (docker) {Container Docker\\Lingkungan Runtime Konsisten};
+\node[box, below=of docker] (compose) {Docker Compose\\Eksekusi Multi-Node Otomatis};
 
 \draw[arrow] (code) -- node[right]{} (manual);
-\draw[arrow] (manual) -- node[right]{manual execution} (config);
-\draw[arrow] (config) -- node[right]{dependency problems} (docker);
-\draw[arrow] (docker) -- node[right]{manual execution} (compose);
+\draw[arrow] (manual) -- node[right]{eksekusi manual} (config);
+\draw[arrow] (config) -- node[right]{masalah dependensi} (docker);
+\draw[arrow] (docker) -- node[right]{eksekusi manual} (compose);
 
 \end{tikzpicture}
-\caption{Development and execution flow from code-level execution to container orchestration}
+\caption{Alur pengembangan dan eksekusi dari level kode hingga orkestrasi container}
 \label{fig:development-execution-flow}
 \end{figure}
 
-\subsection{Constructing System Nodes Using Python}
+\subsection{Membangun Node Sistem Menggunakan Python}
 
-Development begins at the code level, where each system node is implemented as
-an independent Python program. Separate scripts are created for the broker,
-Node~A (capturer), Node~B (transformer), and Node~C (web server). At this stage,
-all communication endpoints, ports, and execution parameters are typically
-embedded directly in the code or provided through command-line arguments.
+Pengembangan dimulai pada level kode, di mana setiap node sistem diimplementasikan
+sebagai program Python yang berdiri sendiri. Skrip terpisah dibuat untuk broker,
+Node~A (capturer), Node~B (transformer), dan Node~C (web server). Pada tahap ini,
+endpoint komunikasi, port, dan parameter eksekusi umumnya masih ditanam langsung
+di dalam kode atau diberikan melalui argumen command line.
 
-This phase establishes functional correctness at the level of individual
-components. Each node can be executed independently, and basic runtime behaviour
-can be verified in isolation.
+Fase ini menetapkan kebenaran fungsional pada level komponen individual. Setiap
+node dapat dijalankan secara mandiri, dan perilaku runtime dasar dapat
+diverifikasi secara terisolasi.
 
-\subsection{Manual Execution of Python Programs}
+\subsection{Eksekusi Manual Program Python}
 
-After implementation, the system is executed by manually starting each Python
-process from the command line. Nodes are launched in a specific order to ensure
-that communication endpoints are available when required. Environment variables
-or command-line parameters are used to configure connections and execution
-behaviour.
+Setelah implementasi selesai, sistem dijalankan dengan cara memulai setiap proses
+Python secara manual melalui command line. Node dijalankan dalam urutan tertentu
+agar endpoint komunikasi sudah tersedia ketika dibutuhkan. Environment variable
+atau parameter command line digunakan untuk mengatur koneksi dan perilaku eksekusi.
 
-Although this approach provides fine-grained control and transparency, it
-introduces operational complexity. Multiple terminals are required, startup
-order must be managed explicitly, and execution becomes error-prone as the
-number of components increases.
+Meskipun pendekatan ini memberi kontrol dan transparansi yang tinggi, kompleksitas
+operasional ikut meningkat. Diperlukan banyak terminal, urutan startup harus
+dikelola secara eksplisit, dan eksekusi menjadi lebih rentan error seiring
+bertambahnya jumlah komponen.
 
-\subsection{Centralising Configuration for Automated Execution}
+\subsection{Memusatkan Konfigurasi untuk Eksekusi yang Lebih Otomatis}
 
-To reduce manual effort, configuration values such as ports, topics, and host
-addresses are externalised into configuration files or environment variable
-definitions. This allows nodes to be launched more consistently and reduces the
-need for code modification when adjusting runtime parameters.
+Untuk mengurangi beban manual, nilai konfigurasi seperti port, topik, dan alamat
+host dieksternalisasi ke berkas konfigurasi atau definisi environment variable.
+Dengan begitu, node dapat dijalankan lebih konsisten dan tidak perlu mengubah kode
+setiap kali parameter runtime disesuaikan.
 
-However, this approach introduces new challenges when execution is moved to a
-different machine. Differences in operating systems, installed libraries, and
-runtime environments can lead to inconsistent behaviour, even when
-configuration files remain unchanged.
+Namun, pendekatan ini memunculkan tantangan baru ketika eksekusi dipindahkan ke
+mesin lain. Perbedaan sistem operasi, pustaka yang terpasang, dan lingkungan
+runtime dapat menyebabkan perilaku yang tidak konsisten, meskipun berkas
+konfigurasi tidak berubah.
 
-\subsection{Containerising Nodes for Execution Consistency}
+\subsection{Membungkus Node dalam Container untuk Konsistensi Eksekusi}
 
-To address environment inconsistency, each node is packaged into a Docker
-container. Container images encapsulate the application code together with all
-required dependencies, ensuring that execution behaviour remains consistent
-across machines.
+Untuk mengatasi ketidakkonsistenan lingkungan, setiap node dikemas ke dalam
+container Docker. \emph{Image} container mengenkapsulasi kode aplikasi beserta
+seluruh dependensi yang dibutuhkan, sehingga perilaku eksekusi lebih konsisten
+lintas mesin.
 
-At this stage, containers are typically built and executed manually. Although
-environment consistency is achieved, configuration and startup still require
-explicit commands for each container. Execution order, network configuration,
-and environment variables must be managed manually, limiting scalability and
-ease of use.
+Pada tahap ini, container biasanya masih dibangun dan dijalankan secara manual.
+Walaupun konsistensi lingkungan telah tercapai, konfigurasi dan proses startup
+tetap memerlukan perintah eksplisit untuk tiap container. Urutan eksekusi,
+konfigurasi jaringan, dan environment variable masih harus dikelola manual,
+sehingga skalabilitas dan kemudahan penggunaan masih terbatas.
 
-\subsection{System Orchestration Using Docker Compose}
+\subsection{Orkestrasi Sistem Menggunakan Docker Compose}
 
-Docker Compose is introduced to automate the execution of the entire system.
-Each node is defined as a service within a single configuration file, including
-its image, environment variables, exposed ports, and dependencies on other
-services.
+Docker Compose diperkenalkan untuk mengotomatisasi eksekusi seluruh sistem.
+Setiap node didefinisikan sebagai service dalam satu berkas konfigurasi, termasuk
+image, environment variable, port yang diekspos, serta dependensi terhadap service
+lain.
 
-With Docker Compose, the complete multi-node system can be started, stopped, and
-reconfigured using a small number of commands. This approach eliminates manual
-startup ordering, simplifies configuration management, and ensures consistent
-execution across machines. Docker Compose therefore represents the culmination
-of the development flow in this chapter, providing an execution model that is
-both reproducible and operationally efficient.
+Dengan Docker Compose, sistem multi-node dapat dijalankan, dihentikan, dan
+dikonfigurasi ulang menggunakan sedikit perintah. Pendekatan ini menghilangkan
+kebutuhan mengatur urutan startup secara manual, menyederhanakan manajemen
+konfigurasi, dan memastikan eksekusi yang konsisten lintas mesin. Karena itu,
+Docker Compose menjadi puncak alur pengembangan pada bab ini, menyediakan model
+eksekusi yang reprodusibel sekaligus efisien secara operasional.
 
-
-\section{Initial System Execution}
-\subsection{Running a Prebuilt Container}
+\section{Eksekusi Awal Sistem}
+\subsection{Menjalankan Container yang Sudah Disediakan}
 \label{sec:initial_system_execution}
 
-Before executing the system, the source code must be obtained locally. The
-complete implementation of the example software system is publicly available in
-the following repository:
+Sebelum menjalankan sistem, kode sumber perlu diperoleh secara lokal. Implementasi
+lengkap dari sistem perangkat lunak contoh tersedia publik pada repositori berikut:
 
 \noindent\url{https://github.com/alfa-yohannis/advanced-software-engineering}
 
-The source code can be acquired using either a graphical interface or
-command-line tools.
+Kode sumber dapat diperoleh melalui antarmuka grafis maupun melalui command line.
 
-Using a web browser, the repository can be downloaded as a compressed archive by
-selecting the \texttt{Code} button on the repository page and choosing the
-\texttt{Download ZIP} option from the \texttt{Local} tab. After the download
-completes, the archive should be extracted into a local working directory.
+Melalui peramban, repositori dapat diunduh sebagai arsip terkompresi dengan
+menekan tombol \texttt{Code} pada halaman repositori dan memilih opsi
+\texttt{Download ZIP} dari tab \texttt{Local}. Setelah unduhan selesai, arsip
+perlu diekstrak ke direktori kerja lokal.
 
-Alternatively, the repository can be cloned directly using the Git version
-control system. From a terminal, the following command retrieves the complete
-repository contents:
+Alternatifnya, repositori dapat di-\emph{clone} menggunakan Git. Dari terminal,
+jalankan perintah berikut untuk mengambil seluruh isi repositori:
 
 \begin{lstlisting}[language=bash]
 git clone https://github.com/alfa-yohannis/advanced-software-engineering.git
 \end{lstlisting}
 
-After downloading or cloning the repository, the project directory structure
-should be inspected. The materials used for the initial system execution are
-located in the following path within the repository:
+Setelah diunduh atau di-\emph{clone}, struktur direktori proyek perlu diperiksa.
+Materi yang digunakan untuk eksekusi awal sistem berada pada path berikut di dalam
+repositori:
 
 \texttt{advanced-software-engineering/projects/session-01/python/}
 
-All commands described in this subsection should be executed from this
-directory, as it contains the Python source code, container definitions, and
-configuration files required to run the system.
+Seluruh perintah pada subbagian ini harus dijalankan dari direktori tersebut,
+karena di situlah tersimpan kode sumber Python, definisi container, dan berkas
+konfigurasi yang dibutuhkan untuk menjalankan sistem.
 
-Execution at this stage relies on prebuilt container images rather than manual
-invocation of individual Python scripts. This execution mode assumes that the
-required tooling, including Docker and Docker Compose, has already been
-installed and configured as described in
-Section~\ref{sec:installation_and_environment_preparation}.
+Pada tahap ini, eksekusi menggunakan image container yang sudah disediakan
+(\emph{prebuilt}) alih-alih memanggil skrip Python satu per satu secara manual.
+Mode eksekusi ini mengasumsikan bahwa Docker dan Docker Compose sudah terpasang
+dan terkonfigurasi sebagaimana dijelaskan pada
+Bagian~\ref{sec:installation_and_environment_preparation}.
 
-To start the system using the provided container configuration, navigate to the
-project directory and execute the following command:
+Untuk menjalankan sistem menggunakan konfigurasi container yang tersedia, masuk
+ke direktori proyek lalu jalankan perintah berikut:
 
 \begin{lstlisting}[language=bash]
 cd advanced-software-engineering/projects/session-01/python
 docker compose up
 \end{lstlisting}
 
-This command starts all required system components, including the broker,
-Node~A (capturer), Node~B (transformer), and Node~C (web server), according to
-the definitions in the Compose configuration file. Network setup, environment
-variables, and container startup order are handled automatically.
+Perintah ini akan menyalakan seluruh komponen yang dibutuhkan, termasuk broker,
+Node~A (capturer), Node~B (transformer), dan Node~C (web server), sesuai definisi
+di berkas Compose. Setup jaringan, environment variable, dan urutan startup
+container ditangani secara otomatis.
 
-During execution, runtime logs from all containers are streamed to the terminal,
-providing direct visibility into system activity. Once startup completes, the
-system begins processing data and producing observable output without requiring
-manual coordination.
+Selama eksekusi, log runtime dari seluruh container akan ditampilkan ke terminal,
+sehingga aktivitas sistem dapat diamati secara langsung. Setelah startup selesai,
+sistem mulai memproses data dan menghasilkan keluaran yang dapat diamati tanpa
+memerlukan koordinasi manual.
 
-Running the system using prebuilt containers establishes a consistent baseline
-for observing runtime behaviour. Local dependency management and process
-orchestration are abstracted away, allowing focus to remain on execution,
-interaction between components, and observable system output rather than on
-setup complexity.
+Menjalankan sistem menggunakan container yang sudah disediakan membentuk baseline
+yang konsisten untuk mengamati perilaku runtime. Manajemen dependensi lokal dan
+orkestrasi proses diabstraksikan, sehingga fokus tetap pada eksekusi, interaksi
+antar komponen, dan keluaran sistem yang tampak, bukan pada kompleksitas setup.
 
-\subsection{Verifying Successful Execution}
+\subsection{Memverifikasi Keberhasilan Eksekusi}
 
-After the system has been started using Docker Compose, successful execution
-should be verified before proceeding with further activities. Verification
-focuses on confirming that all containers are running, that inter-node
-communication has been established, and that observable output is produced as
-expected.
+Setelah sistem dijalankan menggunakan Docker Compose, keberhasilan eksekusi perlu
+diverifikasi sebelum melanjutkan ke aktivitas berikutnya. Verifikasi difokuskan
+pada tiga hal: memastikan seluruh container berjalan, komunikasi antar node
+terjalin, dan keluaran yang dapat diamati muncul sebagaimana diharapkan.
 
-\subsubsection{Verifying Container Status}
+\subsubsection{Memeriksa Status Container}
 
-The first verification step consists of checking that all required containers
-are running. From the project directory, the following command can be used to
-inspect the current container status:
+Langkah verifikasi pertama adalah memeriksa apakah seluruh container yang
+dibutuhkan sedang berjalan. Dari direktori proyek, jalankan perintah berikut:
 
 \begin{lstlisting}[language=bash]
 docker compose ps
 \end{lstlisting}
 
-The output should list all services defined in the Compose configuration,
-including the broker, Node~A (capturer), Node~B (transformer), and Node~C (web
-server), with their state reported as \texttt{running}. Any container shown as
-\texttt{exited} or \texttt{restarting} indicates a startup or configuration
-problem that must be resolved before continuing.
+Keluaran perintah seharusnya menampilkan seluruh service yang didefinisikan pada
+Compose, termasuk broker, Node~A (capturer), Node~B (transformer), dan Node~C (web
+server), dengan status \texttt{running}. Jika ada container yang berstatus
+\texttt{exited} atau \texttt{restarting}, hal itu mengindikasikan masalah startup
+atau konfigurasi yang harus diselesaikan sebelum melanjutkan.
 
-\subsubsection{Inspecting Runtime Logs}
+\subsubsection{Memeriksa Log Runtime}
 
-Runtime logs provide immediate insight into the behaviour of each system
-component. Logs from all containers are displayed automatically when the system
-is started using \texttt{docker compose up}. If the system was started in
-detached mode, logs can be inspected using:
+Log runtime memberikan informasi langsung tentang perilaku tiap komponen sistem.
+Log dari seluruh container akan tampil otomatis ketika sistem dijalankan dengan
+\texttt{docker compose up}. Jika sistem dijalankan dalam mode \emph{detached},
+log dapat diperiksa dengan:
 
 \begin{lstlisting}[language=bash]
 docker compose logs
 \end{lstlisting}
 
-The log output should indicate that each node has started successfully and has
-established connections to the broker. Messages indicating successful binding
-or connection to communication endpoints confirm that inter-node communication
-is active.
+Keluaran log seharusnya menunjukkan bahwa tiap node berhasil berjalan dan
+membangun koneksi ke broker. Pesan yang menandakan keberhasilan binding atau
+koneksi ke endpoint komunikasi mengonfirmasi bahwa komunikasi antar node aktif.
 
-\subsubsection{Observing Web-Based Output}
+\subsubsection{Mengamati Keluaran Melalui Web}
 
-Successful execution can also be verified through the web interface exposed by
-Node~C (web server). Once the containers are running, a web browser can be used
-to access the following address:
+Keberhasilan eksekusi juga dapat diverifikasi melalui antarmuka web yang
+disediakan oleh Node~C (web server). Setelah container berjalan, buka peramban dan
+akses alamat berikut:
 
 \url{http://localhost:8000}
 
-The browser should display a live view of the processed output produced by the
-system. The presence of a continuously updating visual stream confirms that
-data is being captured by Node~A, processed by Node~B, and delivered to the web
-server through the broker.
+Peramban seharusnya menampilkan tampilan langsung dari keluaran hasil pemrosesan
+sistem. Keberadaan stream visual yang terus diperbarui mengonfirmasi bahwa data
+ditangkap oleh Node~A, diproses oleh Node~B, dan dikirim ke web server melalui
+broker.
 
-If the interface loads but no output is visible, runtime logs should be reviewed
-to confirm that data is flowing through all nodes and that no configuration
-errors are present.
+Jika halaman web berhasil terbuka tetapi tidak ada keluaran yang terlihat, log
+runtime perlu ditinjau untuk memastikan data benar-benar mengalir melalui semua
+node dan tidak ada kesalahan konfigurasi.
 
-\subsubsection{Confirming End-to-End Data Flow}
+\subsubsection{Mengonfirmasi Aliran Data Ujung-ke-Ujung}
 
-End-to-end verification is achieved when all of the following conditions are
-met:
+Verifikasi ujung-ke-ujung tercapai apabila seluruh kondisi berikut terpenuhi:
 
 \begin{itemize}
-  \item All containers are running without errors.
-  \item Runtime logs show successful startup and message exchange.
-  \item The web interface displays continuously updated output.
+  \item Seluruh container berjalan tanpa error.
+  \item Log runtime menunjukkan startup yang sukses dan pertukaran pesan.
+  \item Antarmuka web menampilkan keluaran yang terus diperbarui.
 \end{itemize}
 
-Satisfying these conditions confirms that the system is operating as a complete
-runtime pipeline. At this point, the system is considered successfully executed
-and ready for further experimentation, configuration changes, or observation of
-runtime behaviour.
+Jika kondisi tersebut terpenuhi, sistem dapat dianggap beroperasi sebagai pipeline
+runtime yang utuh. Pada titik ini, sistem dinyatakan berhasil dieksekusi dan siap
+untuk eksperimen lanjutan, perubahan konfigurasi, atau pengamatan perilaku runtime.
 
-\section{Activities for IT Students}
+\section{Aktivitas untuk Mahasiswa IT}
 
-This section defines hands-on activities focused on direct execution, runtime
-configuration, and operational reasoning at the process and container level.
-Emphasis is placed on manual execution using Python, controlled modification of
-processing quality parameters, and scaling the web serving layer to handle
-multiple concurrent clients.
+Bagian ini mendefinisikan aktivitas praktik yang berfokus pada eksekusi langsung,
+konfigurasi runtime, dan penalaran operasional pada level proses dan container.
+Penekanan diberikan pada eksekusi manual menggunakan Python, modifikasi parameter
+kualitas pemrosesan secara terkontrol, serta penskalaan lapisan web serving untuk
+menangani banyak klien secara bersamaan.
 
+\subsection{Eksekusi Python Mentah}
 
-\subsection{Raw Python Execution}
+\subsubsection{Aktivitas 1: Eksekusi Manual Menggunakan Proses Python}
 
-\subsubsection{Activity 1: Manual Execution Using Python Processes}
+Sistem dijalankan dengan mengeksekusi setiap node sebagai proses Python terpisah.
+Aktivitas ini membutuhkan beberapa terminal dan pengaturan urutan startup secara
+eksplisit.
 
-The system is executed by running each node as a separate Python process. This
-activity requires multiple terminals and explicit startup ordering.
+\textbf{Langkah 1: Buka Direktori Proyek}
 
-\textbf{Step 1: Open the Project Directory}
-
-Execution should be performed from the project directory:
+Eksekusi dilakukan dari direktori proyek:
 
 \texttt{advanced-software-engineering/projects/session-01/python/}
 
-\textbf{Step 2: Create and Activate a Virtual Environment}
+\textbf{Langkah 2: Buat dan Aktifkan Virtual Environment}
 
-On Ubuntu:
+Pada Ubuntu:
 
 \begin{lstlisting}[language=bash]
 source .venv/bin/activate
 \end{lstlisting}
 
-On Windows (PowerShell):
+Pada Windows (PowerShell):
 
 \begin{lstlisting}[language=bash]
 .venv\Scripts\activate
 \end{lstlisting}
 
-\textbf{Step 3: Install Dependencies}
+\textbf{Langkah 3: Instal Dependensi}
 
 \begin{lstlisting}[language=bash]
 pip install --upgrade pip
 pip install pyzmq pillow bottle waitress opencv-python-headless
 \end{lstlisting}
 
-\textbf{Step 4: Run the Nodes in Separate Terminals}
-Open 4 terminals. Terminal 1 (Broker):
+\textbf{Langkah 4: Jalankan Node di Terminal Terpisah}
+
+Buka 4 terminal. Terminal 1 (Broker):
 
 \begin{lstlisting}[language=bash]
 python broker.py
@@ -946,56 +951,56 @@ Terminal 4 (Web Server / Node-C):
 BROKER_HOST=127.0.0.1 SUB_PORT=5556 SUB_TOPIC=processed HTTP_HOST=0.0.0.0 HTTP_PORT=8000 HTTP_THREADS=8 python web_server.py
 \end{lstlisting}
 
-Successful execution is confirmed when the browser displays output at:
+Eksekusi dinyatakan berhasil jika peramban menampilkan keluaran pada:
 
 \texttt{http://localhost:8000}
 
-\subsubsection{Activity 2: Modifying Transformer Output Quality}
+\subsubsection{Aktivitas 2: Mengubah Kualitas Keluaran Transformer}
 
-This activity modifies the output JPEG quality of the transformer (Node-B) and
-observes the impact on visual fidelity, bandwidth, and runtime performance.
+Aktivitas ini mengubah kualitas JPEG keluaran dari transformer (Node-B) dan
+mengamati dampaknya terhadap kejernihan visual, kebutuhan bandwidth, serta
+performa runtime.
 
-\textbf{Step 1: Identify the Quality Parameter}
+\textbf{Langkah 1: Identifikasi Parameter Kualitas}
 
-The transformer uses an environment variable (or runtime parameter) controlling
-output JPEG quality. The parameter is assumed to be:
+Transformer menggunakan sebuah environment variable (atau parameter runtime) untuk
+mengendalikan kualitas JPEG keluaran. Parameter yang diasumsikan digunakan adalah:
 
 \texttt{JPEG\_QUALITY\_OUT}
 
-\textbf{Step 2: Run Multiple Quality Settings}
+\textbf{Langkah 2: Jalankan Beberapa Pengaturan Kualitas}
 
-Restart Node-B with different quality settings and observe the differences.
+Jalankan ulang Node-B dengan nilai kualitas yang berbeda, lalu amati perbedaannya.
 
-Low quality (smaller bandwidth, more artifacts):
+Kualitas rendah (bandwidth lebih kecil, artefak lebih banyak):
 
 \begin{lstlisting}[language=bash]
 BROKER_HOST=127.0.0.1 SUB_PORT=5556 PUB_PORT=5555 SUB_TOPIC=raw PUB_TOPIC=processed JPEG_QUALITY_OUT=40 python transformer.py
 \end{lstlisting}
 
-High quality (larger bandwidth, fewer artifacts):
+Kualitas tinggi (bandwidth lebih besar, artefak lebih sedikit):
 
 \begin{lstlisting}[language=bash]
 BROKER_HOST=127.0.0.1 SUB_PORT=5556 PUB_PORT=5555 SUB_TOPIC=raw PUB_TOPIC=processed JPEG_QUALITY_OUT=95 python transformer.py
 \end{lstlisting}
 
-Observation targets include:
+Target pengamatan meliputi:
 \begin{itemize}
-  \item Visible artifacts in the browser output.
-  \item Changes in responsiveness (frame delivery smoothness).
-  \item Log indicators of processing rate (FPS) if available.
+  \item Artefak visual yang terlihat pada keluaran di browser.
+  \item Perubahan responsivitas (kelancaran pengiriman frame).
+  \item Indikator laju pemrosesan (misalnya FPS) pada log, jika tersedia.
 \end{itemize}
 
+\subsubsection{Aktivitas 3: Menskalakan Lapisan Web Server Menjadi Dua Instans}
 
-\subsubsection{Activity 3: Scaling the Web Server Layer to Two Instances}
+Lapisan web server dapat diskalakan melalui eksekusi Python mentah dengan
+menjalankan program yang sama lebih dari satu kali menggunakan konfigurasi port
+HTTP yang berbeda. Setiap instans berlangganan stream data \texttt{processed} yang
+sama, tetapi menyediakan layanan pada port yang berbeda.
 
-The web server layer can be scaled using raw Python execution by running the same
-program multiple times with different HTTP port configurations. Each instance
-subscribes to the same processed data stream but exposes its service on a
-different port.
+\textbf{Jalankan Instans Web Server Pertama}
 
-\textbf{Run the First Web Server Instance}
-
-In a terminal, execute:
+Di sebuah terminal, jalankan:
 
 \begin{lstlisting}[language=bash]
 BROKER_HOST=127.0.0.1 \
@@ -1006,13 +1011,13 @@ HTTP_PORT=8000 \
 python web_server.py
 \end{lstlisting}
 
-Access the service at:
+Akses layanan pada:
 
 \texttt{http://localhost:8000}
 
-\textbf{Run the Second Web Server Instance}
+\textbf{Jalankan Instans Web Server Kedua}
 
-In a separate terminal, execute:
+Di terminal terpisah, jalankan:
 
 \begin{lstlisting}[language=bash]
 BROKER_HOST=127.0.0.1 \
@@ -1023,27 +1028,27 @@ HTTP_PORT=8001 \
 python web_server.py
 \end{lstlisting}
 
-Access the service at:
+Akses layanan pada:
 
 \texttt{http://localhost:8001}
 
-Both web server instances run concurrently, receive the same processed data, and
-serve requests independently using different ports.
+Kedua instans web server berjalan secara bersamaan, menerima data hasil pemrosesan
+yang sama, dan melayani permintaan secara independen melalui port yang berbeda.
 
+\subsection{Menggunakan Perintah Docker}
 
-\subsection{Using Docker Commands}
+Bagian ini menunjukkan bagaimana sistem dapat dijalankan dan dimodifikasi
+menggunakan perintah Docker secara langsung tanpa bergantung pada Docker Compose.
+Setiap node dijalankan secara eksplisit, sehingga manajemen siklus hidup container
+dan konfigurasi menjadi terlihat dengan jelas.
 
-This section demonstrates how the system can be executed and modified using
-direct Docker commands without relying on Docker Compose. Each node is started
-explicitly, making container lifecycle management and configuration visible.
+\subsubsection{Aktivitas 1: Menjalankan Seluruh Node}
 
-\subsubsection{Activity 1: Running All the Nodes}
+Pada aktivitas ini, seluruh node sistem dijalankan secara manual sebagai container
+Docker terpisah. Container saling terhubung melalui jaringan default Docker, dan
+setiap node dikonfigurasi menggunakan environment variable.
 
-In this activity, all system nodes are started manually as individual Docker
-containers. Containers are connected through the default Docker network, and
-each node is configured using environment variables.
-
-\textbf{Run the Broker}
+\textbf{Jalankan Broker}
 
 \begin{lstlisting}[language=bash]
 docker run --rm \
@@ -1052,7 +1057,7 @@ docker run --rm \
   broker
 \end{lstlisting}
 
-\textbf{Run the Capturer (Node A)}
+\textbf{Jalankan Capturer (Node A)}
 
 \begin{lstlisting}[language=bash]
 docker run --rm \
@@ -1062,7 +1067,7 @@ docker run --rm \
   capturer
 \end{lstlisting}
 
-\textbf{Run the Transformer (Node B)}
+\textbf{Jalankan Transformer (Node B)}
 
 \begin{lstlisting}[language=bash]
 docker run --rm \
@@ -1076,7 +1081,7 @@ docker run --rm \
   transformer
 \end{lstlisting}
 
-\textbf{Run the Web Server (Node C)}
+\textbf{Jalankan Web Server (Node C)}
 
 \begin{lstlisting}[language=bash]
 docker run --rm \
@@ -1090,15 +1095,15 @@ docker run --rm \
   web_server
 \end{lstlisting}
 
-The system output can be observed at \url{http://localhost:8000}.
+Keluaran sistem dapat diamati pada \url{http://localhost:8000}.
 
-\subsubsection{Activity 2: Modifying Transformer Output Quality}
+\subsubsection{Aktivitas 2: Mengubah Kualitas Keluaran Transformer}
 
-This activity modifies the output quality of the transformer by changing the
-JPEG compression level. The container must be restarted with a different
-environment variable value.
+Aktivitas ini mengubah kualitas keluaran transformer dengan mengatur tingkat
+kompresi JPEG. Container perlu dijalankan ulang dengan nilai environment variable
+yang berbeda.
 
-\textbf{Run Transformer with Lower Quality}
+\textbf{Jalankan Transformer dengan Kualitas Lebih Rendah}
 
 \begin{lstlisting}[language=bash]
 docker run --rm \
@@ -1112,7 +1117,7 @@ docker run --rm \
   transformer
 \end{lstlisting}
 
-\textbf{Run Transformer with Higher Quality}
+\textbf{Jalankan Transformer dengan Kualitas Lebih Tinggi}
 
 \begin{lstlisting}[language=bash]
 docker run --rm \
@@ -1126,16 +1131,15 @@ docker run --rm \
   transformer
 \end{lstlisting}
 
-Changes in visual quality and responsiveness can be observed through the web
-interface.
+Perubahan kualitas visual dan responsivitas dapat diamati melalui antarmuka web.
 
-\subsubsection{Activity 3: Scaling the Web Server Layer to Two Instances}
+\subsubsection{Aktivitas 3: Menskalakan Lapisan Web Server Menjadi Dua Instans}
 
-Two web server containers can be started manually as separate instances. Each
-instance subscribes to the same processed stream and exposes a distinct host
-port.
+Dua container web server dapat dijalankan secara manual sebagai dua instans
+terpisah. Setiap instans berlangganan stream \texttt{processed} yang sama dan
+mengekspos port host yang berbeda.
 
-Example: start two instances mapping to ports 8000 and 8001.
+Contoh: menjalankan dua instans dengan pemetaan port 8000 dan 8001.
 
 \begin{lstlisting}[language=bash]
 docker run --rm \
@@ -1159,24 +1163,24 @@ docker run --rm \
   web_server
 \end{lstlisting}
 
-Each container serves independently at
-\url{http://localhost:8000} and \url{http://localhost:8001}.
+Setiap container melayani secara independen di:
+\url{http://localhost:8000} dan \url{http://localhost:8001}.
 
-This approach allows multiple instances to run concurrently but requires manual
-container management and explicit port assignment.
+Pendekatan ini memungkinkan beberapa instans berjalan bersamaan, tetapi
+membutuhkan manajemen container secara manual dan pengaturan port yang eksplisit.
 
+\subsection{Cara Docker Compose}
 
-\subsection{Docker Compose Way}
+Subbagian ini menunjukkan eksekusi dan modifikasi sistem menggunakan Docker
+Compose. Berbeda dengan perintah Docker langsung, Docker Compose memusatkan
+konfigurasi dalam satu berkas dan memungkinkan sistem multi-node dikelola secara
+deklaratif.
 
-This subsection demonstrates execution and modification of the system using
-Docker Compose. In contrast to direct Docker commands, Docker Compose centralises
-configuration in a single file and allows the entire multi-node system to be
-managed declaratively.
+\subsubsection{Aktivitas 1: Menjalankan Seluruh Node}
 
-\subsubsection{Activity 1: Running All the Nodes}
-
-All system nodes are defined as services in a \texttt{docker-compose.yml} file.
-A minimal fragment illustrating the structure is shown below.
+Seluruh node sistem didefinisikan sebagai service dalam berkas
+\texttt{docker-compose.yml}. Contoh fragmen minimal yang menunjukkan strukturnya
+ditampilkan berikut ini.
 
 \begin{lstlisting}[language=bash]
 services:
@@ -1220,18 +1224,18 @@ services:
       - broker
 \end{lstlisting}
 
-The complete system can be started using:
+Sistem lengkap dapat dijalankan dengan:
 
 \begin{lstlisting}[language=bash]
 docker compose up
 \end{lstlisting}
 
-\subsubsection{Activity 2: Modifying Transformer Output Quality}
+\subsubsection{Aktivitas 2: Mengubah Kualitas Keluaran Transformer}
 
-To modify the output quality of the transformer, only a configuration change is
-required. The Python code remains unchanged.
+Untuk mengubah kualitas keluaran transformer, yang diperlukan hanya perubahan
+konfigurasi. Kode Python tidak perlu diubah.
 
-The following fragment shows the relevant environment variable:
+Fragmen berikut menunjukkan environment variable yang relevan:
 
 \begin{lstlisting}[language=bash]
 transformer:
@@ -1240,20 +1244,21 @@ transformer:
     - JPEG_QUALITY_OUT=40
 \end{lstlisting}
 
-After modifying the value, the system is restarted:
+Setelah nilai diubah, sistem dijalankan ulang:
 
 \begin{lstlisting}[language=bash]
 docker compose down
 docker compose up
 \end{lstlisting}
 
-Changes in visual quality and runtime behaviour can be observed immediately in
-the web interface.
+Perubahan kualitas visual dan perilaku runtime dapat diamati segera melalui
+antarmuka web.
 
-\subsubsection{Activity 3: Scaling the Web Server Layer to Two Instances}
+\subsubsection{Aktivitas 3: Menskalakan Lapisan Web Server Menjadi Dua Instans}
 
-To run two web server instances, an additional service with a different port
-mapping can be added. Each service subscribes to the same processed data stream.
+Untuk menjalankan dua instans web server, sebuah service tambahan dengan pemetaan
+port yang berbeda dapat ditambahkan. Setiap service berlangganan stream data
+\texttt{processed} yang sama.
 
 \begin{lstlisting}[language=bash]
 web1:
@@ -1283,103 +1288,97 @@ web2:
     - broker
 \end{lstlisting}
 
-After updating the Compose file, both instances can be started with:
+Setelah berkas Compose diperbarui, kedua instans dapat dijalankan dengan:
 
 \begin{lstlisting}[language=bash]
 docker compose up
 \end{lstlisting}
 
-The two web servers are accessible at:
+Dua web server dapat diakses pada:
 
 \begin{itemize}
   \item \url{http://localhost:8000}
   \item \url{http://localhost:8001}
 \end{itemize}
 
-Both instances operate independently while consuming the same processed data
-stream. This approach illustrates how Docker Compose simplifies replication and
-configuration by expressing execution structure declaratively rather than
-through repeated command-line invocations.
+Keduanya beroperasi secara independen, namun mengonsumsi stream data hasil
+pemrosesan yang sama. Pendekatan ini menunjukkan bahwa Docker Compose
+menyederhanakan replikasi dan konfigurasi dengan mengekspresikan struktur eksekusi
+secara deklaratif, bukan melalui pengulangan perintah command line.
 
+\subsection{Perbandingan: Docker CLI vs Docker Compose}
 
-\subsection{Comparison: Docker CLI vs Docker Compose}
+\emph{Scaling} manual menggunakan Docker CLI membutuhkan pengulangan perintah
+secara eksplisit, pemetaan port secara manual, serta manajemen siklus hidup untuk
+setiap instans container. Docker Compose memusatkan konfigurasi dan memungkinkan
+orkestrasi multi-service serta scaling melalui sedikit perintah.
 
-Manual scaling using Docker CLI requires explicit repetition of commands, manual
-port mapping, and manual lifecycle management for each container instance.
-Docker Compose centralises configuration and enables multi-service orchestration
-and scaling through a small number of commands.
+Untuk tujuan scaling yang sama (dua web server), Docker Compose memberikan alur
+operasional yang lebih sederhana karena:
 
-Under the same scaling objective (two web servers), Docker Compose provides the
-simpler operational workflow due to:
 \begin{itemize}
-  \item Centralised configuration in a single file.
-  \item Automated service discovery and shared networking.
-  \item One-command lifecycle control (\texttt{up}, \texttt{down}, \texttt{logs},
-        \texttt{ps}).
-  \item Built-in service scaling for replicated instances.
+  \item Konfigurasi terpusat dalam satu berkas.
+  \item \emph{Service discovery} dan jaringan bersama yang berjalan otomatis.
+  \item Kontrol siklus hidup dengan satu perintah (\texttt{up}, \texttt{down},
+        \texttt{logs}, \texttt{ps}).
+  \item Dukungan scaling bawaan untuk instans yang direplikasi.
 \end{itemize}
 
-These activities provide concrete experience with manual runtime execution,
-parameter-driven quality control, and service replication, establishing an
-operational foundation for later topics such as deployment topology, runtime
-scaling, and system observability.
+Seluruh aktivitas ini memberi pengalaman konkret tentang eksekusi runtime secara
+manual, kontrol kualitas berbasis parameter, serta replikasi service, sehingga
+membangun fondasi operasional untuk topik berikutnya seperti topologi deployment,
+runtime scaling, dan observabilitas sistem.
 
+\section{Aktivitas untuk Mahasiswa Non-IT}
 
-\section{Activities for Non-IT Students}
+Bagian ini disusun sebagai aktivitas refleksi kolaboratif. Mahasiswa non-IT
+bekerja dalam kelompok kecil dan diwajibkan berpasangan dengan setidaknya satu
+mahasiswa yang memiliki latar belakang IT. Tujuan kolaborasi ini adalah
+menggabungkan perspektif yang berbeda ketika mengamati dan menalar sistem
+perangkat lunak yang sedang berjalan.
 
-This section is organised as a collaborative reflection activity. Non-IT
-students work in small groups and are required to team up with at least one
-student who has an IT background. The purpose of this collaboration is to bring
-together different perspectives when observing and reasoning about a running
-software system.
+Aktivitas ini tidak menuntut mahasiswa non-IT untuk menulis kode atau memahami
+detail implementasi teknis. Fokusnya adalah pada observasi bersama, diskusi, dan
+penjelasan menggunakan bahasa yang jelas dan sehari-hari.
 
-The activity does not require non-IT students to write code or understand
-technical implementation details. Instead, the focus is on shared observation,
-discussion, and explanation using clear and everyday language.
+\subsection{Aktivitas Kelompok: Mengamati dan Menalar Sistem yang Berjalan}
 
-\subsection{Group Activity: Observing and Reasoning About a Running System}
-
-Based on observation and discussion within the mixed group, answer the following
-five questions. The questions are intended to guide reflection toward the core
-ideas of model-driven engineering, including abstraction, simplification,
-automation, and generation.
+Berdasarkan hasil pengamatan dan diskusi dalam kelompok campuran, jawablah lima
+pertanyaan berikut. Pertanyaan-pertanyaan ini dirancang untuk mengarahkan refleksi
+ke ide inti model-driven engineering, termasuk abstraksi, penyederhanaan,
+otomasi, dan generasi.
 
 \begin{enumerate}
-  \item Which variables or parameters of the system change frequently, and which
-        parts remain static and repeatable across executions?
-  \item Which activities or steps are repeated when running or configuring the
-        system?
-  \item Can these repeated activities be automated, and would code or
-        configuration generation reduce effort or errors during development?
-  \item What are the most important attributes of the system introduced here
-        (for example, nodes, connections, parameters, or execution order)?
-  \item Would representing the system in a more familiar or higher-level form,
-        such as a configuration file, a small domain-specific language, or a
-        visual representation, make it easier to focus on what is important?
+  \item Variabel atau parameter apa yang sering berubah, dan bagian mana yang
+        cenderung tetap serta dapat diulang lintas eksekusi?
+  \item Aktivitas atau langkah apa yang berulang ketika menjalankan atau
+        mengonfigurasi sistem?
+  \item Apakah aktivitas berulang tersebut dapat diotomatisasi, dan apakah
+        generasi kode atau konfigurasi dapat mengurangi usaha atau kesalahan saat
+        pengembangan?
+  \item Atribut apa yang paling penting dari sistem yang diperkenalkan (misalnya
+        node, koneksi, parameter, atau urutan eksekusi)?
+  \item Apakah merepresentasikan sistem dalam bentuk yang lebih familiar atau
+        lebih tinggi level (misalnya berkas konfigurasi, DSL kecil, atau
+        representasi visual) akan memudahkan fokus pada hal-hal yang penting?
 \end{enumerate}
 
+\section{Penutup}
 
-\section{Closing Remarks}
+Bab ini telah membangun fondasi pemahaman sistem perangkat lunak berbasis
+\emph{behaviour-first} dengan menempatkan eksekusi sebagai objek kajian utama.
+Sebuah pipeline runtime terdistribusi yang terdiri dari broker, capturer (Node A),
+transformer (Node B), dan web server (Node C) telah dijalankan, dikonfigurasi,
+dan diamati sebagai sebuah sistem yang benar-benar berjalan. Interaksi praktis
+menegaskan bahwa perilaku yang tampak tidak hanya dibentuk oleh kode sumber,
+melainkan juga oleh konfigurasi runtime, isolasi lingkungan, serta konteks
+eksekusi, sebagaimana terlihat dari perbedaan antara eksekusi Python mentah,
+perintah Docker langsung, dan orkestrasi Docker Compose.
 
-This chapter has established a behaviour-first foundation for understanding
-software systems by treating execution as the primary object of study. A
-distributed runtime pipeline consisting of a broker, a capturer (Node A), a
-transformer (Node B), and a web server (Node C) has been executed, configured,
-and observed as a running system. Practical interaction has emphasized that
-observable behaviour is shaped not only by source code, but also by runtime
-configuration, environment isolation, and execution context, as reflected in
-differences between raw Python execution, direct Docker commands, and Docker
-Compose orchestration.
-
-The limitations of behaviour-only understanding have also been made explicit.
-While observation supports intuition about data flow, dependencies, and failure
-effects, complete understanding cannot be derived solely from visible outcomes
-and logs. These limits motivate the transition toward design-level reasoning in
-subsequent chapters, where observed runtime behaviour can be progressively
-mapped to architectural structures, formal models, and systematic design
-principles, enabling explanation, prediction, and deliberate construction of
-software systems beyond experimentation alone.
-
-
-
-
+Keterbatasan pemahaman yang hanya mengandalkan perilaku juga dibuat eksplisit.
+Walaupun observasi membantu membangun intuisi tentang aliran data, dependensi,
+dan efek kegagalan, pemahaman yang lengkap tidak dapat diturunkan semata-mata dari
+hasil yang terlihat dan log. Keterbatasan ini memotivasi transisi menuju penalaran
+pada level desain di bab-bab berikutnya, di mana perilaku runtime yang telah
+diamati dapat dipetakan secara bertahap ke struktur arsitektur, model formal, dan
+prinsip desain yang sistematis, sehingga sistem dapat dijelaskan dan diprediksi.

@@ -33,7 +33,7 @@ services:
       PUB_PORT: "5555"
       SUB_TOPIC: raw
       PUB_TOPIC: processed
-      JPEG_QUALITY_OUT: "80"
+      JPEG_QUALITY_OUT: "10"
 
   web_server:
     build: ./web_server

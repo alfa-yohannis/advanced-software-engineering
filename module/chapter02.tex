@@ -1,341 +1,290 @@
-\chapter{Strategi dan Kerangka Kerja Big Data}
+\chapter{Observabilitas Sistem Terdistribusi}
 
-\noindent
-Implementasi big data yang sukses dalam organisasi tidak cukup hanya mengandalkan teknologi canggih atau volume data yang besar. Diperlukan pendekatan strategis yang menyeluruh agar data dapat diolah dan dimanfaatkan secara efektif untuk mendukung tujuan bisnis. Strategi big data berfungsi sebagai fondasi dalam merencanakan, mengelola, dan mengevaluasi inisiatif data di seluruh unit organisasi. Dalam bab ini, akan dibahas berbagai kerangka kerja penting yang digunakan untuk memahami dan membangun strategi big data secara sistematis, termasuk model 5Vs, Big Data Value Chain, Big Data Maturity Model (BDMM), serta kerangka tata kelola DAMA-DMBOK. Kerangka-kerangka ini tidak hanya memberikan panduan konseptual, tetapi juga membantu organisasi dalam mengukur kesiapan, menetapkan prioritas, dan mengelola siklus hidup data secara strategis.
+\section{Tujuan Pembelajaran}
 
-
-\section{Pentingnya Strategi Big Data dalam Organisasi}
-
-Strategi big data merupakan pendekatan terencana dan terstruktur yang dirancang untuk memaksimalkan pemanfaatan data dalam mencapai tujuan bisnis. Di tengah meningkatnya volume, variasi, dan kecepatan data yang masuk ke organisasi, keberadaan strategi yang jelas menjadi faktor penentu keberhasilan implementasi big data secara berkelanjutan dan berdampak nyata.
-
-Tanpa strategi, organisasi sering kali terjebak dalam inisiatif teknologi yang terfragmentasi, tidak selaras dengan prioritas bisnis, serta menghasilkan beban biaya tinggi tanpa hasil yang signifikan. Gartner (2018) melaporkan bahwa lebih dari 85\% proyek big data gagal memberikan nilai bisnis karena kurangnya penyelarasan antara teknologi, proses bisnis, dan kompetensi organisasi \cite{gartner2018}.
-
-Strategi big data yang efektif mencakup beberapa elemen utama:
-\begin{enumerate}
-	\item \textbf{Visi dan Tujuan Bisnis:} Strategi harus dimulai dari pemahaman tujuan bisnis, seperti meningkatkan loyalitas pelanggan, efisiensi rantai pasok, atau inovasi produk berbasis data.
-	
-	\item \textbf{Arsitektur dan Teknologi:} Pemilihan platform dan infrastruktur yang sesuai dengan skala, kecepatan, dan kebutuhan integrasi data organisasi sangat krusial dalam mendukung strategi data yang berkelanjutan \cite{ekambaram2021}.
-	
-	\item \textbf{Tata Kelola dan Kepatuhan:} Strategi harus mengatur bagaimana data dikumpulkan, disimpan, diakses, dan digunakan dengan mematuhi kebijakan privasi dan etika \cite{otieno2021}.
-	
-	\item \textbf{Kapabilitas Organisasi:} Pengembangan kompetensi internal, pelatihan, dan pembentukan budaya berbasis data menjadi fondasi pelaksanaan strategi secara menyeluruh \cite{lewis2021}.
-	
-	\item \textbf{Metrik dan Evaluasi Dampak:} Strategi perlu menetapkan indikator kinerja untuk mengukur efektivitas inisiatif data, baik dari sisi operasional, finansial, maupun inovasi.
-\end{enumerate}
-
-Dalam konteks yang lebih luas, strategi big data juga berfungsi sebagai jembatan antara visi digital organisasi dan pelaksanaannya melalui teknologi. Menurut laporan McKinsey, perusahaan yang mengintegrasikan strategi data dengan pengambilan keputusan tingkat manajemen cenderung lebih adaptif dan unggul dalam bersaing di era digital \cite{mckinsey2016}.
-
-Oleh karena itu, strategi big data bukan sekadar rencana teknis, tetapi merupakan bagian integral dari transformasi organisasi menuju pengambilan keputusan berbasis bukti, efisiensi proses, dan inovasi yang berkelanjutan.
-
-\section{Kerangka Konseptual 5Vs Big Data}
-
-Kerangka 5Vs merupakan salah satu model konseptual yang paling umum digunakan untuk menjelaskan kompleksitas dan tantangan pengelolaan big data. Diperkenalkan pertama kali oleh Doug Laney (2001) dengan tiga elemen awal—Volume, Velocity, dan Variety—kerangka ini kemudian diperluas dengan Veracity dan Value oleh peneliti dan praktisi industri \cite{laney2001, gandomi2015}. Setiap dimensi mencerminkan karakteristik unik data modern yang harus dipertimbangkan dalam perencanaan strategi data organisasi.
-
-\subsection{Volume}
-
-Volume merujuk pada skala besar data yang dikumpulkan dan disimpan oleh organisasi. Peningkatan volume data berasal dari beragam sumber seperti sistem transaksi, log aktivitas pengguna, sensor IoT, media sosial, hingga rekam medis elektronik. Menurut IDC (2021), total data digital global diperkirakan mencapai lebih dari 180 zettabytes pada tahun 2025 \cite{idc2021}. Volume besar ini menuntut penggunaan sistem penyimpanan terdistribusi seperti Hadoop HDFS atau penyimpanan awan dengan skala elastis.
-
-Sebagai contoh, perusahaan e-commerce seperti Amazon menangani miliaran permintaan produk, klik pengguna, dan transaksi per hari yang harus disimpan dan diproses secara efisien untuk kebutuhan analitik dan layanan personalisasi. Di sektor kesehatan, rumah sakit dan penyedia layanan kesehatan menghasilkan data medis dalam jumlah besar, seperti hasil laboratorium, rekam radiologi, dan catatan elektronik pasien, yang semuanya harus disimpan dengan aman dan sesuai standar regulasi.
-
-\subsection{Velocity}
-
-Velocity mengacu pada kecepatan data dihasilkan, ditransmisikan, dan diproses. Dalam konteks bisnis modern, kemampuan memproses data secara real-time atau near-real-time menjadi sangat penting, misalnya dalam sistem rekomendasi online, deteksi fraud perbankan, atau monitoring kondisi mesin. Teknologi seperti Apache Kafka dan Spark Streaming memungkinkan organisasi merespons data streaming dengan latensi rendah \cite{demchenko2013}.
-
-Contoh nyata dari penerapan velocity adalah sistem navigasi transportasi daring seperti Gojek atau Grab yang memproses data lokasi jutaan pengguna dan pengemudi secara real-time untuk mengatur alokasi armada dan estimasi waktu kedatangan. Contoh lain adalah sistem perdagangan saham algoritmik yang harus memproses dan merespons data pasar dalam milidetik untuk mengeksekusi keputusan pembelian atau penjualan secara otomatis.
-
-
-\subsection{Variety}
-
-Variety menjelaskan keragaman jenis dan format data. Data modern tidak hanya berupa data terstruktur dalam tabel relasional, tetapi juga mencakup data semi-terstruktur (seperti XML dan JSON), serta data tidak terstruktur seperti teks, gambar, audio, dan video. Perusahaan yang mampu menggabungkan data dari berbagai format dapat memperoleh wawasan yang lebih menyeluruh dan holistik \cite{gandomi2015}.
-
-Sebagai contoh, platform media sosial seperti Facebook dan TikTok memproses berbagai jenis data termasuk teks status, metadata pengguna, komentar suara, foto, serta video pendek. Penggabungan data ini memungkinkan algoritma rekomendasi bekerja lebih akurat dalam memahami preferensi pengguna. Di sektor layanan pelanggan, perusahaan seperti Telkom atau PLN menggabungkan data terstruktur dari sistem billing dengan data tidak terstruktur dari log percakapan call center untuk meningkatkan kualitas layanan dan merespon keluhan secara proaktif.
-
-\subsection{Veracity}
-
-Veracity berhubungan dengan akurasi, konsistensi, dan keandalan data. Data yang mengandung noise, inkonsistensi, atau bias dapat menghasilkan kesimpulan yang salah dan berdampak negatif pada keputusan bisnis. Oleh karena itu, proses validasi, pembersihan data, dan pengelolaan metadata menjadi komponen penting dalam manajemen data modern \cite{sadiq2017}.
-
-Sebagai contoh, dalam industri kesehatan, kesalahan input dalam data rekam medis pasien seperti usia, alergi, atau riwayat obat dapat mengakibatkan diagnosis yang tidak akurat dan membahayakan nyawa pasien. Di sektor keuangan, data nasabah yang tidak konsisten antar sistem—misalnya perbedaan ejaan nama atau alamat—dapat menyebabkan duplikasi profil atau kesalahan scoring risiko kredit. Oleh karena itu, verifikasi, normalisasi, dan deduplikasi data menjadi prosedur wajib dalam proyek integrasi data lintas sistem.
-
-\subsection{Value}
-
-Value adalah tujuan akhir dari seluruh inisiatif big data—yakni menciptakan nilai nyata bagi organisasi. Data yang besar dan cepat tidak memiliki arti tanpa penerapan analitik dan interpretasi yang tepat. Nilai dapat dihasilkan dalam bentuk peningkatan efisiensi, pengurangan biaya, peningkatan kepuasan pelanggan, atau penciptaan model bisnis baru \cite{waller2013}. Oleh karena itu, strategi big data harus berorientasi pada nilai, bukan hanya volume teknis.
-
-Sebagai contoh, Netflix menggunakan big data untuk menganalisis perilaku tontonan penggunanya secara real-time, yang kemudian diterjemahkan menjadi strategi rekomendasi konten yang sangat personal. Pendekatan ini tidak hanya meningkatkan waktu tonton dan retensi pelanggan, tetapi juga digunakan dalam pengambilan keputusan produksi serial orisinal, seperti dalam kasus sukses “House of Cards.”
-
-Contoh lain datang dari industri logistik: perusahaan seperti DHL atau Maersk memanfaatkan analitik big data untuk mengoptimalkan rute pengiriman, meminimalkan waktu tempuh, serta mengurangi konsumsi bahan bakar dan emisi karbon. Hasilnya adalah peningkatan efisiensi operasional sekaligus kontribusi terhadap tujuan keberlanjutan (sustainability) perusahaan.
-
-\begin{longtable}{|p{0.1\textwidth}|p{0.34\textwidth}|p{0.47\textwidth}|}
-	\caption{Ringkasan 5Vs dalam Kerangka Konseptual Big Data}
-	\label{tab:5vs} \\
-	\hline
-	\textbf{Dimensi} & \textbf{Deskripsi} & \textbf{Contoh Aplikasi Nyata} \\
-	\hline
-	\endfirsthead
-	
-	\multicolumn{3}{c}{{\tablename\ \thetable{} -- lanjutan dari halaman sebelumnya}} \\
-	\hline
-	\textbf{Dimensi} & \textbf{Deskripsi} & \textbf{Contoh Aplikasi Nyata} \\
-	\hline
-	\endhead
-	
-	\hline \multicolumn{3}{r}{{Bersambung ke halaman berikutnya}} \\
-	\endfoot
-	
-	\hline
-	\endlastfoot
-	
-	\textbf{Volume} & Skala besar data yang dikumpulkan dari berbagai sumber, seperti transaksi, sensor IoT, media sosial, dan rekam medis. & Amazon menangani miliaran transaksi dan klik; rumah sakit menyimpan data laboratorium, radiologi, dan rekam medis dalam jumlah besar. \\
-	\hline
-	\textbf{Velocity} & Kecepatan data dihasilkan dan diproses secara real-time atau near-real-time. & Gojek memproses data lokasi jutaan pengguna secara langsung; algoritma saham mengeksekusi transaksi dalam hitungan milidetik. \\
-	\hline
-	\textbf{Variety} & Keragaman format data: terstruktur, semi-terstruktur (XML/JSON), dan tidak terstruktur (teks, audio, video). & TikTok menggabungkan metadata, video, dan komentar suara; Telkom memadukan data billing dengan log percakapan pelanggan. \\
-	\hline
-	\textbf{Veracity} & Tingkat keakuratan, konsistensi, dan keandalan data, serta pengelolaan noise dan bias. & Kesalahan input data medis dapat membahayakan diagnosis; duplikasi data nasabah menyebabkan kesalahan scoring risiko kredit. \\
-	\hline
-	\textbf{Value} & Nilai bisnis yang dihasilkan melalui analitik, seperti efisiensi, penghematan biaya, atau inovasi. & Netflix meningkatkan retensi dengan rekomendasi konten personal; DHL mengoptimalkan rute dan efisiensi logistik menggunakan data. \\
-	\hline
-	
-\end{longtable}
-
-
-
-Kerangka 5Vs (Tabel~\ref{tab:5vs}) memberikan dasar konseptual yang berguna untuk mengevaluasi kesiapan organisasi dalam memanfaatkan big data serta membantu merumuskan pendekatan yang tepat dalam perencanaan, integrasi, dan penggunaan data dalam konteks bisnis.
-
-\section{Big Data Value Chain}
-
-Salah satu pendekatan kerangka kerja yang banyak digunakan dalam strategi big data adalah model \textit{Big Data Value Chain}. Dalam kajian ini, rantai nilai data dioperasionalkan ke dalam delapan langkah praktis: \textbf{Capture}, \textbf{Curate}, \textbf{Process}, \textbf{Analyse}, \textbf{Visualise}, \textbf{Decide}, \textbf{Act}, dan \textbf{Measure}. Struktur ini merupakan adaptasi dari berbagai sumber termasuk Open Data Watch \cite{opendatawatch2020}, Curry \cite{curry2016}, dan McKinsey \cite{mckinsey2021}, serta mempertimbangkan prinsip-prinsip dari TDWI \cite{tdwi2013}, CRISP-DM \cite{crispdm1999}, dan Forrester \cite{forrester2016}. Penambahan tahap \textit{Act} dan \textit{Measure} mencerminkan pentingnya pelaksanaan serta evaluasi berkelanjutan dari keputusan berbasis data. Setiap tahapan berkontribusi dalam siklus nilai data secara utuh dari pengumpulan hingga pengukuran dampak.
-
-\subsection{Tahapan: Capture, Curate, Process, Analyse, Visualise, Decide, Act, Measure}
-
-
-\begin{enumerate}
-	\item \textbf{Define}. Tahap penetapan tujuan bisnis, kebutuhan data, dan pertanyaan analitik yang ingin dijawab. Aktivitas ini memastikan bahwa proses data yang dilakukan selaras dengan strategi organisasi dan menghasilkan insight yang relevan. \textit{Contoh:} menentukan apa yang akan dianalisis, data yang perlu di-tangkap, teknologi yang diperlukan, metode analisis yang tepat, dsb. Dokumen: business case, data requirement specification, analisis kebutuhan.
-	
-	\item \textbf{Capture}. Tahap pengumpulan data dari berbagai sumber internal maupun eksternal, baik terstruktur maupun tidak terstruktur. Data dapat berasal dari transaksi pelanggan, sensor IoT, media sosial, log sistem, atau sumber pihak ketiga. \textit{Contoh:} sensor IoT, log sistem, transaksi pelanggan. Teknologi: API, web scraping, Apache NiFi.
-	
-	\item \textbf{Curate}. Tahapan ini mencakup proses pembersihan, validasi, standarisasi, serta integrasi data agar siap digunakan dalam analisis. Kualitas dan konsistensi data ditingkatkan agar dapat digunakan lintas sistem dan fungsi. \textit{Contoh:} penghapusan duplikasi, validasi format, harmonisasi nilai kategori. Tools: KNIME, Talend, Alteryx.
-	
-	\item \textbf{Process}. Transformasi data ke dalam format yang sesuai untuk kebutuhan analisis, serta penyimpanan dalam infrastruktur yang mendukung skalabilitas dan akses cepat. Termasuk proses ETL (Extract, Transform, Load), pemrosesan batch, atau real-time. \textit{Contoh:} pemrosesan data harian dengan Hadoop, pemantauan log real-time menggunakan Spark Streaming. Tools: Hadoop, Spark, Airflow.
-	
-	\item \textbf{Analyse}. Data yang telah diproses kemudian dieksplorasi dan dianalisis untuk menemukan pola, anomali, atau insight menggunakan teknik statistik maupun machine learning. Analisis ini dapat bersifat deskriptif, diagnostik, prediktif, atau preskriptif. \textit{Contoh:} prediksi churn pelanggan, segmentasi pasar, analisis hubungan antar variabel. Tools: Orange, scikit-learn, RapidMiner, R, Python.
-	
-	\item \textbf{Visualise}. Penyajian hasil analisis dalam bentuk grafis dan visual interaktif untuk mendukung pemahaman, komunikasi, dan pengambilan keputusan. Visualisasi yang baik mempermudah interpretasi insight oleh pemangku kepentingan non-teknis. \textit{Contoh:} dashboard penjualan harian di Power BI, visualisasi klaster pelanggan di Tableau.
-	
-	\item \textbf{Decide}. Tahapan pengambilan keputusan berbasis data yang telah dianalisis. Keputusan dapat bersifat operasional (seperti penyesuaian stok otomatis), taktis (penargetan kampanye), hingga strategis (pengembangan layanan baru). \textit{Contoh:} strategi penetapan harga dinamis, pemilihan prioritas fitur produk.
-	
-	\item \textbf{Act}. Implementasi dari keputusan yang telah diambil ke dalam proses bisnis nyata. Tahap ini memastikan bahwa insight yang diperoleh tidak hanya berhenti di level analisis, namun diintegrasikan dalam operasional organisasi. \textit{Contoh:} peluncuran kampanye pemasaran otomatis, aktivasi sistem rekomendasi produk, penyesuaian jadwal distribusi logistik.
-	
-	\item \textbf{Measure}. Evaluasi terhadap dampak dari tindakan yang diambil guna mengukur efektivitas, efisiensi, dan nilai tambah dari penggunaan data. Hasil evaluasi menjadi dasar untuk iterasi perbaikan strategi data di masa depan. \textit{Contoh:} pengukuran ROI kampanye, analisis perbandingan A/B testing, pelacakan akurasi model prediksi, dashboard KPI performa unit bisnis.
-\end{enumerate}
-
-
-Kerangka ini tidak hanya menjelaskan bagaimana data diproses secara teknis, tetapi juga menekankan pentingnya nilai bisnis dari setiap tahapan. Tabel~\ref{tab:big_data_value_chain} merangkum tiap tahapan.
-
-\begin{longtable}{|p{0.11\textwidth}|p{0.82\textwidth}|}
-	\caption{Tahapan dalam Big Data Value Chain}
-	\label{tab:big_data_value_chain} \\
-	\hline
-	\textbf{Tahapan} & \textbf{Deskripsi dan Contoh} \\
-	\hline
-	\endfirsthead
-	
-	\multicolumn{2}{c}{{\tablename\ \thetable{} -- lanjutan dari halaman sebelumnya}} \\
-	\hline
-	\textbf{Tahapan} & \textbf{Deskripsi dan Contoh} \\
-	\hline
-	\endhead
-	
-	\hline \multicolumn{2}{r}{{Bersambung ke halaman berikutnya}} \\
-	\endfoot
-	
-	\hline
-	\endlastfoot
-	
-	\textbf{Capture} &
-	Pengumpulan data dari berbagai sumber internal dan eksternal, baik terstruktur maupun tidak terstruktur. \textit{Contoh:}  transaksi pelanggan, log sistem, sensor IoT, media sosial. Teknologi: API, web scraping, Apache NiFi. \\
-	\hline
-	\textbf{Curate} &
-	Pembersihan, filter, dan integrasi data untuk memastikan kualitas dan konsistensi. Contoh aktivitas: penghapusan duplikasi, standarisasi format. Tools: KNIME, Talend, Alteryx. \\
-	\hline
-	\textbf{Process} &
-	Transformasi dan penyimpanan data agar siap dianalisis. Meliputi pemrosesan batch (Hadoop) atau real-time (Spark). Pilihan bergantung pada volume dan kebutuhan bisnis. \\
-	\hline
-	\textbf{Analyse} &
-	Analisis data untuk menemukan pola dan insight. Pendekatan statistik dan machine learning digunakan. Tools: Orange, scikit-learn, RapidMiner. \\
-	\hline
-	\textbf{Visualise} &
-	Penyajian hasil analisis dalam bentuk visualisasi informatif dan interaktif. \textit{Contoh:}  dashboard Power BI, Tableau untuk mendukung interpretasi bisnis. \\
-	\hline
-	\textbf{Decide} &
-	Pengambilan keputusan berbasis data. Dapat berupa keputusan operasional (pengaturan stok), taktis (kampanye), atau strategis (pengembangan produk). \\
-	\hline
-	
-\end{longtable}
-
-
-\subsection{Aplikasi Value Chain dalam Konteks Bisnis}
-
-Model Big Data Value Chain sangat relevan dalam berbagai sektor industri. Beberapa contoh aplikatif meliputi:
-
+Setelah mengikuti sesi ini, peserta diharapkan mampu:
 \begin{itemize}
-	\item \textbf{Ritel dan E-commerce:} Perusahaan seperti Tokopedia atau Shopee menangkap data klik dan transaksi (\textit{capture}), membersihkannya dari bot dan error (\textit{curate}), memproses dalam data warehouse (\textit{process}), menganalisis perilaku pengguna (\textit{analyse}), menampilkan rekomendasi produk (\textit{visualise}), dan secara otomatis mempersonalisasi halaman utama pelanggan (\textit{decide}).
-	
-	\item \textbf{Manufaktur:} Dalam industri manufaktur, sensor pada mesin produksi menangkap data suhu dan getaran (\textit{capture}), data dikurasi agar hanya anomali penting yang disimpan (\textit{curate}), dilakukan proses normalisasi data IoT (\textit{process}), lalu digunakan untuk model prediksi kerusakan mesin (\textit{analyse}). Hasil ditampilkan melalui dashboard kondisi mesin (\textit{visualise}) untuk mendukung keputusan pemeliharaan prediktif (\textit{decide}).
-	
-	\item \textbf{Keuangan:} Di sektor perbankan, aliran transaksi digital (\textit{capture}) dikurasi untuk menyingkirkan noise dan error (\textit{curate}), diproses secara real-time dengan streaming analytics (\textit{process}), dianalisis untuk mendeteksi fraud (\textit{analyse}), ditampilkan sebagai alert visual kepada analis (\textit{visualise}), dan menghasilkan tindakan pemblokiran otomatis (\textit{decide}).
-	
-	\item \textbf{Pemerintahan dan Publik:} Instansi pemerintah dapat menggunakan data survei dan pelayanan publik (\textit{capture}), mengkurasi data warga (\textit{curate}), memproses tren populasi dan permintaan layanan (\textit{process}), menganalisis dampak kebijakan (\textit{analyse}), menyusun laporan interaktif untuk legislatif (\textit{visualise}), dan menentukan intervensi sosial atau ekonomi yang tepat (\textit{decide}).
+  \item Memahami observabilitas sebagai pendekatan untuk mengenali dan menalar perilaku sistem berdasarkan data runtime, tanpa bergantung pada struktur internal atau kode sumber sistem.
+  \item Mengidentifikasi dan menafsirkan metrik, log, dan trace sebagai representasi perilaku sistem terdistribusi yang melibatkan broker, capturer, transformer, dan web server.
+  \item Mengaitkan visualisasi observabilitas pada Prometheus dan Grafana dengan kondisi runtime, beban sistem, serta pengalaman pengguna.
 \end{itemize}
 
-Kerangka ini fleksibel dan dapat diadaptasi dalam berbagai skala organisasi, mulai dari startup digital hingga institusi publik berskala nasional. Dengan pendekatan ini, organisasi dapat membangun alur kerja data yang terstruktur, transparan, dan terarah pada penciptaan nilai yang nyata.
+
+\section{Konsep Dasar Observabilitas}
+
+\subsection{Observabilitas vs Monitoring}
+
+Monitoring dan observabilitas sering digunakan secara bergantian, namun keduanya merepresentasikan pendekatan yang berbeda dalam memahami perilaku sistem. Monitoring berfokus pada pengawasan kondisi yang telah diketahui sebelumnya, biasanya melalui sekumpulan metrik atau ambang batas yang telah ditentukan. Pendekatan ini menjawab pertanyaan apakah sistem berada dalam kondisi normal atau tidak.
+
+Observabilitas, di sisi lain, berfokus pada kemampuan untuk menalar kondisi internal sistem berdasarkan sinyal eksternal yang dihasilkan selama sistem berjalan. Tujuannya bukan hanya mendeteksi bahwa terjadi masalah, tetapi juga memahami mengapa dan bagaimana masalah tersebut muncul, termasuk dalam situasi yang sebelumnya tidak diprediksi.
+
+Dalam konteks sistem terdistribusi yang terdiri dari broker, capturer, transformer, dan web server, monitoring umumnya menampilkan indikator terpisah pada setiap komponen, seperti penggunaan sumber daya atau status layanan. Pendekatan ini berguna untuk mendeteksi gangguan lokal, namun sering kali tidak cukup untuk menjelaskan perilaku sistem secara menyeluruh ketika terjadi keterlambatan, penumpukan data, atau kegagalan parsial.
+
+Observabilitas memungkinkan pengamatan perilaku lintas komponen dengan mengaitkan metrik, log, dan trace sebagai satu kesatuan. Melalui korelasi data runtime yang dikumpulkan oleh Prometheus dan divisualisasikan melalui Grafana, peserta dapat menelusuri aliran peristiwa dari satu komponen ke komponen lain, serta memahami dampaknya terhadap respons sistem secara keseluruhan.
+
+Dengan demikian, monitoring dapat dipandang sebagai alat untuk menjawab pertanyaan \emph{``apa yang salah''}, sedangkan observabilitas berperan untuk menjawab \emph{``mengapa hal tersebut terjadi''}. Pendekatan observabilitas menjadi penting dalam sistem modern yang bersifat dinamis, terdistribusi, dan sulit dipahami hanya melalui inspeksi statis atau asumsi desain awal.
+
+\subsection{Metrik, Log, dan Trace}
+
+Metrik, log, dan trace merupakan tiga jenis sinyal utama dalam observabilitas yang merepresentasikan perilaku sistem dari sudut pandang yang berbeda. Ketiganya saling melengkapi dan digunakan bersama untuk membangun pemahaman yang utuh terhadap dinamika sistem saat berjalan.
+
+Metrik menyajikan pengukuran numerik teragregasi yang menggambarkan kondisi sistem dalam rentang waktu tertentu. Contoh metrik meliputi laju pemrosesan, latensi, tingkat kesalahan, dan penggunaan sumber daya. Dalam sistem yang terdiri dari broker, capturer, transformer, dan web server, metrik memungkinkan pengamatan tren seperti peningkatan beban, antrian yang menumpuk, atau penurunan throughput tanpa harus melihat peristiwa individual.
+
+Log merekam peristiwa diskret yang terjadi selama eksekusi sistem, biasanya dalam bentuk pesan berurutan yang merefleksikan aktivitas internal komponen. Log memberikan konteks yang lebih kaya dibandingkan metrik, seperti urutan kejadian, kondisi tertentu, atau keputusan yang diambil oleh sistem. Pada sistem terdistribusi, log membantu menjelaskan apa yang sedang dilakukan oleh masing-masing komponen pada saat tertentu, terutama ketika terjadi kegagalan atau perilaku tidak normal.
+
+Trace merepresentasikan alur eksekusi suatu permintaan atau data saat melewati beberapa komponen sistem. Melalui trace, satu peristiwa dapat ditelusuri dari awal hingga akhir, misalnya dari capturer ke broker, diteruskan ke transformer, hingga akhirnya disajikan oleh web server. Trace memberikan gambaran hubungan sebab-akibat antar komponen serta memungkinkan identifikasi titik keterlambatan atau bottleneck dalam alur sistem.
+
+Dalam praktik observabilitas, ketiga sinyal ini tidak digunakan secara terpisah. Metrik sering digunakan untuk mendeteksi adanya anomali, log digunakan untuk memberikan konteks terhadap anomali tersebut, dan trace digunakan untuk menelusuri jalur eksekusi yang menyebabkan kondisi tersebut muncul. Kombinasi ini memungkinkan pemahaman perilaku sistem secara menyeluruh, bahkan ketika masalah yang terjadi tidak pernah didefinisikan sebelumnya.
+
+Dengan memanfaatkan metrik, log, dan trace secara bersamaan, observabilitas memungkinkan peserta untuk berpindah dari pengamatan permukaan menuju pemahaman mendalam terhadap dinamika runtime sistem terdistribusi.
+
+
+\subsection{Observabilitas sebagai Pendekatan Bottom-Up}
+
+Pendekatan bottom-up dalam observabilitas menekankan pemahaman sistem yang dimulai dari perilaku nyata yang muncul selama eksekusi, bukan dari asumsi desain atau spesifikasi awal. Dalam pendekatan ini, sistem dipahami melalui sinyal runtime yang dihasilkannya, seperti metrik, log, dan trace, yang merefleksikan interaksi aktual antar komponen.
+
+Berbeda dengan pendekatan top-down yang berangkat dari arsitektur, diagram, atau dokumentasi desain, pendekatan bottom-up mengajak peserta untuk terlebih dahulu mengamati apa yang benar-benar terjadi ketika sistem dijalankan. Hal ini menjadi penting terutama pada sistem terdistribusi yang kompleks, di mana perilaku aktual sering kali menyimpang dari ekspektasi desain akibat beban, kegagalan parsial, atau interaksi non-linear antar komponen.
+
+Dalam sistem yang melibatkan broker, capturer, transformer, dan web server, pendekatan bottom-up memungkinkan pengamatan aliran data dan peristiwa tanpa harus memahami implementasi internal masing-masing komponen. Peserta dapat mulai dengan mengamati metrik seperti laju data masuk, latensi pemrosesan, atau tingkat kesalahan, kemudian menelusuri log dan trace untuk memahami hubungan sebab-akibat di balik perubahan yang teramati.
+
+Pendekatan ini juga mendorong eksplorasi sistem secara iteratif. Pengamatan awal terhadap dashboard atau grafik metrik dapat memunculkan pertanyaan baru, yang selanjutnya dijawab dengan memperkaya konteks melalui log dan trace. Proses ini membentuk siklus observasi dan penalaran yang berulang, di mana pemahaman sistem berkembang seiring dengan meningkatnya kedalaman pengamatan.
+
+Dengan menempatkan data runtime sebagai sumber utama pengetahuan, observabilitas sebagai pendekatan bottom-up membantu membangun intuisi tentang perilaku sistem yang bersifat dinamis dan kontekstual. Pendekatan ini sangat relevan untuk sistem modern yang terus berevolusi, berskala besar, dan tidak dapat sepenuhnya dipahami hanya melalui analisis statis atau dokumentasi desain.
 
 
 
-\section{Big Data Maturity Model (BDMM)}
 
-Model Kematangan Big Data atau \textit{Big Data Maturity Model} (BDMM) merupakan kerangka evaluatif yang digunakan untuk mengukur kesiapan dan kapabilitas organisasi dalam mengelola dan memanfaatkan big data secara strategis. Model ini memetakan kondisi aktual (\textit{as-is}) dan target masa depan (\textit{to-be}) dari pengelolaan data organisasi melalui beberapa tahapan perkembangan yang dapat dijadikan peta jalan transformasi data-driven \cite{alsai2023}.
-
-\subsection{Tingkat Kematangan Organisasi}
-
-Menurut studi oleh Al-Sai et al. \cite{alsai2023}, terdapat berbagai model BDMM yang dikembangkan baik oleh akademisi maupun praktisi. Model yang paling umum terdiri atas lima hingga enam tingkat kematangan. Sebagai contoh, model TDWI terdiri dari lima tingkat: \textit{Nascent}, \textit{Pre-adoption}, \textit{Early adoption}, \textit{Corporate adoption}, dan \textit{Mature/Visionary}, sedangkan model lainnya seperti IDC atau IBM menggunakan tingkatan seperti \textit{Ad-hoc}, \textit{Opportunistic}, \textit{Repeatable}, \textit{Managed}, dan \textit{Optimized}.
-
-Tinjauan sistematis menunjukkan bahwa meskipun terdapat variasi penamaan antar model, pola tingkat kematangan yang digunakan umumnya konsisten. Lima hingga enam tingkat kematangan tersebut dapat dirangkum sebagai berikut:
-
-\begin{enumerate}
-	\item \textbf{Level 1: Initial.} Disebut juga sebagai \textit{Nascent}, \textit{Ad-hoc}, \textit{Ignorance}, atau \textit{In the Dark}. Organisasi berada pada tahap awal tanpa strategi big data yang jelas. Inisiatif dilakukan secara sporadis, tanpa struktur, dan belum ada proses atau analitik yang terdokumentasi. \textit{Contoh:}  Tim pemasaran menggunakan Excel untuk menganalisis hasil survei tanpa dokumentasi. Divisi keuangan menyimpan data transaksi lokal tanpa sistem integrasi.
-	
-	\item \textbf{Level 2: Managed.} Juga dikenal sebagai \textit{Pre-adoption}, \textit{Opportunistic}, \textit{Coping}, atau \textit{Catching Up}. Beberapa unit kerja mulai bereksperimen dengan big data melalui proyek kecil atau pilot, namun belum terkoordinasi secara organisasi dan masih minim tata kelola. \textit{Contoh:}  Departemen logistik mencoba menggunakan dashboard Power BI untuk pelacakan pengiriman. Unit SDM mengembangkan model churn karyawan tanpa dukungan pusat data.
-	
-	\item \textbf{Level 3: Defined.} Disebut pula sebagai \textit{Early Adoption}, \textit{Repeatable}, \textit{Understanding}, atau \textit{First Pilots}. Organisasi mulai menerapkan praktik big data yang terdokumentasi dan konsisten. Infrastruktur dan proses standar mulai dibangun, serta analitik digunakan untuk mendukung operasi. \textit{Contoh:}  Organisasi memiliki data warehouse terpusat yang diakses oleh beberapa divisi. Model prediksi permintaan mulai digunakan dalam perencanaan inventori.
-	
-	\item \textbf{Level 4: Integrated.} Sama dengan \textit{Corporate Adoption}, \textit{Managed}, atau \textit{Business Adoption}. Penggunaan big data sudah terintegrasi lintas fungsi dengan dukungan teknologi yang matang dan tata kelola formal. Pengambilan keputusan berbasis data dilakukan secara luas di organisasi. \textit{Contoh:}  Setiap departemen memiliki akses ke dashboard KPI lintas fungsi. Kebijakan manajemen data ditetapkan oleh komite tata kelola organisasi.
-	
-	\item \textbf{Level 5: Optimized.} Juga disebut \textit{Mature/Visionary}, \textit{Optimized}, \textit{Innovating}, atau \textit{Strategic}. Organisasi mencapai tingkat kematangan penuh dengan budaya berbasis data yang kuat. Inovasi didorong oleh analitik canggih, pengambilan keputusan otomatis, dan pendekatan prediktif berbasis data real-time. \textit{Contoh:}  Sistem rekomendasi produk berjalan secara otomatis berdasarkan perilaku pengguna terkini. Strategi bisnis jangka panjang ditentukan dengan simulasi berbasis data.
-\end{enumerate}
+\section{Arsitektur Sistem Studi Kasus}
 
 
+\begin{figure}[htbp]
+\centering
+\scalebox{0.9}{
+\begin{tikzpicture}[
+  font=\small\bfseries,
+  node distance=9mm and 12mm,
+  box/.style={
+    draw,
+    rounded corners=2mm,
+    align=center,
+    minimum width=32mm,
+    minimum height=9mm,
+    fill=blue!10
+  },
+  brokerbox/.style={box,fill=orange!15},
+  webbox/.style={box,fill=green!12},
+  browserbox/.style={box,fill=gray!12},
+  extbox/.style={box,fill=purple!10},
+  arrow/.style={-Latex,thick},
+  dottedarrow/.style={-Latex,thick,dotted}
+]
 
-\subsection{Aspek Penilaian dan Indikator Maturitas}
+% Core nodes (note: Prometheus service embedded in each node)
+\node[box ] (transformer) {Transformer\\(Node B)\\{\scriptsize Prometheus service}};
+\node[box,left=of transformer, xshift=-10mm] (capturer) {Capturer\\(Node A)\\{\scriptsize Prometheus service}};
+\node[brokerbox, below=of capturer, yshift=-5mm] (broker) {Broker\\(XSUB / XPUB)\\{\scriptsize Prometheus service}};
 
-Penilaian BDMM dilakukan berdasarkan beberapa dimensi kunci, yang umum ditemukan di berbagai model menurut tinjauan sistematis meliputi:
+\node[browserbox,below=of broker] (browser) {Browser};
+\node[webbox,right=of browser, xshift=10mm](web) {Web Server\\(Node C)\\{\scriptsize Prometheus service}};
 
+% External observability nodes
+\node[extbox,right=of web] (grafana) {Grafana};
+\node[extbox,above=of grafana, yshift=10mm] (prom) {Prometheus};
+
+% Data flow arrows
+\draw[arrow] (capturer) -- node[above, xshift=-8mm]{PUB \texttt{raw}} (broker);
+\draw[arrow] (broker) -- node[above, yshift=-5mm, xshift=8mm]{SUB \texttt{raw}} (transformer);
+\draw[arrow] (transformer.south) |- node[below]{PUB \texttt{processed}} (broker.east);
+\draw[arrow] (broker) -- node[right,xshift=3mm]{SUB \texttt{processed}} (web.north);
+\draw[arrow] (web.west) -- node[above]{HTTP MJPEG} (browser.east);
+
+% Observability (scraping + visualization)
+\draw[dottedarrow] (capturer.south) -- (prom);
+\draw[dottedarrow] (broker) -- (prom);
+\draw[dottedarrow] (transformer.east) -- (prom);
+\draw[dottedarrow] (web.east) -- (prom);
+\draw[arrow] (prom) -- (grafana);
+
+\end{tikzpicture}
+}
+\caption{Arsitektur aliran data menggunakan komunikasi publish--subscribe berbasis broker, dengan layanan Prometheus tertanam pada setiap node serta Prometheus dan Grafana sebagai komponen observabilitas eksternal}
+\label{fig:broker-pubsub-observability}
+\end{figure}
+
+Pada Gambar~\ref{fig:broker-pubsub-observability} ditunjukkan arsitektur sistem studi kasus yang digunakan untuk mengeksplorasi perilaku sistem terdistribusi berbasis komunikasi \emph{publish--subscribe}. Arsitektur ini terdiri dari beberapa node utama yang berinteraksi melalui sebuah \emph{message broker}, serta dilengkapi dengan mekanisme observabilitas yang terintegrasi.
+
+Node \textbf{Capturer (Node A)} berperan sebagai sumber data awal. Node ini menghasilkan data mentah (\emph{raw data}) dan mempublikasikannya ke broker menggunakan mekanisme \emph{publish}. Dengan pendekatan ini, produsen data tidak berkomunikasi langsung dengan konsumen, melainkan melalui perantara.
+
+Node \textbf{Broker} berfungsi sebagai pusat pertukaran data dengan pola komunikasi \emph{XSUB/XPUB}. Broker menerima data mentah dari capturer dan mendistribusikannya kepada node yang melakukan \emph{subscribe}. Pola ini memungkinkan pemisahan yang jelas antara pengirim dan penerima data, serta mendukung skalabilitas sistem.
+
+Node \textbf{Transformer (Node B)} melakukan \emph{subscribe} terhadap data mentah dari broker untuk kemudian memprosesnya. Data hasil pemrosesan (\emph{processed data}) dipublikasikan kembali ke broker, sehingga dapat digunakan oleh komponen lain tanpa ketergantungan langsung.
+
+Node \textbf{Web Server (Node C)} melakukan \emph{subscribe} terhadap data hasil pemrosesan dari broker dan menyajikannya kepada pengguna. Penyajian data dilakukan melalui antarmuka web menggunakan protokol HTTP dalam bentuk aliran MJPEG.
+
+Interaksi pengguna direpresentasikan oleh \textbf{Browser}, yang mengakses web server untuk melihat hasil akhir pemrosesan. Dari sudut pandang pengguna, sistem tampak sebagai layanan web, meskipun terdiri dari beberapa komponen terdistribusi di belakang layar.
+
+Setiap node aplikasi dilengkapi dengan \textbf{layanan Prometheus yang tertanam} untuk mengekspor metrik runtime. Metrik-metrik ini mencerminkan perilaku aktual sistem selama eksekusi. Prometheus eksternal bertugas mengumpulkan metrik dari seluruh node melalui mekanisme \emph{scraping}.
+
+Data observabilitas yang telah dikumpulkan selanjutnya divisualisasikan melalui \textbf{Grafana}. Dashboard Grafana memungkinkan pemantauan dan analisis perilaku sistem secara menyeluruh, serta mendukung pendekatan observabilitas berbasis pengamatan langsung terhadap data runtime.
+
+Arsitektur ini dirancang untuk mendukung pendekatan observabilitas \emph{bottom-up}, di mana pemahaman sistem dibangun dari perilaku nyata yang teramati selama sistem berjalan, sebelum dilakukan analisis struktur atau optimasi desain.
+
+
+\section{Prometheus}
+
+Prometheus merupakan sistem pemantauan dan pengumpulan metrik yang dirancang untuk sistem terdistribusi dan dinamis. Dalam studi kasus ini, Prometheus digunakan sebagai komponen observabilitas terpusat yang mengumpulkan metrik runtime dari setiap node aplikasi, yaitu Capturer, Broker, Transformer, dan Web Server.
+
+Prometheus menerapkan model \emph{pull-based}, di mana server Prometheus secara periodik melakukan pengambilan (\emph{scraping}) metrik dari endpoint yang diekspos oleh masing-masing node. Setiap node aplikasi menjalankan layanan Prometheus tertanam yang mengekspor metrik runtime tanpa mengganggu alur pemrosesan data utama.
+
+Metrik yang dikumpulkan disimpan dalam bentuk \emph{time-series data}, sehingga memungkinkan analisis perilaku sistem sepanjang waktu, termasuk pengamatan tren, lonjakan beban, latensi, serta indikasi kegagalan parsial. Dalam arsitektur ini, Prometheus tidak terlibat langsung dalam alur data aplikasi, melainkan berfungsi murni sebagai mekanisme observasi.
+
+Pada demo ini, Prometheus tidak diinstal secara manual pada sistem operasi host. Prometheus dijalankan sebagai \emph{container} menggunakan \emph{Docker image} resmi yang di-\emph{pull} dari repositori. Pendekatan ini memberikan lingkungan runtime yang konsisten, mudah direproduksi, dan terisolasi dari node aplikasi.
+
+Dengan menjalankan Prometheus sebagai container, konfigurasi scraping dan penyimpanan metrik dapat dikelola secara terpisah dari kode aplikasi. Selain itu, Prometheus dapat dengan mudah dijalankan, dihentikan, atau dikonfigurasi ulang tanpa memengaruhi proses utama sistem studi kasus.
+
+Untuk mendukung ekspor metrik dari aplikasi berbasis Python, digunakan library \texttt{prometheus-client}. Library ini memungkinkan setiap node menyediakan endpoint metrik yang dapat diakses oleh Prometheus eksternal.
+
+\begin{lstlisting}[language=bash]
+pip install prometheus-client
+\end{lstlisting}
+
+Dengan pendekatan ini, setiap node aplikasi mengekspor sinyal runtime secara mandiri, sementara Prometheus berperan sebagai pengumpul data terpusat yang berjalan sebagai layanan terpisah. Pemisahan peran ini mendukung observabilitas berbasis data runtime dan memungkinkan analisis perilaku sistem secara \emph{bottom-up} sebelum dilakukan penalaran terhadap struktur atau desain sistem.
+
+
+
+\section{Grafana}
+
+Grafana merupakan platform visualisasi data yang digunakan untuk menampilkan dan menganalisis metrik yang dikumpulkan oleh Prometheus. Dalam studi kasus ini, Grafana berperan sebagai lapisan presentasi yang memungkinkan pengamatan perilaku sistem secara intuitif melalui \emph{dashboard}.
+
+Grafana tidak mengumpulkan data secara langsung dari node aplikasi. Grafana berfungsi sebagai klien yang melakukan kueri ke Prometheus untuk mengambil data metrik yang telah tersimpan dalam bentuk \emph{time-series}. Pemisahan peran ini memastikan bahwa visualisasi tidak memengaruhi mekanisme pengumpulan maupun pemrosesan data utama sistem.
+
+Pada demo ini, Grafana tidak dipasang secara manual di sistem operasi host. Sebaliknya, Grafana dijalankan sebagai \emph{container} dengan memanfaatkan \emph{Docker image} resmi yang di-\emph{pull} dari repositori. Pendekatan ini memberikan lingkungan runtime yang konsisten, dapat direproduksi, dan mudah dikonfigurasi ulang, terutama dalam konteks eksperimen dan pembelajaran.
+
+Dengan menjalankan Grafana sebagai container, proses penyebaran dan penghentian layanan visualisasi dapat dilakukan tanpa memengaruhi node aplikasi maupun server Prometheus. Selain itu, konfigurasi Grafana, seperti koneksi ke Prometheus dan definisi dashboard, dapat dikelola secara terpisah dari kode aplikasi.
+
+Melalui dashboard Grafana, metrik dari berbagai node seperti Capturer, Broker, Transformer, dan Web Server dapat ditampilkan secara bersamaan. Visualisasi ini memungkinkan perbandingan perilaku antar node, identifikasi pola beban, serta pengamatan perubahan kondisi sistem dari waktu ke waktu.
+
+Dalam konteks pembelajaran, penggunaan Grafana sebagai container juga memperkuat pemahaman bahwa komponen observabilitas dapat diperlakukan sebagai layanan terpisah. Peserta dapat fokus pada interpretasi perilaku sistem melalui dashboard tanpa harus berurusan dengan kompleksitas instalasi perangkat lunak secara manual.
+
+Dengan demikian, Grafana berfungsi sebagai lapisan visualisasi observabilitas yang fleksibel, terisolasi, dan mudah direproduksi, sejalan dengan tujuan demo untuk menekankan observabilitas berbasis data runtime.
+
+
+\section{OpenTelemetry}
+
+
+\section{Eksperimen Observabilitas}
 \begin{itemize}
-	\item \textbf{Strategi dan Visi Bisnis:} Keterpaduan strategi data dengan tujuan bisnis jangka panjang. \textit{Contoh:} Visi organisasi mencakup pemanfaatan data pelanggan untuk pengembangan layanan baru dan efisiensi operasional.
-	
-	\item \textbf{Data dan Tata Kelola:} Kebijakan, standar, dan integrasi data lintas sistem dan unit. \textit{Contoh:} Terdapat kebijakan klasifikasi data sensitif dan peran data steward di setiap departemen.
-	
-	\item \textbf{Teknologi dan Infrastruktur:} Kesiapan teknologi seperti data lake, platform cloud, serta kapabilitas pemrosesan real-time. \textit{Contoh:} Organisasi menggunakan data lake berbasis cloud dan Apache Kafka untuk integrasi data secara streaming.
-	
-	\item \textbf{Analitik dan Visualisasi:} Penggunaan analitik lanjutan, machine learning, dan alat visualisasi untuk mendukung keputusan. \textit{Contoh:} Dashboard interaktif Power BI digunakan untuk memantau performa harian. Model prediktif diterapkan untuk analisis churn pelanggan.
-	
-	\item \textbf{Organisasi dan SDM:} Struktur organisasi, budaya berbasis data, pelatihan, dan peran seperti \textit{data steward}. \textit{Contoh:} Organisasi menyediakan pelatihan rutin bagi analis data dan memiliki unit khusus pengelolaan data.
-	
-	\item \textbf{Keamanan dan Privasi:} Perlindungan data, kepatuhan terhadap regulasi, dan manajemen risiko. \textit{Contoh:} Implementasi kontrol akses berbasis peran dan kepatuhan terhadap UU PDP serta GDPR.
+  \item Main interface:
+    \begin{itemize}
+      \item \url{http://localhost:8000/}
+      \item \url{http://localhost:8000/stream.mjpg}
+    \end{itemize}
+
+  \item Metrics endpoints:
+    \begin{itemize}
+      \item Capturer: \url{http://localhost:9101/metrics}
+      \item Broker: \url{http://localhost:9102/metrics}
+      \item Transformer: \url{http://localhost:9103/metrics}
+      \item Web server: \url{http://localhost:9104/metrics}
+    \end{itemize}
+
+	\item Monitoring:
+	\begin{itemize}
+		\item Prometheus: \url{http://localhost:9090}
+		\item Grafana: \url{http://grafana:3000}
+	\end{itemize}
+
 \end{itemize}
 
 
 
-Setiap dimensi dilengkapi indikator yang mencerminkan tingkat kematangan tertentu, memungkinkan organisasi melakukan penilaian diri melalui kuesioner, tools benchmarking, atau workshop lintas fungsi.
-
-\subsection{Penerapan BDMM dalam Evaluasi Strategi}
-
-BDMM tidak hanya berfungsi sebagai alat evaluasi, tetapi juga sebagai kerangka kerja untuk:
-
-\begin{itemize}
-	\item \textbf{Menentukan posisi saat ini dan kesenjangan maturitas} untuk menetapkan prioritas pengembangan data. \textit{Contoh:} Survei internal menunjukkan bahwa unit layanan pelanggan masih menggunakan data secara silo dan belum terintegrasi.
-	
-	\item \textbf{Merancang roadmap transformasi digital} berbasis target kematangan yang realistis dan terukur. \textit{Contoh:} Organisasi menargetkan transisi dari tingkat opportunistic ke systematic dalam dua tahun dengan membangun data warehouse.
-	
-	\item \textbf{Mendukung pengambilan keputusan investasi teknologi} berbasis hasil evaluasi kapabilitas saat ini. \textit{Contoh:} Evaluasi menunjukkan perlunya adopsi platform integrasi data untuk meningkatkan kualitas dan kecepatan analitik.
-	
-	\item \textbf{Meningkatkan koordinasi antar fungsi organisasi} melalui dialog berbasis data dan indikator bersama. \textit{Contoh:} Dibentuk forum lintas departemen antara tim IT, pemasaran, dan operasional untuk proyek analitik pelanggan.
-	
-	\item \textbf{Mengukur dampak strategis dari inisiatif data} secara berkelanjutan, berdasarkan indikator performa seperti ROI, efisiensi, dan adopsi. \textit{Contoh:} Laporan triwulanan memantau peningkatan penggunaan dashboard analitik dan penghematan waktu analisis.
-\end{itemize}
-
-
-Sebagian besar model dalam tinjauan ini telah digunakan dalam berbagai sektor, seperti manufaktur, layanan keuangan, pendidikan, dan transportasi, dengan penyesuaian konteks spesifik industri.
-
-
-\section{DAMA-DMBOK: Kerangka Tata Kelola Data}
-
-Tata kelola data (data governance) adalah elemen fundamental dalam strategi big data yang berkelanjutan dan bertanggung jawab. Salah satu kerangka kerja paling komprehensif dalam bidang ini adalah DAMA-DMBOK, yaitu \textit{Data Management Body of Knowledge}, yang dikembangkan oleh Data Management Association (DAMA International) \cite{dama2017}.
-
-Kerangka ini memberikan panduan menyeluruh mengenai domain, prinsip, dan praktik terbaik dalam manajemen data di seluruh siklus hidupnya. DAMA-DMBOK tidak berfokus pada teknologi tertentu, melainkan pada struktur kebijakan dan kapabilitas organisasi untuk memastikan data dikelola secara akurat, aman, dan bernilai.
-
-\subsection{Komponen Utama DAMA}
-
-DAMA-DMBOK membagi manajemen data ke dalam 11 domain utama:
-
-\begin{enumerate}
-	\item \textbf{Data Governance} – pengawasan dan pengendalian strategis atas data, termasuk kepemilikan, standar, dan kebijakan penggunaan data. \textit{Contoh:}  Organisasi membentuk komite tata kelola data lintas departemen. Kebijakan akses data disusun dan diimplementasikan melalui persetujuan berjenjang.
-	
-	\item \textbf{Data Architecture} – desain struktural data enterprise, termasuk pemodelan konseptual, logikal, dan fisikal. \textit{Contoh:}  Enterprise data model dibuat untuk menyatukan skema antar sistem. Arsitektur data disusun untuk mendukung integrasi cloud dan on-premise.
-	
-	\item \textbf{Data Modeling \& Design} – pembangunan model data untuk mendukung aplikasi dan sistem bisnis. \textit{Contoh:}  Diagram ER dibuat sebagai bagian dari proses pengembangan sistem keuangan. Tim pengembang menggunakan skema logikal untuk mendesain struktur database pelanggan.
-	
-	\item \textbf{Data Storage \& Operations} – pengelolaan penyimpanan, backup, dan pengambilan data yang andal. \textit{Contoh:}  Perusahaan menerapkan jadwal backup harian dan replikasi geografis. Penggunaan object storage berbasis cloud memungkinkan penyimpanan skala besar dengan biaya efisien.
-	
-	\item \textbf{Data Security} – perlindungan data dari akses tidak sah, pelanggaran, dan kerusakan. \textit{Contoh:}  Implementasi enkripsi data end-to-end untuk data pelanggan. Audit keamanan dilakukan secara berkala terhadap hak akses database.
-	
-	\item \textbf{Data Integration \& Interoperability} – penggabungan data dari berbagai sistem dan menjamin sinkronisasi. \textit{Contoh:}  ETL pipeline dibangun untuk menggabungkan data penjualan dari tiga platform berbeda. Integrasi API dilakukan untuk menyatukan data layanan pelanggan dan sistem ERP.
-	
-	\item \textbf{Document \& Content Management} – pengelolaan data tidak terstruktur seperti dokumen dan multimedia. \textit{Contoh:}  Sistem manajemen dokumen digunakan untuk menyimpan laporan internal dan kontrak hukum. File audio dari call center diarsipkan dan diklasifikasikan berdasarkan metadata.
-	
-	\item \textbf{Reference \& Master Data Management} – pemusatan dan standarisasi entitas inti seperti pelanggan dan produk. \textit{Contoh:}  Satu identitas pelanggan ditetapkan lintas sistem untuk menghindari duplikasi. Daftar produk disinkronkan secara otomatis antara sistem gudang dan penjualan.
-	
-	\item \textbf{Data Warehousing \& BI} – pemusatan data untuk pelaporan dan pengambilan keputusan. \textit{Contoh:}  Data warehouse dibangun untuk mengkonsolidasikan data penjualan nasional. Dashboard BI disediakan bagi manajemen untuk memantau KPI harian.
-	
-	\item \textbf{Metadata Management} – pengelolaan informasi tentang data (data tentang data). \textit{Contoh:}  Data katalog dikembangkan untuk mendokumentasikan asal-usul dan struktur dataset. Metadata digunakan untuk mengotomatisasi proses audit dan lineage data.
-	
-	\item \textbf{Data Quality Management} – perencanaan, pemantauan, dan perbaikan kualitas data. \textit{Contoh:}  Pembersihan data dilakukan secara otomatis untuk menghapus duplikasi. Skor kualitas data dilaporkan mingguan untuk memantau tingkat kelengkapan dan akurasi.
-\end{enumerate}
+\begin{table}[htbp]
+\centering
+\small
+\caption{Summary and comparison of pipeline components}
+\label{tab:pipeline-comparison}
+\begin{tabular}{|
+p{0.10\linewidth}|
+p{0.18\linewidth}|
+p{0.12\linewidth}|
+p{0.12\linewidth}|
+p{0.10\linewidth}|
+p{0.12\linewidth}|
+}
+\hline
+\textbf{Component} &
+\textbf{Primary Role} &
+\textbf{Frames (in $\rightarrow$ out)} &
+\textbf{Avg Payload Size} &
+\textbf{CPU Usage} &
+\textbf{RSS Memory} \\
+\hline
+Capturer &
+Video ingest and JPEG encoding &
+-- $\rightarrow$ 8\,473 &
+$\sim$102 KB &
+$\sim$54\% &
+$\sim$128 MB \\
+\hline
+Broker &
+XSUB/XPUB message forwarding &
+17\,030 $\rightarrow$ 17\,030 (ZMQ frames) &
+$\sim$100 KB (data frames) &
+$\sim$2\% &
+$\sim$32 MB \\
+\hline
+Transformer &
+JPEG decode, grayscale transform, re-encode &
+8\,641 $\rightarrow$ 8\,641 &
+Input $\sim$102 KB, Output $\sim$99 KB &
+$\sim$21\% &
+$\sim$45--52 MB \\
+\hline
+Web Server &
+ZMQ receive and HTTP/MJPEG delivery &
+8\,819 $\rightarrow$ -- &
+$\sim$98.5 KB &
+$\sim$0\% (at scrape) &
+$\sim$193 MB \\
+\hline
+\end{tabular}
+\end{table}
 
 
-Kesebelas domain ini saling terintegrasi dan membentuk dasar tata kelola data organisasi yang berkelanjutan dan adaptif terhadap pertumbuhan volume dan kompleksitas data.
+\begin{table}[htbp]
+\centering
+\caption{Performance Comparison of Web Server Under Different Numbers of MJPEG Clients}
+\label{tab:webserver_clients}
+\begin{tabular}{lrrr}
+\hline
+\textbf{Metric} & \textbf{1 Browser} & \textbf{6 Browsers} & \textbf{Change} \\
+\hline
+Active MJPEG clients            & 1       & 6       & $\times 6$ \\
+Frames received                 & 7{,}070 & 7{,}517 & +6.3\% \\
+Bytes received (MB)             & 697     & 741     & +6.3\% \\
+Average JPEG size (KB)          & 98.6    & 98.6    & 0\% \\
+\hline
+Mean end-to-end latency (ms)    & 30.1    & 30.2    & $\approx 0$ \\
+95--100\% latency bound (ms)    & $\le$100 & $\le$100 & unchanged \\
+\hline
+CPU utilisation (\%)            & 1       & 4       & +3 pp \\
+Resident memory (MB)            & 133     & 157     & +24 \\
+Open file descriptors           & 18      & 23      & +5 \\
+\hline
+\end{tabular}
+\end{table}
 
-\subsection{Hubungan DAMA dengan Strategi Big Data}
+\section{Sudut Pandang Mahasiswa Non-IT}
 
-Kerangka DAMA melengkapi strategi big data dengan menyediakan struktur pengelolaan yang stabil dan dapat ditelusuri (traceable). Hubungannya dapat diringkas sebagai berikut:
-
-\begin{itemize}
-	\item \textbf{Mendukung Strategi Jangka Panjang:} DAMA memberi fondasi proses dan peran yang jelas untuk pelaksanaan strategi data lintas fungsi. \textit{Contoh:}  Organisasi menetapkan peran data steward untuk setiap domain bisnis sebagai bagian dari roadmap transformasi data. Visi jangka panjang untuk integrasi data lintas departemen didukung oleh struktur tata kelola yang diatur dalam DAMA.
-	
-	\item \textbf{Memastikan Kepatuhan dan Etika:} DAMA mengatur peran, tanggung jawab, dan kontrol yang mendukung kepatuhan terhadap regulasi seperti GDPR dan UU PDP. \textit{Contoh:}  Prosedur pelabelan data pribadi dan persetujuan eksplisit ditetapkan berdasarkan prinsip tata kelola DAMA. Audit internal dilakukan secara rutin untuk memverifikasi kesesuaian dengan kebijakan perlindungan data.
-	
-	\item \textbf{Menjamin Kualitas dan Konsistensi:} Strategi big data yang berbasis analitik sangat bergantung pada kualitas dan konsistensi data, yang diatur melalui domain seperti Data Quality Management dan Metadata Management. \textit{Contoh:}  Skor kualitas data mingguan digunakan sebagai indikator kinerja tim pengelola data. Metadata standar diterapkan agar definisi data seragam antar unit.
-	
-	\item \textbf{Menghubungkan Teknologi dan Kebijakan:} DAMA menjembatani tim TI dan unit bisnis melalui kebijakan dan prinsip pengelolaan data yang disepakati. \textit{Contoh:}  Tim data engineer dan analis bisnis menyusun aturan validasi data bersama dalam kerangka standar DAMA. Proses pengelolaan data lintas divisi dilakukan berdasarkan kebijakan yang telah disetujui bersama.
-\end{itemize}
-
-
-DAMA-DMBOK juga dapat digunakan bersamaan dengan Big Data Maturity Model (BDMM) sebagai indikator kesiapan organisasi dalam menjalankan program data secara strategis dan bertanggung jawab.
-
-\subsection{Implikasi Praktis bagi Organisasi}
-
-Adopsi kerangka DAMA memiliki implikasi langsung terhadap tata kelola dan operasional organisasi, antara lain:
-
-\begin{itemize}
-	\item \textbf{Penerapan Data Stewardship:} Organisasi harus menetapkan peran seperti \textit{data steward}, \textit{data owner}, dan \textit{data custodian} dengan tugas dan akuntabilitas yang jelas. \textit{Contoh:}  Setiap domain data utama seperti pelanggan dan produk memiliki penanggung jawab yang berbeda sesuai peran DAMA. Tim proyek diminta berkoordinasi dengan data steward sebelum melakukan migrasi data antar sistem.
-	
-	\item \textbf{Peningkatan Transparansi dan Auditabilitas:} Dengan metadata dan pengelolaan kualitas yang baik, organisasi dapat menelusuri asal-usul data dan menjamin keabsahannya. \textit{Contoh:}  Metadata lineage memungkinkan tim untuk melacak perubahan data dari input awal hingga dashboard pelaporan. Dokumentasi definisi data KPI membantu menghindari interpretasi ganda antar divisi.
-	
-	\item \textbf{Reduksi Risiko dan Biaya:} Kontrol akses yang baik dan integrasi sistem yang terstruktur mengurangi risiko kehilangan data, redundansi, dan kebocoran informasi. \textit{Contoh:}  Otentikasi berbasis peran diterapkan pada semua platform data internal. Eliminasi data duplikat antar sistem berhasil menghemat kapasitas penyimpanan hingga 30\%.
-	
-	\item \textbf{Skalabilitas dalam Analitik:} Infrastruktur tata kelola yang kokoh memungkinkan organisasi untuk mengadopsi teknologi analitik lanjutan secara lebih cepat dan terarah. \textit{Contoh:}  Platform analitik berbasis cloud dapat dengan mudah diintegrasikan karena adanya standarisasi dan dokumentasi skema, format, dan metadata. Tim AI/ML menggunakan katalog data resmi untuk mempercepat proses eksplorasi dan pengujian model.
-\end{itemize}
+\section{Sudut Pandang Mahasiswa IT}
 
 
-Dengan kata lain, DAMA-DMBOK membantu organisasi menyusun kerangka manajemen data yang tidak hanya mendukung inisiatif teknologi, tetapi juga menciptakan sinergi antara data, proses bisnis, dan nilai strategis organisasi.
 
-\section{Penutup}
+\section{Diskusi dan Refleksi}
 
-Strategi dan kerangka kerja big data merupakan fondasi penting dalam upaya organisasi untuk mentransformasikan data menjadi nilai bisnis yang nyata dan berkelanjutan. Bab ini telah membahas berbagai pendekatan konseptual dan praktis yang dapat digunakan untuk merancang, mengevaluasi, dan mengelola inisiatif big data secara sistematis.
 
-Melalui kerangka 5Vs, organisasi dapat memahami kompleksitas karakteristik data modern yang mencakup volume yang besar, kecepatan tinggi, keragaman format, kebutuhan akan keandalan, dan potensi nilai yang dapat diekstrak. Sementara itu, model Big Data Value Chain membantu memetakan alur kerja data dari pengumpulan hingga pengambilan keputusan, yang penting dalam merancang proses bisnis berbasis data.
+\section{Ringkasan}
 
-Lebih lanjut, Big Data Maturity Model (BDMM) memberikan kerangka penilaian yang memungkinkan organisasi mengidentifikasi posisi kematangan mereka dan menetapkan target peningkatan yang realistis. Di sisi lain, kerangka DAMA-DMBOK menekankan pentingnya tata kelola dan pengelolaan data yang disiplin, dengan struktur peran dan proses yang mendukung penerapan strategi data secara menyeluruh.
 
-Keseluruhan kerangka ini saling melengkapi, dan memberikan perspektif lintas dimensi—teknologi, organisasi, manusia, dan kebijakan—yang harus diperhitungkan dalam implementasi big data. Pemahaman terhadap strategi dan kerangka kerja ini akan sangat membantu organisasi dalam menghindari jebakan implementasi teknologi yang terputus dari nilai bisnis, serta dalam merancang transformasi digital yang bertumpu pada data.
 
-Bab-bab selanjutnya akan membahas aspek teknis dan praktis yang mendukung strategi-strategi ini, seperti arsitektur teknologi big data, integrasi data, serta pendekatan visualisasi dan analitik yang dapat diterapkan oleh organisasi dalam konteks nyata.
+

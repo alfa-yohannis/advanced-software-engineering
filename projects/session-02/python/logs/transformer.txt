@@ -1,0 +1,184 @@
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 321.0
+python_gc_objects_collected_total{generation="1"} 108.0
+python_gc_objects_collected_total{generation="2"} 0.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 55.0
+python_gc_collections_total{generation="1"} 5.0
+python_gc_collections_total{generation="2"} 0.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="12",patchlevel="12",version="3.12.12"} 1.0
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 3.70724864e+08
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 4.5379584e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.76931542994e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 198.34
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 15.0
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1024.0
+# HELP frames_in_total Frames received (events/messages)
+# TYPE frames_in_total counter
+frames_in_total{instance="0eb316b2a25c",service="transformer",topic="raw"} 8641.0
+# HELP frames_in_created Frames received (events/messages)
+# TYPE frames_in_created gauge
+frames_in_created{instance="0eb316b2a25c",service="transformer",topic="raw"} 1.7693154315745337e+09
+# HELP frames_out_total Frames sent (events/messages)
+# TYPE frames_out_total counter
+frames_out_total{instance="0eb316b2a25c",service="transformer",topic="processed"} 8641.0
+# HELP frames_out_created Frames sent (events/messages)
+# TYPE frames_out_created gauge
+frames_out_created{instance="0eb316b2a25c",service="transformer",topic="processed"} 1.7693154316221435e+09
+# HELP bytes_in_total Bytes received (payload bytes; best-effort)
+# TYPE bytes_in_total counter
+bytes_in_total{instance="0eb316b2a25c",service="transformer",topic="raw"} 8.84686904e+08
+# HELP bytes_in_created Bytes received (payload bytes; best-effort)
+# TYPE bytes_in_created gauge
+bytes_in_created{instance="0eb316b2a25c",service="transformer",topic="raw"} 1.769315431574562e+09
+# HELP bytes_out_total Bytes sent (payload bytes; best-effort)
+# TYPE bytes_out_total counter
+bytes_out_total{instance="0eb316b2a25c",service="transformer",topic="processed"} 8.51913735e+08
+# HELP bytes_out_created Bytes sent (payload bytes; best-effort)
+# TYPE bytes_out_created gauge
+bytes_out_created{instance="0eb316b2a25c",service="transformer",topic="processed"} 1.769315431622178e+09
+# HELP errors_total Errors (count)
+# TYPE errors_total counter
+# HELP stage_seconds Stage latency in seconds
+# TYPE stage_seconds histogram
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.001",service="transformer",stage="transformer_recv"} 7.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.003",service="transformer",stage="transformer_recv"} 7.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.005",service="transformer",stage="transformer_recv"} 7.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.01",service="transformer",stage="transformer_recv"} 8.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.02",service="transformer",stage="transformer_recv"} 15.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.05",service="transformer",stage="transformer_recv"} 170.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.1",service="transformer",stage="transformer_recv"} 8577.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.2",service="transformer",stage="transformer_recv"} 8640.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.5",service="transformer",stage="transformer_recv"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="1.0",service="transformer",stage="transformer_recv"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="2.0",service="transformer",stage="transformer_recv"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="5.0",service="transformer",stage="transformer_recv"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="+Inf",service="transformer",stage="transformer_recv"} 8641.0
+stage_seconds_count{instance="0eb316b2a25c",service="transformer",stage="transformer_recv"} 8641.0
+stage_seconds_sum{instance="0eb316b2a25c",service="transformer",stage="transformer_recv"} 669.3725092411041
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.001",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.003",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.005",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.01",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.02",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.05",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.1",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.2",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.5",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="1.0",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="2.0",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="5.0",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="+Inf",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_count{instance="0eb316b2a25c",service="transformer",stage="transformer_parse_header"} 8641.0
+stage_seconds_sum{instance="0eb316b2a25c",service="transformer",stage="transformer_parse_header"} 0.5133607387542725
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.001",service="transformer",stage="transformer_decode"} 0.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.003",service="transformer",stage="transformer_decode"} 0.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.005",service="transformer",stage="transformer_decode"} 0.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.01",service="transformer",stage="transformer_decode"} 4893.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.02",service="transformer",stage="transformer_decode"} 8590.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.05",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.1",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.2",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.5",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="1.0",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="2.0",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="5.0",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="+Inf",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_count{instance="0eb316b2a25c",service="transformer",stage="transformer_decode"} 8641.0
+stage_seconds_sum{instance="0eb316b2a25c",service="transformer",stage="transformer_decode"} 91.35252499580383
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.001",service="transformer",stage="transformer_grayscale"} 0.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.003",service="transformer",stage="transformer_grayscale"} 8464.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.005",service="transformer",stage="transformer_grayscale"} 8622.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.01",service="transformer",stage="transformer_grayscale"} 8640.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.02",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.05",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.1",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.2",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.5",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="1.0",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="2.0",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="5.0",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="+Inf",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_count{instance="0eb316b2a25c",service="transformer",stage="transformer_grayscale"} 8641.0
+stage_seconds_sum{instance="0eb316b2a25c",service="transformer",stage="transformer_grayscale"} 14.562873363494873
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.001",service="transformer",stage="transformer_encode_jpeg"} 0.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.003",service="transformer",stage="transformer_encode_jpeg"} 0.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.005",service="transformer",stage="transformer_encode_jpeg"} 0.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.01",service="transformer",stage="transformer_encode_jpeg"} 6136.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.02",service="transformer",stage="transformer_encode_jpeg"} 8630.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.05",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.1",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.2",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="0.5",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="1.0",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="2.0",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="5.0",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_bucket{instance="0eb316b2a25c",le="+Inf",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_count{instance="0eb316b2a25c",service="transformer",stage="transformer_encode_jpeg"} 8641.0
+stage_seconds_sum{instance="0eb316b2a25c",service="transformer",stage="transformer_encode_jpeg"} 85.17288541793823
+# HELP stage_seconds_created Stage latency in seconds
+# TYPE stage_seconds_created gauge
+stage_seconds_created{instance="0eb316b2a25c",service="transformer",stage="transformer_recv"} 1.7693154315744064e+09
+stage_seconds_created{instance="0eb316b2a25c",service="transformer",stage="transformer_parse_header"} 1.769315431574749e+09
+stage_seconds_created{instance="0eb316b2a25c",service="transformer",stage="transformer_decode"} 1.7693154316082892e+09
+stage_seconds_created{instance="0eb316b2a25c",service="transformer",stage="transformer_grayscale"} 1.769315431610333e+09
+stage_seconds_created{instance="0eb316b2a25c",service="transformer",stage="transformer_encode_jpeg"} 1.769315431621791e+09
+# HELP jpeg_bytes JPEG payload size in bytes
+# TYPE jpeg_bytes histogram
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="10000.0",service="transformer"} 0.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="30000.0",service="transformer"} 0.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="60000.0",service="transformer"} 0.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="120000.0",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="250000.0",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="500000.0",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="1e+06",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="2e+06",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="in",instance="0eb316b2a25c",le="+Inf",service="transformer"} 8641.0
+jpeg_bytes_count{direction="in",instance="0eb316b2a25c",service="transformer"} 8641.0
+jpeg_bytes_sum{direction="in",instance="0eb316b2a25c",service="transformer"} 8.84686904e+08
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="10000.0",service="transformer"} 0.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="30000.0",service="transformer"} 0.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="60000.0",service="transformer"} 0.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="120000.0",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="250000.0",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="500000.0",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="1e+06",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="2e+06",service="transformer"} 8641.0
+jpeg_bytes_bucket{direction="out",instance="0eb316b2a25c",le="+Inf",service="transformer"} 8641.0
+jpeg_bytes_count{direction="out",instance="0eb316b2a25c",service="transformer"} 8641.0
+jpeg_bytes_sum{direction="out",instance="0eb316b2a25c",service="transformer"} 8.51913735e+08
+# HELP jpeg_bytes_created JPEG payload size in bytes
+# TYPE jpeg_bytes_created gauge
+jpeg_bytes_created{direction="in",instance="0eb316b2a25c",service="transformer"} 1.769315431574593e+09
+jpeg_bytes_created{direction="out",instance="0eb316b2a25c",service="transformer"} 1.7693154316218827e+09
+# HELP e2e_seconds End-to-end latency seconds (capture->node_c_ingest)
+# TYPE e2e_seconds histogram
+# HELP mjpeg_clients Active MJPEG clients
+# TYPE mjpeg_clients gauge
+# HELP process_rss_bytes Process RSS bytes
+# TYPE process_rss_bytes gauge
+process_rss_bytes{instance="0eb316b2a25c",service="transformer"} 5.2506624e+07
+# HELP process_cpu_percent Process CPU percent
+# TYPE process_cpu_percent gauge
+process_cpu_percent{instance="0eb316b2a25c",service="transformer"} 21.0

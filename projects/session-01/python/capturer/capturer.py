@@ -8,7 +8,7 @@
 # JPEG_QUALITY=80 \
 # LOOP=true \
 # FALLBACK_FPS=25 \
-# python node_a.py
+# python capturer.py
 
 
 ## Run with Docker
@@ -22,7 +22,7 @@
 #   -e LOOP=true \
 #   -e FALLBACK_FPS=25 \
 #   -v "$PWD:/data:ro" \
-#   node-a
+#   capturer
 
 import json
 import os

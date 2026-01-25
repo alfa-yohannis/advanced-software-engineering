@@ -1,0 +1,100 @@
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 390.0
+python_gc_objects_collected_total{generation="1"} 104.0
+python_gc_objects_collected_total{generation="2"} 0.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 66.0
+python_gc_collections_total{generation="1"} 6.0
+python_gc_collections_total{generation="2"} 0.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="12",patchlevel="12",version="3.12.12"} 1.0
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 2.612404224e+09
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 1.27963136e+08
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.76931542994e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 477.15
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 14.0
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1024.0
+# HELP frames_in_total Frames received (events/messages)
+# TYPE frames_in_total counter
+# HELP frames_out_total Frames sent (events/messages)
+# TYPE frames_out_total counter
+frames_out_total{instance="72be9af8db88",service="capturer",topic="raw"} 8473.0
+# HELP frames_out_created Frames sent (events/messages)
+# TYPE frames_out_created gauge
+frames_out_created{instance="72be9af8db88",service="capturer",topic="raw"} 1.7693154315727632e+09
+# HELP bytes_in_total Bytes received (payload bytes; best-effort)
+# TYPE bytes_in_total counter
+# HELP bytes_out_total Bytes sent (payload bytes; best-effort)
+# TYPE bytes_out_total counter
+bytes_out_total{instance="72be9af8db88",service="capturer",topic="raw"} 8.67471682e+08
+# HELP bytes_out_created Bytes sent (payload bytes; best-effort)
+# TYPE bytes_out_created gauge
+bytes_out_created{instance="72be9af8db88",service="capturer",topic="raw"} 1.7693154315727892e+09
+# HELP errors_total Errors (count)
+# TYPE errors_total counter
+# HELP stage_seconds Stage latency in seconds
+# TYPE stage_seconds histogram
+stage_seconds_bucket{instance="72be9af8db88",le="0.001",service="capturer",stage="capturer_encode_jpeg"} 0.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.003",service="capturer",stage="capturer_encode_jpeg"} 0.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.005",service="capturer",stage="capturer_encode_jpeg"} 0.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.01",service="capturer",stage="capturer_encode_jpeg"} 8273.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.02",service="capturer",stage="capturer_encode_jpeg"} 8466.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.05",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.1",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.2",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_bucket{instance="72be9af8db88",le="0.5",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_bucket{instance="72be9af8db88",le="1.0",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_bucket{instance="72be9af8db88",le="2.0",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_bucket{instance="72be9af8db88",le="5.0",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_bucket{instance="72be9af8db88",le="+Inf",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_count{instance="72be9af8db88",service="capturer",stage="capturer_encode_jpeg"} 8473.0
+stage_seconds_sum{instance="72be9af8db88",service="capturer",stage="capturer_encode_jpeg"} 57.73459982872009
+# HELP stage_seconds_created Stage latency in seconds
+# TYPE stage_seconds_created gauge
+stage_seconds_created{instance="72be9af8db88",service="capturer",stage="capturer_encode_jpeg"} 1.7693154315716782e+09
+# HELP jpeg_bytes JPEG payload size in bytes
+# TYPE jpeg_bytes histogram
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="10000.0",service="capturer"} 0.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="30000.0",service="capturer"} 0.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="60000.0",service="capturer"} 0.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="120000.0",service="capturer"} 8473.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="250000.0",service="capturer"} 8473.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="500000.0",service="capturer"} 8473.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="1e+06",service="capturer"} 8473.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="2e+06",service="capturer"} 8473.0
+jpeg_bytes_bucket{direction="out",instance="72be9af8db88",le="+Inf",service="capturer"} 8473.0
+jpeg_bytes_count{direction="out",instance="72be9af8db88",service="capturer"} 8473.0
+jpeg_bytes_sum{direction="out",instance="72be9af8db88",service="capturer"} 8.67471682e+08
+# HELP jpeg_bytes_created JPEG payload size in bytes
+# TYPE jpeg_bytes_created gauge
+jpeg_bytes_created{direction="out",instance="72be9af8db88",service="capturer"} 1.7693154315720513e+09
+# HELP e2e_seconds End-to-end latency seconds (capture->node_c_ingest)
+# TYPE e2e_seconds histogram
+# HELP mjpeg_clients Active MJPEG clients
+# TYPE mjpeg_clients gauge
+# HELP process_rss_bytes Process RSS bytes
+# TYPE process_rss_bytes gauge
+process_rss_bytes{instance="72be9af8db88",service="capturer"} 1.28036864e+08
+# HELP process_cpu_percent Process CPU percent
+# TYPE process_cpu_percent gauge
+process_cpu_percent{instance="72be9af8db88",service="capturer"} 54.0
