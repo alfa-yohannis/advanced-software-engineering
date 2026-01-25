@@ -222,10 +222,10 @@ Kode pada node Capturer, Broker, Transformer, dan Web Server diperbarui untuk me
 
 Selain itu, ditambahkan \emph{shared library} metrik untuk memastikan konsistensi definisi metrik antar node, misalnya konsistensi penamaan metrik, label yang digunakan, serta tipe metrik (\texttt{Counter}, \texttt{Gauge}, \texttt{Histogram}). Shared library ini bertujuan mencegah duplikasi definisi metrik dan mengurangi risiko inkonsistensi antar node.
 
-Berikut contoh struktur minimal shared library metrik (misal: \texttt{shared/obs.py}):
+Berikut contoh struktur minimal shared library metrik (misal: \texttt{shared/observability.py}):
 
 \begin{lstlisting}[style=PythonStyle]
-# shared/metrics2.py
+# shared/observability.py
 from prometheus_client import Counter, Gauge, Histogram
 
 # Throughput / volume counters
