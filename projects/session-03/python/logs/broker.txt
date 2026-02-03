@@ -1,0 +1,150 @@
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 314.0
+python_gc_objects_collected_total{generation="1"} 111.0
+python_gc_objects_collected_total{generation="2"} 0.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 46.0
+python_gc_collections_total{generation="1"} 4.0
+python_gc_collections_total{generation="2"} 0.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="12",patchlevel="12",version="3.12.12"} 1.0
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 3.52641024e+08
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 3.1596544e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.76931542966e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 12.59
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 19.0
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1024.0
+# HELP frames_in_total Frames received (events/messages)
+# TYPE frames_in_total counter
+frames_in_total{instance="2dfa5e9027bc",service="broker",topic="subs"} 2.0
+frames_in_total{instance="2dfa5e9027bc",service="broker",topic="xsub_in"} 17030.0
+# HELP frames_in_created Frames received (events/messages)
+# TYPE frames_in_created gauge
+frames_in_created{instance="2dfa5e9027bc",service="broker",topic="subs"} 1.769315430757118e+09
+frames_in_created{instance="2dfa5e9027bc",service="broker",topic="xsub_in"} 1.769315431573552e+09
+# HELP frames_out_total Frames sent (events/messages)
+# TYPE frames_out_total counter
+frames_out_total{instance="2dfa5e9027bc",service="broker",topic="subs"} 2.0
+frames_out_total{instance="2dfa5e9027bc",service="broker",topic="xpub_out"} 17030.0
+# HELP frames_out_created Frames sent (events/messages)
+# TYPE frames_out_created gauge
+frames_out_created{instance="2dfa5e9027bc",service="broker",topic="subs"} 1.769315430757359e+09
+frames_out_created{instance="2dfa5e9027bc",service="broker",topic="xpub_out"} 1.7693154315738087e+09
+# HELP bytes_in_total Bytes received (payload bytes; best-effort)
+# TYPE bytes_in_total counter
+bytes_in_total{instance="2dfa5e9027bc",service="broker",topic="subs"} 14.0
+bytes_in_total{instance="2dfa5e9027bc",service="broker",topic="xsub_in"} 1.715118791e+09
+# HELP bytes_in_created Bytes received (payload bytes; best-effort)
+# TYPE bytes_in_created gauge
+bytes_in_created{instance="2dfa5e9027bc",service="broker",topic="subs"} 1.769315430757159e+09
+bytes_in_created{instance="2dfa5e9027bc",service="broker",topic="xsub_in"} 1.769315431573577e+09
+# HELP bytes_out_total Bytes sent (payload bytes; best-effort)
+# TYPE bytes_out_total counter
+bytes_out_total{instance="2dfa5e9027bc",service="broker",topic="subs"} 14.0
+bytes_out_total{instance="2dfa5e9027bc",service="broker",topic="xpub_out"} 1.715118791e+09
+# HELP bytes_out_created Bytes sent (payload bytes; best-effort)
+# TYPE bytes_out_created gauge
+bytes_out_created{instance="2dfa5e9027bc",service="broker",topic="subs"} 1.7693154307573884e+09
+bytes_out_created{instance="2dfa5e9027bc",service="broker",topic="xpub_out"} 1.7693154315738258e+09
+# HELP errors_total Errors (count)
+# TYPE errors_total counter
+# HELP stage_seconds Stage latency in seconds
+# TYPE stage_seconds histogram
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.001",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.003",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.005",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.01",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.02",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.05",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.1",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.2",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.5",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="1.0",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="2.0",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="5.0",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="+Inf",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_count{instance="2dfa5e9027bc",service="broker",stage="broker_recv_xpub"} 2.0
+stage_seconds_sum{instance="2dfa5e9027bc",service="broker",stage="broker_recv_xpub"} 0.0005991458892822266
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.001",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.003",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.005",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.01",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.02",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.05",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.1",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.2",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.5",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="1.0",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="2.0",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="5.0",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="+Inf",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_count{instance="2dfa5e9027bc",service="broker",stage="broker_send_xsub"} 2.0
+stage_seconds_sum{instance="2dfa5e9027bc",service="broker",stage="broker_send_xsub"} 0.00020694732666015625
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.001",service="broker",stage="broker_recv_xsub"} 17029.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.003",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.005",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.01",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.02",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.05",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.1",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.2",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.5",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="1.0",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="2.0",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="5.0",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="+Inf",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_count{instance="2dfa5e9027bc",service="broker",stage="broker_recv_xsub"} 17030.0
+stage_seconds_sum{instance="2dfa5e9027bc",service="broker",stage="broker_recv_xsub"} 2.0412940979003906
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.001",service="broker",stage="broker_send_xpub"} 17017.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.003",service="broker",stage="broker_send_xpub"} 17027.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.005",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.01",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.02",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.05",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.1",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.2",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="0.5",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="1.0",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="2.0",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="5.0",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_bucket{instance="2dfa5e9027bc",le="+Inf",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_count{instance="2dfa5e9027bc",service="broker",stage="broker_send_xpub"} 17030.0
+stage_seconds_sum{instance="2dfa5e9027bc",service="broker",stage="broker_send_xpub"} 1.540647029876709
+# HELP stage_seconds_created Stage latency in seconds
+# TYPE stage_seconds_created gauge
+stage_seconds_created{instance="2dfa5e9027bc",service="broker",stage="broker_recv_xpub"} 1.7693154307569318e+09
+stage_seconds_created{instance="2dfa5e9027bc",service="broker",stage="broker_send_xsub"} 1.7693154307572432e+09
+stage_seconds_created{instance="2dfa5e9027bc",service="broker",stage="broker_recv_xsub"} 1.7693154315734398e+09
+stage_seconds_created{instance="2dfa5e9027bc",service="broker",stage="broker_send_xpub"} 1.769315431573735e+09
+# HELP jpeg_bytes JPEG payload size in bytes
+# TYPE jpeg_bytes histogram
+# HELP e2e_seconds End-to-end latency seconds (capture->node_c_ingest)
+# TYPE e2e_seconds histogram
+# HELP mjpeg_clients Active MJPEG clients
+# TYPE mjpeg_clients gauge
+# HELP process_rss_bytes Process RSS bytes
+# TYPE process_rss_bytes gauge
+process_rss_bytes{instance="2dfa5e9027bc",service="broker"} 3.1465472e+07
+# HELP process_cpu_percent Process CPU percent
+# TYPE process_cpu_percent gauge
+process_cpu_percent{instance="2dfa5e9027bc",service="broker"} 2.0

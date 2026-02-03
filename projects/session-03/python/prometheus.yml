@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 2s
+
+scrape_configs:
+  - job_name: "capturer"
+    static_configs:
+      - targets: ["capturer:9101"]
+
+  - job_name: "broker"
+    static_configs:
+      - targets: ["broker:9102"]
+
+  - job_name: "transformer"
+    static_configs:
+      - targets: ["transformer:9103"]
+
+  - job_name: "web_server"
+    static_configs:
+      - targets: ["web_server:9104"]
