@@ -9,7 +9,7 @@ import time
 import binascii
 import zmq
 
-BROKER_HOST = os.getenv("BROKER_HOST", "broker")
+BROKER_HOST = os.getenv("BROKER_HOST", "broker-session03")  # nama service di docker-compose
 SUB_PORT = int(os.getenv("SUB_PORT", "5556"))  # port SUB side (xpub bind)
 TOPIC = os.getenv("TOPIC", "")                 # "" = semua topic
 N = int(os.getenv("N", "10"))                  # berapa message

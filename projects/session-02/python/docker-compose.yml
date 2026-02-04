@@ -89,6 +89,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--log.level=warn"
     ports:
       - "9090:9090"
     depends_on:
@@ -100,6 +101,8 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    environment:
+      - GF_LOG_LEVEL=error
     ports:
       - "3000:3000"
     depends_on:

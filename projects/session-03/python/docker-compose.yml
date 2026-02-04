@@ -1,13 +1,13 @@
 services:
 
-  broker:
+  broker-session03:
     build:
       context: .
       dockerfile: broker/Dockerfile
     image: broker:latest
-    container_name: broker
+    container_name: broker-session03
     environment:
-      SERVICE: broker
+      SERVICE: broker-session03
       BROKER_BIND_HOST: 0.0.0.0
       PUB_PORT: 5555
       SUB_PORT: 5556
@@ -17,15 +17,15 @@ services:
       - "5556:5556"
       - "9102:9102"
 
-  capturer:
+  capturer-session03:
     build:
       context: .
       dockerfile: capturer/Dockerfile
     image: capturer:latest
-    container_name: capturer
+    container_name: capturer-session03
     environment:
-      SERVICE: capturer
-      BROKER_HOST: broker
+      SERVICE: capturer-session03
+      BROKER_HOST: broker-session03
       PUB_PORT: 5555
       TOPIC: raw
       VIDEO_PATH: /data/input.mp4
@@ -38,19 +38,19 @@ services:
     volumes:
       - ./data:/data:ro
     depends_on:
-      - broker
+      - broker-session03
     ports:
       - "9101:9101"
 
-  transformer:
+  transformer-session03:
     build:
       context: .
       dockerfile: transformer/Dockerfile
     image: transformer:latest
-    container_name: transformer
+    container_name: transformer-session03
     environment:
-      SERVICE: transformer
-      BROKER_HOST: broker
+      SERVICE: transformer-session03
+      BROKER_HOST: broker-session03
       SUB_PORT: 5556
       PUB_PORT: 5555
       SUB_TOPIC: raw
@@ -59,20 +59,20 @@ services:
       METRICS_PORT: 9103
       PAYLOAD_KEY: RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
     depends_on:
-      - broker
+      - broker-session03
     ports:
       - "9103:9103"
 
 
-  web_server:
+  web_server-session03:
     build:
       context: .
       dockerfile: web_server/Dockerfile
     image: web_server:latest
-    container_name: web_server
+    container_name: web_server-session03
     environment:
-      SERVICE: web_server
-      BROKER_HOST: broker
+      SERVICE: web_server-session03
+      BROKER_HOST: broker-session03
       SUB_PORT: 5556
       SUB_TOPIC: processed
       HTTP_HOST: 0.0.0.0
@@ -81,8 +81,8 @@ services:
       METRICS_PORT: 9104
       PAYLOAD_KEY: RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
     depends_on:
-      - broker
-      - transformer
+      - broker-session03
+      - transformer-session03
     ports:
       - "8000:8000"
       - "9104:9104"
@@ -98,10 +98,10 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - broker
-      - capturer
-      - transformer
-      - web_server
+      - broker-session03
+      - capturer-session03
+      - transformer-session03
+      - web_server-session03
 
   grafana:
     image: grafana/grafana:latest
