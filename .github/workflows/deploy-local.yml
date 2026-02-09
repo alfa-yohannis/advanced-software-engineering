@@ -1,0 +1,21 @@
+name: deploy-local
+
+on:
+  workflow_run:
+    workflows: ["tests"]
+    types: [completed]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: [self-hosted, local, deploy]  # adjust labels to match your runner
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Run app locally (compose)
+        run: |
+          docker compose -f projects/session-04/docker-compose.yml down || true
+          docker compose -f projects/session-04/docker-compose.yml build
+          docker compose -f projects/session-04/docker-compose.yml up -d
