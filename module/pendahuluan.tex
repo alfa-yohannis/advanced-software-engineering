@@ -16,15 +16,17 @@
 
 \subsection*{Sesi 3 --- Keamanan Sistem Perangkat Lunak}
 \textbf{Deskripsi:} Keamanan dan kepatuhan diperkenalkan sebagai mekanisme yang secara aktif membatasi perilaku runtime sistem, bukan sekadar sebagai aktivitas audit eksternal.  
-\textbf{Alat:} Docker, pengantar konsep Kubernetes, dan konsep Terraform.  
+\textbf{Alat:} Docker, Python, Docker Compose.  
 \textbf{Mahasiswa Non-IT:} Mahasiswa mengidentifikasi aturan keamanan, batasan, serta pelanggaran kebijakan, dan menjelaskan dampaknya terhadap risiko dan kepatuhan sistem.  
 \textbf{Mahasiswa IT:} Mahasiswa menerapkan kontrol keamanan dasar pada container dan deployment, serta mengonfigurasi batasan runtime pada level lingkungan.
 
-\subsection*{Sesi 4 --- CI/CD dan Ledakan Skrip}
-\textbf{Deskripsi:} Mahasiswa mengalami langsung keterbatasan otomasi berbasis skrip melalui pipeline continuous integration dan deployment, dengan menyoroti duplikasi dan kerapuhan solusi skrip.  
-\textbf{Alat:} CI/CD berbasis YAML dan Bash.  
-\textbf{Mahasiswa Non-IT:} Mahasiswa menelusuri langkah eksekusi pipeline dan mendokumentasikan masalah pemeliharaan otomasi.  
-\textbf{Mahasiswa IT:} Mahasiswa memodifikasi pipeline CI/CD lintas lingkungan dan mengamati bagaimana perubahan kecil pada skrip dapat memicu kegagalan runtime.
+\subsection*{Sesi 4 --- CI/CD dan Otomasi Terstruktur}
+
+\textbf{Deskripsi:} Mahasiswa mempelajari penerapan \textit{continuous integration} dan \textit{continuous deployment} sebagai bentuk otomasi terstruktur dalam pengembangan perangkat lunak. Melalui pipeline CI/CD, mahasiswa mengamati bagaimana proses build, pengujian, dan deployment dapat dijalankan secara konsisten, terverifikasi, dan dapat direproduksi tanpa bergantung pada langkah manual.
+\textbf{Alat:} CI/CD berbasis YAML (GitHub Actions), Bash, Docker, dan Docker Compose.
+\textbf{Mahasiswa Non-IT:} Mahasiswa menelusuri alur eksekusi pipeline CI/CD, memahami tujuan setiap tahap (checkout, testing, deployment), serta mendokumentasikan peran otomasi dalam menjaga konsistensi dan kualitas sistem.
+\textbf{Mahasiswa IT:} Mahasiswa mengonfigurasi dan memodifikasi pipeline CI/CD lintas lingkungan (CI dan deployment), menjalankan pengujian otomatis, serta menganalisis dampak perubahan konfigurasi terhadap keberhasilan pipeline dan stabilitas sistem runtime.
+
 
 \subsection*{Sesi 5 --- Model Runtime dan Perilaku Eksekutabel}
 \textbf{Deskripsi:} Artefak runtime dieksplisitkan sebagai model dan langsung diperlakukan sebagai struktur keputusan yang dapat dieksekusi, menjembatani transisi dari konfigurasi implisit ke eksekusi yang terkendali.  
@@ -181,3 +183,5 @@ Contoh topik studi komparasi yang dapat dilakukan secara mandiri dan berpotensi 
     \item Perbandingan algoritma kompresi \texttt{gzip} dan \texttt{zstd} untuk berkas log, dengan pengukuran waktu kompresi, dekompresi, dan rasio kompresi.
 	\item PostgreSQLvs MongoDB dalam hal penyimpanan gambar atau gambar time-series.
 \end{enumerate}
+
+\cite{020practical}.
