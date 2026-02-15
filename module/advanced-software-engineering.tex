@@ -137,6 +137,31 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	showstringspaces=false
 }
 
+\lstdefinelanguage{terraform} {
+	keywords={variable, bool, type, number, string, default, locals, resource, dynamic, 
+				module, content, output},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywords={iex},
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{\#},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
 % Define Java language style for listings
 \lstdefinestyle{JavaScript}{
 	language=Java,
@@ -195,6 +220,7 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	\include{chapter02}
 	\include{chapter03}
 	\include{chapter04}
+	\include{chapter05}
 
 	\backmatter
 	\addcontentsline{toc}{chapter}{Daftar Pustaka}
