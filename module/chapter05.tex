@@ -567,6 +567,9 @@ Atau melalui environment variable. Pendekatan ini efektif untuk skala kecil, tet
 
 Terraform mendukung pendekatan modular dan berbasis variabel. Satu modul infrastruktur dapat digunakan ulang untuk dev, staging, dan production. Perbedaan hanya terletak pada nilai variabel dan file \texttt{*.tfvars}.
 
+
+
+
 Contoh pemanggilan modul untuk environment berbeda:
 
 \begin{lstlisting}[language=terraform]
@@ -577,6 +580,9 @@ module "tts" {
 \end{lstlisting}
 
 Pendekatan ini menjaga struktur arsitektur tetap identik antar environment, sehingga meningkatkan environment parity dan mengurangi risiko inkonsistensi konfigurasi.
+
+
+
 
 \subsection{Production-Grade Capabilities}
 
@@ -616,6 +622,89 @@ Penyimpanan berkas audio dilakukan menggunakan MinIO sebagai \textit{object stor
 Sebagai lapisan terluar, sistem menggunakan Nginx sebagai \textit{gateway} atau \textit{reverse proxy}. Komponen ini bertugas mengarahkan lalu lintas dari klien ke layanan internal yang sesuai. Dalam skenario production, gateway juga dapat menangani terminasi TLS, pembatasan akses, serta kebijakan keamanan tambahan lainnya.
 
 Secara keseluruhan, arsitektur TTS ini memisahkan komputasi, penyimpanan, dan akses jaringan menjadi komponen independen. Pola ini mencerminkan praktik arsitektur sistem modern yang mendukung skalabilitas, isolasi tanggung jawab, dan kemudahan pengelolaan lintas environment. Struktur inilah yang kemudian menjadi dasar untuk membandingkan penggunaan Docker Compose pada tahap awal pengembangan dengan pendekatan Infrastructure as Code menggunakan Terraform dalam pengelolaan deployment multi-environment.
+
+\subsection{Workflow}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  scale=0.9,
+  transform shape, 
+  font=\small,
+  node distance=10mm and 12mm,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt},
+  grp/.style={draw, rounded corners, dashed, inner sep=6pt},
+  arr/.style={-{Latex[length=3mm]}, thick},
+  note/.style={align=left, font=\scriptsize}
+]
+
+% --- Input layer
+\node[box] (code) {Kode Aplikasi\\\texttt{app/}\\(API, Web, Worker)};
+\node[box, right=of code] (module) {Terraform Module\\\texttt{modules/tts\_stack}\\(desired state)};
+\node[box, right=of module] (tfvars) {Konfigurasi Environment\\\texttt{dev.tfvars}\\\texttt{staging.tfvars}\\\texttt{production.tfvars}};
+
+% --- Merge/plan/apply
+\node[box, below=of module] (plan) {\texttt{terraform init}\\\texttt{terraform plan}\\\texttt{terraform apply}};
+
+\draw[arr] (code) -- (module);
+\draw[arr] (tfvars) -- (module);
+\draw[arr] (module) -- (plan);
+
+% --- Environments
+\node[box, below left=5mm and 16mm of plan] (dev) {ENV: \textbf{dev}\\
+\texttt{env=dev}\\
+\texttt{gateway=8088}\\
+\texttt{worker=1}\\
+\texttt{bucket=tts-dev}};
+\node[box, below=of plan] (stg) {ENV: \textbf{staging}\\
+\texttt{env=staging}\\
+\texttt{gateway=18088}\\
+\texttt{worker=2}\\
+\texttt{bucket=tts-staging}};
+\node[box, below right=5mm and 15mm of plan] (prod) {ENV: \textbf{production}\\
+\texttt{env=production}\\
+\texttt{gateway=28088}\\
+\texttt{worker=4}\\
+\texttt{bucket=tts-prod}};
+
+\draw[arr] (plan) -- (dev);
+\draw[arr] (plan) -- (stg);
+\draw[arr] (plan) -- (prod);
+
+
+% --- Each environment contains the same stack
+\node[box, below=8mm of dev,  minimum width=40mm] (devstack) {Stack Identik\\Redis + MinIO\\API + Web + Worker(s)\\Nginx Gateway};
+\node[box, below=8mm of stg,  minimum width=40mm] (stgstack) {Stack Identik\\Redis + MinIO\\API + Web + Worker(s)\\Nginx Gateway};
+\node[box, below=8mm of prod, minimum width=40mm] (prdstack) {Stack Identik\\Redis + MinIO\\API + Web + Worker(s)\\Nginx Gateway};
+
+\node[note, above=2mm of module] (legend) {Prinsip utama: \textbf{module sama} $\rightarrow$ \textbf{parameter beda} $\rightarrow$ \textbf{deploy multi-environment}};
+
+
+\draw[arr] (dev) -- (devstack);
+\draw[arr] (stg) -- (stgstack);
+\draw[arr] (prod) -- (prdstack);
+
+% --- Dashed grouping to emphasize "same architecture, different params"
+\node[grp, fit=(dev)(devstack)] (gdev) {};
+\node[grp, fit=(stg)(stgstack)] (gstg) {};
+\node[grp, fit=(prod)(prdstack)] (gprd) {};
+
+\end{tikzpicture}
+\caption{Dari kode dan modul IaC yang sama, sistem dapat dideploy ke banyak environment melalui konfigurasi \texttt{*.tfvars} yang berbeda.}
+\label{fig:workflow_terraform}
+\end{figure}
+
+Diagram pada Gambar~\ref{fig:workflow_terraform} menggambarkan alur kerja deployment sistem TTS menggunakan pendekatan Infrastructure as Code (IaC) berbasis Terraform. Workflow ini dimulai dari dua artefak utama, yaitu kode aplikasi yang berada pada direktori \texttt{app/} dan modul Terraform \texttt{modules/tts\_stack} yang mendefinisikan \textit{desired state} infrastruktur. Kode aplikasi merepresentasikan logika bisnis dan implementasi layanan seperti API, Web, dan Worker, sedangkan modul Terraform mendeskripsikan bagaimana layanan tersebut dijalankan dalam bentuk container, network, volume, serta konfigurasi port dan environment variable. Modul ini bersifat generik dan reusable sehingga dapat digunakan untuk berbagai environment tanpa perlu duplikasi definisi resource.
+
+Perbedaan antar environment tidak dibuat dengan menggandakan modul atau mengubah struktur arsitektur, melainkan melalui file konfigurasi parameter seperti \texttt{dev.tfvars}, \texttt{staging.tfvars}, dan \texttt{production.tfvars}. File-file ini menyediakan nilai variabel yang menentukan karakteristik operasional setiap environment, seperti nama environment, pemetaan port host, jumlah replika worker, serta nama bucket penyimpanan. Dengan pendekatan ini, arsitektur sistem tetap identik di semua environment, namun parameter operasionalnya dapat disesuaikan sesuai kebutuhan pengembangan, pengujian, atau produksi.
+
+Ketika perintah \texttt{terraform init}, \texttt{terraform plan}, dan \texttt{terraform apply} dijalankan dengan file \texttt{*.tfvars} yang sesuai, Terraform akan menginisialisasi provider, membandingkan konfigurasi dengan state saat ini, menghasilkan rencana perubahan, dan kemudian menerapkan perubahan tersebut hingga kondisi aktual sesuai dengan konfigurasi yang dideklarasikan. Proses ini bersifat deklaratif dan idempotent, sehingga menjalankan konfigurasi yang sama tidak akan menghasilkan duplikasi resource atau perubahan yang tidak diperlukan.
+
+Hasil dari workflow ini adalah terciptanya beberapa environment yang berjalan secara terisolasi namun memiliki struktur arsitektur yang sama. Environment dev dapat memiliki satu worker dan menggunakan port default, staging dapat meningkatkan jumlah worker dan menggeser port untuk menghindari konflik, sedangkan production dapat menjalankan lebih banyak worker dengan konfigurasi yang lebih ketat. Meskipun parameter berbeda, setiap environment tetap terdiri dari komponen yang sama, yaitu Redis sebagai message queue, MinIO sebagai object storage, API dan Web sebagai lapisan layanan, Worker sebagai komponen komputasi, serta Nginx sebagai gateway.
+
+Secara konseptual, workflow ini menunjukkan transformasi dari kode dan definisi infrastruktur menuju deployment multi-environment yang konsisten dan terkontrol. Prinsip yang dihasilkan adalah environment parity, reproducibility, skalabilitas berbasis variabel, serta pemisahan tanggung jawab antara logika aplikasi dan konfigurasi infrastruktur. Dengan demikian, deployment tidak lagi menjadi proses manual berbasis langkah-langkah ad-hoc, melainkan bagian terstruktur dari siklus hidup perangkat lunak yang terdokumentasi dan terversi.
+
+
 
 
 \subsection{Struktur Proyek}
