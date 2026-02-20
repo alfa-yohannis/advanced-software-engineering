@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tts-config
+data:
+  ENV: "prod"
+  MP3_BUCKET: "tts-prod"
+  API_BASE_URL: "http://api:8000"

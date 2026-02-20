@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tts-config
+data:
+  ENV: "dev"
+  MP3_BUCKET: "tts-dev"
+  # If your gateway/web needs an external URL, keep API_BASE_URL internal for cluster calls:
+  API_BASE_URL: "http://api:8000"

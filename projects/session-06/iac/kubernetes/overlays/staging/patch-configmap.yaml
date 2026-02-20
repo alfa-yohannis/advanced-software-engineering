@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tts-config
+data:
+  APP_ENV: "staging"
+  MP3_BUCKET: "tts-staging"

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tts-config
+data:
+  APP_ENV: "prod"
+  MP3_BUCKET: "tts-prod"

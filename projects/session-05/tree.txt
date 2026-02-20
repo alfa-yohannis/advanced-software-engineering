@@ -1,0 +1,87 @@
+.
+├── app
+│   ├── client
+│   │   └── load_client.py
+│   ├── gateway
+│   │   └── nginx.conf
+│   ├── models
+│   │   ├── en_GB-alan-medium.onnx
+│   │   ├── en_GB-alan-medium.onnx.json
+│   │   ├── id_ID-news_tts-medium.onnx
+│   │   └── id_ID-news_tts-medium.onnx.json
+│   ├── pytest.ini
+│   ├── requirements-dev.txt
+│   ├── services
+│   │   ├── api
+│   │   │   ├── api.py
+│   │   │   ├── Dockerfile
+│   │   │   ├── __pycache__
+│   │   │   │   └── api.cpython-312.pyc
+│   │   │   └── requirements.txt
+│   │   ├── web
+│   │   │   ├── Dockerfile
+│   │   │   ├── __pycache__
+│   │   │   │   └── web.cpython-312.pyc
+│   │   │   ├── requirements.txt
+│   │   │   ├── static
+│   │   │   │   └── index.html
+│   │   │   └── web.py
+│   │   └── worker
+│   │       ├── Dockerfile
+│   │       ├── __pycache__
+│   │       │   └── worker.cpython-312.pyc
+│   │       ├── requirements.txt
+│   │       └── worker.py
+│   └── tests
+│       ├── conftest.py
+│       ├── integration
+│       │   ├── __pycache__
+│       │   │   ├── test_e2e_compose.cpython-312-pytest-8.3.2.pyc
+│       │   │   └── test_e2e.cpython-312-pytest-8.3.2.pyc
+│       │   └── test_e2e.py
+│       ├── __pycache__
+│       │   ├── conftest.cpython-312-pytest-7.4.4.pyc
+│       │   └── conftest.cpython-312-pytest-8.3.2.pyc
+│       └── unit
+│           ├── api
+│           │   ├── __pycache__
+│           │   │   ├── test_api.cpython-312-pytest-8.3.2.pyc
+│           │   │   ├── test_enqueue_contract.cpython-312-pytest-8.3.2.pyc
+│           │   │   └── test_healthz.cpython-312-pytest-8.3.2.pyc
+│           │   └── test_api.py
+│           ├── web
+│           │   ├── __pycache__
+│           │   │   ├── test_health_contract.cpython-312-pytest-8.3.2.pyc
+│           │   │   └── test_web.cpython-312-pytest-8.3.2.pyc
+│           │   └── test_web.py
+│           └── worker
+│               ├── __pycache__
+│               │   └── test_worker.cpython-312-pytest-8.3.2.pyc
+│               └── test_worker.py
+├── compose
+│   └── docker-compose.yml
+├── iac
+│   └── terraform
+│       ├── dev
+│       │   ├── dev.tfvars
+│       │   ├── main.tf
+│       │   ├── terraform.tfstate
+│       │   └── terraform.tfstate.backup
+│       ├── modules
+│       │   └── tts_stack
+│       │       ├── main.tf
+│       │       ├── outputs.tf
+│       │       └── variables.tf
+│       ├── prod
+│       │   ├── main.tf
+│       │   ├── production.tfvars
+│       │   ├── terraform.tfstate
+│       │   └── terraform.tfstate.backup
+│       └── staging
+│           ├── main.tf
+│           ├── staging.tfvars
+│           ├── terraform.tfstate
+│           └── terraform.tfstate.backup
+└── tree.txt
+
+32 directories, 53 files

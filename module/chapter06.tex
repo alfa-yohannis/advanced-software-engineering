@@ -1,481 +1,168 @@
-\chapter{Teknologi Pemrosesan Big Data }
-
-\section{Pendahuluan}
-
-Pemrosesan big data memiliki peran penting dalam arsitektur data bisnis karena memungkinkan organisasi untuk mengubah data mentah, tidak terstruktur, dan beragam menjadi format terstruktur yang siap untuk analisis. Transformasi ini sangat penting untuk mendukung inisiatif Business Intelligence (BI) dan Machine Learning (ML) yang mendorong pengambilan keputusan strategis dan efisiensi operasional. Dalam arsitektur data modern, teknologi pemrosesan berfungsi sebagai jembatan antara pengumpulan data dan ekstraksi nilai, menentukan seberapa efektif data dapat diintegrasikan, dibersihkan, ditransformasikan, dan disiapkan untuk aplikasi analitik selanjutnya.
-
-Bab ini memperkenalkan konsep dan teknologi dasar dalam pemrosesan big data. Pembahasan dimulai dengan menempatkan pemrosesan big data dalam konteks arsitektur data yang lebih luas, menjelaskan alur data dari berbagai sumber ke data lake, kemudian diproses dan diorganisir ke dalam data warehouse atau lakehouse untuk analisis. Bab ini mencakup paradigma pemrosesan batch dan stream beserta perannya dalam berbagai skenario bisnis seperti pelaporan keuangan dan deteksi penipuan secara real-time. Selain itu, akan dibahas kerangka kerja inti seperti Hadoop MapReduce dan Apache Spark, serta alat ekosistem lainnya termasuk Apache Hive, HBase, Sqoop, dan Kafka, dengan evaluasi implikasi strategis pemilihan teknologi pemrosesan terkait biaya, skalabilitas, integrasi, dan kebutuhan keterampilan organisasi.
-
-
-\section{Gambaran Umum Pemrosesan Big Data}
-
-\begin{figure}[ht]
-	\centering
-	\begin{tikzpicture}[node distance=1cm and 0.5cm]
-		
-		% Define styles
-		\tikzset{
-			box/.style={
-				rectangle, draw, rounded corners,
-				minimum width=2.2cm, minimum height=1cm,
-				text width=3cm, align=center, font=\small
-			},
-			widebox/.style={
-				rectangle, draw, rounded corners,
-				minimum width=6.5cm, minimum height=1cm,
-				text width=6.8cm, align=center, font=\small
-			},
-			source/.style={box, fill=gray!30},
-			ingestion/.style={box, fill=blue!20},
-			storage/.style={box, fill=gray!30},
-			processing/.style={box, fill=cyan!10},
-			lakehouse/.style={box, fill=gray!30},
-			serving/.style={box, fill=gray!30},
-			ml/.style={box, fill=gray!30},
-			governance/.style={widebox, fill=gray!30},
-			output/.style={box, fill=gray!30},
-			arrow/.style={thick, ->, >=Stealth},
-			dashedarrow/.style={thick, dashed, ->, >=Stealth}
-		}
-		
-		% Main flow (horizontal line)
-		\node (source)    [source]        {\textbf{Data Sources}\\• IoT\\• Logs\\• APIs\\• Social Media};
-		\node (ingest)    [ingestion, right=of source] {\textbf{Ingestion Layer}\\• Kafka\\• Pub/Sub\\• NiFi};
-		\node (lake)      [storage,   right=of ingest] {\textbf{Raw Data Lake}\\• S3\\• GCS\\• ADLS\\• HDFS};
-		\node (process)   [processing, right=of lake] {\textbf{Processing}\\• Spark\\• Flink\\• Dataflow};
-		
-		% Warehouse
-		\node (warehouse) [lakehouse, below=1.5cm of process] {\textbf{Lakehouse/ DW}\\• BigQuery\\• Snowflake\\• Delta Lake};
-		
-		% Governance (above lake and process)
-		\node (gov)       [governance, left=1cm of warehouse] {\textbf{Governance \& Orchestration}\\• Atlas\quad• Airflow\quad• IAM\quad• Data Catalog};
-		
-		% BI and ML 
-		\node (bi)        [serving, below=1.5cm of warehouse] {\textbf{BI \& Analytics}\\• Tableau\\• Power BI\\• Looker};
-		\node (decision)  [output, left=.5cm of bi] {\textbf{Decision Support}\\• Dashboards\\• Reports\\• KPIs};
-		
-		\node (ml)        [ml, left= of decision] {\textbf{ML Platform}\\• SageMaker\\• TensorFlow\\• Feature Store};
-		\node (opsys)     [output, left=.5cm of ml] {\textbf{Operational Systems}\\• Recommenders\\• Alerts\\• Automation};
-		
-		
-		% Arrows (main flow)
-		\draw[arrow] (source) -- (ingest);
-		\draw[arrow] (ingest) -- (lake);
-		\draw[arrow] (lake) -- (process);
-		\draw[arrow] (process) -- (warehouse);
-		
-		% BI and ML branches
-		\draw[arrow] (warehouse.south) -- (bi.north);
-		\draw[arrow] (warehouse.south) -- (ml.north);
-		\draw[arrow] (bi) -- (decision);
-		\draw[arrow] (ml) -- (opsys);
-		\draw[arrow] (ml) -- (decision);
-		
-		% Governance dashed arrows to all
-		\draw[dashedarrow] (gov.north) -- (source.south);
-		\draw[dashedarrow] (gov.north) -- (ingest.south);
-		\draw[dashedarrow] (gov.north) -- (lake.south);
-		\draw[dashedarrow] (gov.north) -- (process.south);
-		
-		\draw[dashedarrow] (gov.east) -- (warehouse.west);
-		
-		\draw[dashedarrow] (gov.south) --  (bi.north);
-		\draw[dashedarrow] (gov.south) --  (ml.north);
-		\draw[dashedarrow] (gov.south) --  (decision.north);
-		\draw[dashedarrow] (gov.south) --  (opsys.north);
-		
-	\end{tikzpicture}
-	\caption{Data Processing, particularly ingestion for data lake and transformation for lake/warehouse, in Big Data}
-	\label{fig:bigdata-processing}
-\end{figure}
-
-
-Big data processing merupakan proses penting dalam arsitektur big data yang bertujuan untuk mengolah data berukuran besar dan beragam menjadi informasi yang bernilai bagi organisasi. Pada bagian ini akan dibahas definisi big data processing (Gambar \ref{fig:bigdata-processing}), peran pemrosesan dalam mengubah data mentah menjadi format terstruktur, serta alur arsitektur pemrosesan data secara keseluruhan.
-
-Big data processing dapat didefinisikan sebagai serangkaian aktivitas untuk membaca, membersihkan, mengintegrasi, mengubah, dan menganalisis data dalam jumlah besar yang berasal dari berbagai sumber. Proses ini dilakukan menggunakan teknologi dan kerangka kerja khusus yang mampu menangani volume, kecepatan, dan variasi data yang tinggi, seperti Hadoop MapReduce, Apache Spark, dan teknologi pemrosesan streaming lainnya.
-
-Peran utama dari big data processing adalah untuk mengubah data mentah yang tidak terstruktur atau semi-terstruktur menjadi data terstruktur yang dapat dimanfaatkan untuk analisis lanjutan, business intelligence (BI), atau machine learning (ML). Tanpa adanya tahap pemrosesan ini, data yang dikumpulkan hanya menjadi kumpulan informasi yang tidak memiliki makna strategis. Melalui pemrosesan, data dapat dibersihkan dari duplikasi, divalidasi, digabungkan, serta diubah menjadi format tabel atau schema yang sesuai dengan kebutuhan analisis bisnis dan prediktif.
-
-Secara umum, alur arsitektur big data processing dimulai dari berbagai sumber data seperti IoT sensor, aplikasi bisnis, media sosial, dan file log, yang kemudian disimpan dalam data lake. Setelah itu, data akan diproses menggunakan pipeline pemrosesan batch maupun streaming untuk transformasi dan integrasi data. Hasil dari pemrosesan ini selanjutnya disimpan dalam data warehouse atau lakehouse yang telah terstruktur, sehingga dapat digunakan oleh sistem business intelligence (BI) untuk pelaporan dan visualisasi, serta oleh machine learning (ML) untuk model prediktif dan analitik lanjutan.
-
-Dengan demikian, big data processing menjadi salah satu komponen utama dalam menciptakan nilai dari data, mendukung pengambilan keputusan berbasis data, serta mendorong inovasi berbasis AI dan analitik dalam organisasi modern.
-
-\section{Tinjauan Ulang Data Ingestion}
-
-Data ingestion merupakan tahap awal dalam arsitektur big data yang berfokus pada proses memasukkan data dari berbagai sumber ke dalam sistem penyimpanan terpusat seperti data lake. Tahap ini menjadi fondasi penting karena kualitas dan keberagaman data yang diingest akan menentukan efektivitas pemrosesan dan analisis data di tahap selanjutnya.
-
-Secara umum, data ingestion menggambarkan bagaimana data dari beragam sumber seperti sensor IoT, aplikasi bisnis, media sosial, file log server, sistem transaksi, hingga open data pemerintah dikumpulkan dan disimpan dalam data lake. Proses ini dapat dilakukan secara batch, di mana data dikumpulkan dalam interval tertentu untuk dimuat secara bersamaan, maupun secara streaming yang memungkinkan data dikirim dan disimpan secara real-time saat data dihasilkan.
-
-Jenis data yang diingest ke dalam data lake sangat beragam, mencakup data terstruktur, semi-terstruktur, dan tidak terstruktur. Data terstruktur adalah data yang memiliki format tabel yang jelas dengan schema terdefinisi, seperti data transaksi penjualan dalam database relasional. Data semi-terstruktur adalah data yang memiliki struktur tertentu namun tidak terdefinisi dalam schema tabel tradisional, seperti file JSON dan XML. Sementara itu, data tidak terstruktur adalah data yang tidak memiliki struktur tetap, seperti teks dokumen, gambar, video, dan rekaman audio.
-
-Dengan memahami proses dan tipe data dalam data ingestion, organisasi dapat merancang strategi penyimpanan dan pemrosesan yang sesuai, memastikan bahwa data yang masuk ke dalam data lake siap untuk diolah lebih lanjut dalam pipeline big data untuk mendukung kebutuhan business intelligence dan machine learning secara optimal.
-
-\section{Apache Kafka untuk Ingesti Data Real-Time}
-
+\subsection{Tema Demo: Apa yang Bisa Dilakukan Kubernetes yang Tidak Bisa Dilakukan Terraform}
 
-\begin{figure}[ht]
-	\centering
-	\begin{tikzpicture}[node distance=1cm and 0.8cm]
-		
-		% Styles
-		\tikzset{
-			component/.style={
-				rectangle, draw, rounded corners,
-				minimum width=2.5cm, minimum height=1cm,
-				text width=3cm, align=center, font=\small, fill=gray!20
-			},
-			kafka/.style={
-				rectangle, draw, rounded corners,
-				minimum width=3.2cm, minimum height=1.2cm,
-				text width=3.4cm, align=center, font=\small, fill=orange!30
-			},
-			consumer/.style={
-				rectangle, draw, rounded corners,
-				minimum width=2.5cm, minimum height=1cm,
-				text width=3cm, align=center, font=\small, fill=green!20
-			},
-			labelbox/.style={
-				draw=none, fill=none, text centered, font=\small
-			},
-			arrowpub/.style={thick, ->, >=Stealth, blue},
-			arrowsub/.style={thick, ->, >=Stealth, red}
-		}
-		
-		% Producers
-		\node (webapp) [component] {\textbf{Web Apps}\\(Clicks, Logs)};
-		\node (iot) [component, below=of webapp] {\textbf{IoT Sensors}\\(Telemetry)};
-		\node (trx) [component, below=of iot] {\textbf{Transaction Systems}\\(Payments, Orders)};
-		\node (log) [component, below=of trx] {\textbf{Log Servers}\\(Events)};
-		
-		% Kafka
-		\node (kafka) [kafka, right=2cm of iot, yshift=-1cm] {\textbf{Apache Kafka}\\(Topics, Brokers)};
-		
-		% Topic ID label
-		\node (topic) [labelbox, below=0.2cm of kafka] {Contoh: Topic ID = \texttt{transactions}};
-		
-		% Consumers
-		\node (stream) [consumer, right=2cm of kafka, yshift=1cm] {\textbf{Stream Processing}\\• Spark Streaming\\• Flink};
-		\node (lake) [consumer, right=2cm of kafka, yshift=-1cm] {\textbf{Data Lake / Lakehouse}\\• S3\\• HDFS\\• Delta Lake};
-		
-		% Publish arrows: producers to kafka
-		\draw[arrowpub] (webapp.east) -- node[above, font=\scriptsize, blue] {Publish} (kafka.west);
-		\draw[arrowpub] (iot.east) -- node[above, font=\scriptsize, blue] {Publish} (kafka.west);
-		\draw[arrowpub] (trx.east) -- node[above, font=\scriptsize, blue] {Publish} (kafka.west);
-		\draw[arrowpub] (log.east) -- node[above, font=\scriptsize, blue] {Publish} (kafka.west);
-		
-		% Subscribe arrows: kafka to consumers
-		\draw[arrowsub] (kafka.east) -- node[above, font=\scriptsize, red] {Subscribe} (stream.west);
-		\draw[arrowsub] (kafka.east) -- node[below, font=\scriptsize, red] {Subscribe} (lake.west);
-		
-		% Publish-subscribe label
-		\node (pubsub) [labelbox, above=0.4cm of kafka] {\textbf{Publish - Subscribe}};
-		
-	\end{tikzpicture}
-	\caption{Arsitektur Apache Kafka dengan konsep Publish-Subscribe dan Topic ID}
-	\label{fig:kafka-architecture}
-\end{figure}
-
-
-Apache Kafka merupakan platform streaming ingestion yang banyak digunakan dalam arsitektur big data modern untuk mendukung pemrosesan data secara real-time. Kafka awalnya dikembangkan oleh LinkedIn dan kemudian menjadi proyek open source di bawah Apache Software Foundation. Teknologi ini dirancang untuk menangani aliran data berkecepatan tinggi dengan throughput tinggi, latensi rendah, dan kemampuan skalabilitas horizontal yang baik.
-
-Sebagai platform ingestion streaming, Kafka berfungsi sebagai perantara (message broker) yang memungkinkan data dari berbagai sumber dikirim secara terus-menerus ke dalam sistem penyimpanan dan pemrosesan downstream, seperti data lake dan lakehouse (perhatikan Gambar \ref{fig:kafka-architecture}). Kafka menggunakan konsep \textit{publish-subscribe}, di mana produser (producers) mengirimkan data ke topik tertentu, dan konsumer (consumers) membaca data tersebut sesuai kebutuhan mereka. Dengan arsitektur terdistribusi ini, Kafka mampu memastikan data dapat diterima dengan andal meskipun terdapat lonjakan volume data yang tinggi.
-
-Dalam pipeline data real-time, Apache Kafka berperan penting untuk menghubungkan sistem sumber data seperti aplikasi web, sensor IoT, sistem transaksi, dan log server dengan data lake atau lakehouse. Data yang masuk melalui Kafka dapat diproses secara langsung menggunakan teknologi pemrosesan stream seperti Apache Flink atau Spark Streaming, atau disimpan terlebih dahulu ke dalam data lake untuk diproses lebih lanjut secara batch.
-
-Contoh kasus penggunaan Kafka dalam dunia bisnis meliputi pelacakan aktivitas pelanggan secara real-time pada aplikasi e-commerce untuk analisis perilaku dan rekomendasi produk instan, pemantauan transaksi keuangan untuk mendeteksi penipuan (fraud detection) secara langsung, dan pengumpulan data sensor IoT untuk pengendalian operasional mesin atau kendaraan secara real-time. Dengan menggunakan Kafka, organisasi dapat membangun pipeline data streaming yang andal untuk mendukung kebutuhan analitik dan operasional yang membutuhkan data up-to-date dengan kecepatan tinggi.
-
-Dengan demikian, Apache Kafka menjadi komponen strategis dalam arsitektur big data modern yang menuntut ingestion data real-time, mendukung transformasi digital, dan meningkatkan ketepatan pengambilan keputusan berbasis data terkini.
-
-\section{Pemrosesan dalam Arsitektur Big Data}
-
-
-Processing atau pemrosesan dalam arsitektur big data merupakan tahap penting yang berfokus pada transformasi, pembersihan, integrasi, dan penataan data sehingga dapat digunakan untuk analisis bisnis dan machine learning secara efektif. Tanpa adanya tahap pemrosesan, data yang dikumpulkan dalam data lake hanya akan menjadi kumpulan informasi mentah yang tidak memiliki nilai strategis bagi organisasi.
-
-Secara umum, pemrosesan data meliputi beberapa aktivitas utama. Pertama, transformasi data, yaitu mengubah data dari format awal menjadi format yang sesuai dengan kebutuhan analisis, seperti konversi tipe data, perhitungan agregat, atau pembuatan variabel turunan. Kedua, pembersihan data (data cleaning) yang bertujuan untuk menghapus duplikasi, menangani nilai kosong atau tidak valid, dan memastikan konsistensi data. Ketiga, integrasi data, yaitu menggabungkan data dari berbagai sumber menjadi satu set data terpadu yang dapat digunakan untuk analisis lintas sumber. Keempat, penataan data (structuring) yang mengorganisir data ke dalam schema tabel atau format file tertentu sesuai standar data warehouse atau lakehouse.
-
-Terdapat perbedaan strategis dalam pemrosesan data untuk data warehouse dan lakehouse. Pada arsitektur data warehouse tradisional, pemrosesan dilakukan secara ketat untuk memastikan data sudah sepenuhnya terstruktur, terintegrasi, dan divalidasi sebelum dimasukkan ke dalam warehouse (ETL: Extract, Transform, Load). Pendekatan ini menekankan kualitas dan konsistensi data yang tinggi, sehingga cocok untuk pelaporan keuangan, compliance, dan analisis bisnis yang memerlukan data bersih dan stabil.
-
-Sementara itu, pada arsitektur lakehouse yang menggabungkan kelebihan data lake dan data warehouse, pemrosesan dapat dilakukan dengan pendekatan ELT (Extract, Load, Transform), di mana data mentah disimpan terlebih dahulu di lakehouse kemudian diproses sesuai kebutuhan analisis. Pendekatan ini memungkinkan fleksibilitas yang lebih tinggi, mendukung analisis eksplorasi data besar dan machine learning dengan cepat, tanpa harus menunggu seluruh proses transformasi selesai sebelum data tersedia.
-
-Dengan demikian, pemrosesan dalam big data architecture tidak hanya menentukan kualitas data yang digunakan oleh organisasi, tetapi juga mempengaruhi kecepatan, fleksibilitas, dan skalabilitas dalam mendukung pengambilan keputusan strategis berbasis data di era digital.
-
-
-\subsection{Batch vs Stream Processing}
-
-Pemrosesan batch dan stream merupakan dua paradigma utama dalam big data processing yang memiliki perbedaan konsep dan strategi penerapan dalam arsitektur data organisasi.
-
-Secara konseptual, \textbf{batch processing} adalah metode pemrosesan di mana data dikumpulkan terlebih dahulu dalam jumlah besar dalam periode waktu tertentu, kemudian diproses secara serentak dalam satu eksekusi. Pendekatan ini cocok untuk pekerjaan yang tidak memerlukan hasil secara langsung, seperti pelaporan keuangan bulanan, penghitungan total penjualan harian, atau pengolahan data historis untuk analisis tren bisnis. Teknologi yang umum digunakan untuk batch processing meliputi Hadoop MapReduce dan Apache Spark batch mode, yang mampu menangani volume data besar dengan biaya komputasi yang efisien.
-
-Di sisi lain, \textbf{stream processing} atau pemrosesan streaming merupakan metode pemrosesan data secara real-time atau near real-time, di mana data diproses segera setelah diterima. Pendekatan ini sangat penting untuk skenario bisnis yang memerlukan respon cepat, seperti deteksi penipuan transaksi keuangan secara real-time, monitoring kondisi mesin industri melalui sensor IoT, dan analisis perilaku pengguna aplikasi untuk memberikan rekomendasi instan. Teknologi populer untuk stream processing meliputi Apache Kafka Streams, Apache Flink, dan Spark Streaming.
-
-Dalam konteks kesiapan data warehouse dan lakehouse, pemrosesan batch lebih sesuai untuk data warehouse tradisional karena memastikan data sudah bersih, terstruktur, dan divalidasi sebelum dimuat ke warehouse (ETL). Hal ini mendukung kebutuhan pelaporan yang menuntut akurasi tinggi dan data yang konsisten. Sementara itu, pemrosesan streaming lebih sering digunakan pada arsitektur lakehouse atau hybrid, yang memungkinkan data dimuat dan dianalisis secara cepat tanpa menunggu seluruh proses transformasi selesai, mendukung analitik prediktif dan machine learning yang membutuhkan data terkini.
-
-Sebagai contoh penerapan bisnis, perusahaan perbankan menggunakan batch processing untuk menghasilkan laporan keuangan harian dan bulanan yang diolah pada malam hari di luar jam operasional, sedangkan stream processing digunakan untuk mendeteksi anomali transaksi yang mengindikasikan penipuan (fraud detection) dalam hitungan detik saat transaksi terjadi.
-
-Dengan memahami perbedaan dan keunggulan masing-masing paradigma, organisasi dapat merancang pipeline pemrosesan data yang sesuai dengan kebutuhan analitik, memastikan ketersediaan data yang cepat dan akurat untuk mendukung pengambilan keputusan strategis dan operasional secara efektif.
+\textbf{Perbandingan Utama}
 
+\begin{itemize}
+    \item \textbf{Terraform} $\rightarrow$ Lifecycle Infrastruktur
+    \item \textbf{Kubernetes} $\rightarrow$ Lifecycle Aplikasi
+\end{itemize}
 
-\section{Hadoop Ecosystem}
+% ============================================================
+\subsection{Demo 1 -- Self-Healing (Mustahil di Terraform)}
 
-\subsection{Introduction to Hadoop}
+\begin{frame}[fragile]{Demo 1 -- Self-Healing}
 
-Hadoop merupakan salah satu teknologi fundamental dalam big data processing yang memungkinkan organisasi untuk menyimpan dan memproses data berukuran sangat besar secara efisien dengan biaya yang relatif rendah. Hadoop dikembangkan pertama kali oleh Doug Cutting dan Mike Cafarella pada tahun 2005 sebagai proyek open source yang terinspirasi dari makalah Google File System (GFS) dan MapReduce. Saat ini, Hadoop berada di bawah naungan Apache Software Foundation dan telah menjadi standar de facto untuk pemrosesan data skala besar di banyak organisasi global.
-
-Secara umum, Hadoop memiliki dua komponen utama. Pertama, \textbf{Hadoop Distributed File System (HDFS)}, yaitu sistem file terdistribusi yang dirancang untuk menyimpan data dalam jumlah besar dengan membagi file menjadi blok-blok kecil dan mendistribusikannya ke beberapa node dalam cluster. HDFS menyediakan mekanisme replikasi otomatis untuk memastikan keandalan dan ketersediaan data meskipun terjadi kegagalan pada salah satu node.
-
-Kedua, Hadoop memiliki \textbf{MapReduce}, sebuah model pemrograman untuk pemrosesan data secara paralel di seluruh node dalam cluster Hadoop. Dengan model ini, data diproses dekat dengan lokasi penyimpanannya (data locality principle), sehingga mengurangi biaya transfer data dan meningkatkan efisiensi pemrosesan.
-
-Hadoop relevan dalam konteks big data karena mampu menangani volume data yang sangat besar (petabyte) dengan struktur yang beragam. Selain itu, Hadoop dibangun dengan arsitektur terdistribusi yang bersifat scalable dan fault-tolerant, memungkinkan organisasi untuk menambah kapasitas cluster hanya dengan menambahkan node baru tanpa perlu mengganti sistem secara keseluruhan.
-
-Dalam perkembangannya, Hadoop tidak hanya terdiri dari HDFS dan MapReduce, tetapi juga memiliki ekosistem luas yang mencakup berbagai alat dan kerangka kerja pendukung seperti Apache Hive, HBase, Pig, Sqoop, dan lainnya, yang memudahkan integrasi, query, analisis, dan manajemen data besar secara komprehensif.
-
-Dengan demikian, Hadoop menjadi salah satu pondasi utama dalam arsitektur big data modern yang mendukung pemrosesan data batch berskala besar untuk berbagai keperluan analisis bisnis, pelaporan, dan pengambilan keputusan strategis di era data-driven.
-
-
-\subsection{MapReduce}
-
-MapReduce merupakan model pemrograman yang menjadi inti dari pemrosesan batch dalam Hadoop. Konsep MapReduce pertama kali diperkenalkan oleh Google pada tahun 2004 dan diimplementasikan dalam Hadoop untuk memungkinkan pemrosesan data berukuran besar secara paralel di seluruh node dalam cluster.
-
-\begin{figure}[ht]
-	\centering
-	\begin{tikzpicture}[node distance=0.5cm and 0.5cm]
-		
-		% Styles
-		\tikzset{
-			stage/.style={
-				rectangle, draw, rounded corners,
-				minimum width=2cm, minimum height=1cm,
-				text width=2cm, align=center, font=\small, fill=orange!20
-			},
-			process/.style={
-				rectangle, draw, rounded corners,
-				minimum width=2.2cm, minimum height=0.8cm,
-				text width=2.4cm, align=center, font=\scriptsize, fill=green!20
-			},
-			arrow/.style={thick, ->, >=Stealth}
-		}
-		
-		% Input data
-		\node (input) [stage] {Input Data\\(Split Files)};
-		
-		% Mappers
-		\node (map1) [process, right=of input, yshift=1cm] {Mapper 1:\\(Key, Value)};
-		\node (map2) [process, right=of input, yshift=-1cm] {Mapper 2:\\(Key, Value)};
-		
-		% Shuffle and Sort
-		\node (shuffle) [stage, right=3.5cm of input] {Shuffle \& Sort};
-		
-		% Reducers
-		\node (reduce1) [process, right=of shuffle, yshift=0.8cm] {Reducer 1:\\(Key, Aggregated Value)};
-		\node (reduce2) [process, right=of shuffle, yshift=-0.8cm] {Reducer 2:\\(Key, Aggregated Value)};
-		
-		% Output
-		\node (output) [stage, right=of reduce1, xshift=0.5cm, yshift=-0.8cm] {Final Output\\(Results)};
-		
-		% Arrows: Input to Mappers
-		\draw[arrow] (input.east) -- (map1.west);
-		\draw[arrow] (input.east) -- (map2.west);
-		
-		% Arrows: Mappers to Shuffle
-		\draw[arrow] (map1.east) -- (shuffle.west);
-		\draw[arrow] (map2.east) -- (shuffle.west);
-		
-		% Arrows: Shuffle to Reducers
-		\draw[arrow] (shuffle.east) -- (reduce1.west);
-		\draw[arrow] (shuffle.east) -- (reduce2.west);
-		
-		% Arrows: Reducers to Output
-		\draw[arrow] (reduce1.east) -- (output.west);
-		\draw[arrow] (reduce2.east) -- (output.west);
-		
-	\end{tikzpicture}
-	\caption{Ilustrasi alur kerja MapReduce pada Hadoop}
-	\label{fig:mapreduce-flow}
-\end{figure}
+\textbf{Langkah 1 -- Tampilkan Pod}
 
+\begin{lstlisting}[language=bash]
+kubectl get pods -n tts
+\end{lstlisting}
 
-Gambar \ref{fig:mapreduce-flow} mengilustrasikan cara kerja MapReduce. Secara konseptual, MapReduce terdiri dari dua tahap utama. Tahap pertama adalah \textbf{Map}, di mana data input dibagi menjadi potongan-potongan kecil dan setiap potongan diproses secara independen untuk menghasilkan pasangan kunci-nilai (key-value pairs). Tahap kedua adalah \textbf{Reduce}, di mana hasil keluaran dari tahap Map akan digabungkan dan dikompilasi berdasarkan kunci untuk menghasilkan output akhir yang terintegrasi. Pendekatan ini memungkinkan pemrosesan data secara terdistribusi dengan memanfaatkan banyak node sekaligus, sehingga meningkatkan kecepatan eksekusi dan skalabilitas pemrosesan. 
+\textbf{Langkah 2 -- Hapus Satu Pod}
 
-Secara strategis, MapReduce memiliki beberapa manfaat utama. Pertama, model ini mendukung pemrosesan batch dengan volume data yang sangat besar, bahkan hingga petabyte, dengan memanfaatkan arsitektur cluster Hadoop yang scalable. Kedua, MapReduce bersifat fault-tolerant karena jika terjadi kegagalan pada satu task, sistem akan secara otomatis menjadwalkan ulang task tersebut pada node lain. Ketiga, MapReduce mengoptimalkan prinsip data locality, yaitu memproses data di lokasi penyimpanan data berada, sehingga mengurangi biaya transfer data di dalam cluster.
+\begin{lstlisting}[language=bash]
+kubectl delete pod -n tts <nama-pod-api>
+kubectl get pods -n tts -w
+\end{lstlisting}
 
-Namun, MapReduce juga memiliki beberapa keterbatasan. Salah satunya adalah kompleksitas dalam penulisan program MapReduce yang memerlukan pemahaman mendalam tentang cara kerja model Map dan Reduce, serta tidak seintuitif menulis query SQL. Selain itu, MapReduce kurang optimal untuk skenario pemrosesan real-time atau near real-time karena bersifat batch-oriented, sehingga memiliki latensi yang tinggi dalam menghasilkan output.
+\textbf{Poin:}
+Terraform tidak melakukan apa-apa.
+Kubernetes merekonsiliasi desired state secara kontinu.
 
-Dengan demikian, meskipun MapReduce sangat efektif untuk pemrosesan batch skala besar seperti agregasi data historis dan pelaporan berkala, organisasi perlu mempertimbangkan keterbatasannya dalam kecepatan eksekusi dan fleksibilitas saat memilih teknologi pemrosesan untuk kebutuhan bisnis yang memerlukan analitik real-time atau interaktif.
+\end{frame}
 
-\subsection{Use Cases for Data Warehouse Preparation}
+% ============================================================
+\subsection{Demo 2 -- Horizontal Auto Scaling (HPA)}
 
-Dalam konteks persiapan data warehouse, Hadoop MapReduce memiliki berbagai kasus penggunaan yang relevan untuk mendukung integrasi dan penataan data dalam skala besar sebelum dimuat ke dalam sistem warehouse. Dua contoh utama yang sering diterapkan di dunia bisnis adalah agregasi transaksi ritel dan peringkasan data log untuk pelaporan kepatuhan.
+\begin{frame}[fragile]{Demo 2 -- Horizontal Auto Scaling}
 
-Contoh pertama adalah \textbf{agregasi transaksi ritel}. Perusahaan ritel besar seperti supermarket dan e-commerce menghasilkan jutaan transaksi penjualan setiap harinya yang tersimpan dalam sistem point of sales (POS) terdistribusi. Dengan menggunakan MapReduce, data transaksi dari berbagai outlet atau lokasi dapat digabungkan dan dihitung totalnya berdasarkan kategori produk, wilayah, atau periode waktu tertentu. Hasil agregasi ini kemudian dimuat ke dalam data warehouse untuk mendukung analisis penjualan, optimasi inventori, strategi promosi, dan perencanaan pembelian barang dagangan secara efisien.
+\textbf{Tampilkan HPA}
 
-Contoh kedua adalah \textbf{peringkasan data log untuk pelaporan kepatuhan}. Perusahaan di sektor keuangan dan telekomunikasi diwajibkan untuk menyimpan log aktivitas sistem dan transaksi untuk kepentingan audit dan regulasi. Volume data log yang besar dari server aplikasi, database, dan perangkat jaringan perlu diringkas sebelum dimasukkan ke data warehouse. MapReduce digunakan untuk membaca data log mentah, melakukan parsing untuk mengekstrak field yang relevan, mengelompokkan data berdasarkan jenis aktivitas atau user, serta menghasilkan ringkasan penggunaan sistem atau statistik akses yang dibutuhkan untuk pelaporan kepatuhan kepada regulator.
+\begin{lstlisting}[language=bash]
+kubectl get hpa -n tts
+\end{lstlisting}
 
-Dengan demikian, penggunaan MapReduce dalam tahap persiapan data warehouse membantu organisasi dalam melakukan pemrosesan batch berukuran besar secara efisien, memastikan data yang dimuat ke warehouse sudah terstruktur, bersih, dan siap digunakan untuk pelaporan, analisis bisnis, serta pengambilan keputusan strategis secara tepat waktu.
+\textbf{Buat Beban}
 
+\begin{lstlisting}[language=bash]
+python client/load_client.py --base-url http://tts.local --concurrency 50
+\end{lstlisting}
 
-\section{Framework dan Alat Lain dalam Ekosistem Hadoop}
-Hadoop tidak berdisi sendiri, melainkan memiliki ekosistem di mana terdapat frameworks dan tools yang menunjang penggunaan framework tersebut. Gambar \ref{fig:hadoop-ecosystem-complete} menggambarkan beberapa frameworks dan tools tersebut dan kontribusinya di ekosistem Hadoop.
+atau
 
-\begin{figure}[ht]
-	\centering
-	\begin{tikzpicture}[node distance=1cm and 1.2cm]
-		
-		% Styles
-		\tikzset{
-			core/.style={
-				rectangle, draw, rounded corners,
-				minimum width=4cm, minimum height=1.2cm,
-				text width=4.2cm, align=center, font=\small, fill=orange!30
-			},
-			component/.style={
-				rectangle, draw, rounded corners,
-				minimum width=3.2cm, minimum height=1cm,
-				text width=3.4cm, align=center, font=\small, fill=green!20
-			},
-			arrow/.style={thick, ->, >=Stealth},
-			labelbox/.style={
-				draw=none, fill=none, text centered, font=\small
-			}
-		}
-		
-		% Hadoop Core
-		\node (core) [core] {\textbf{Hadoop Core}\\HDFS + MapReduce};
-		
-		% Components above
-		\node (hive) [component, above left=of core] {\textbf{Apache Hive}\\SQL-like Query};
-		\node (hbase) [component, above=of core] {\textbf{Apache HBase}\\NoSQL Real-time DB};
-		\node (sqoop) [component, above right=of core] {\textbf{Apache Sqoop}\\RDBMS Import/Export};
-		
-		% Arrows with labels
-		\draw[arrow] (hive.south) -- node[left, font=\scriptsize] {Query via SQL} (core.north west);
-		\draw[arrow] (hbase.south) -- node[right, font=\scriptsize] {Real-time Access} (core.north);
-		\draw[arrow] (sqoop.south) -- node[right, font=\scriptsize] {DB Integration} (core.north east);
-		
-	
-		
-	\end{tikzpicture}
-	\caption{Komponen pendukung melengkapi Hadoop Core dengan fungsi query, NoSQL, dan integrasi RDBMS}
-	\label{fig:hadoop-ecosystem-complete}
-\end{figure}
+\begin{lstlisting}[language=bash]
+hey -n 2000 -c 50 http://tts.local/api/healthz
+\end{lstlisting}
 
-\subsection{Apache Hive}
+\textbf{Amati Scaling}
 
-Apache Hive merupakan salah satu komponen penting dalam ekosistem Hadoop yang dirancang untuk memberikan kemampuan query data dengan sintaks mirip SQL pada data yang disimpan di Hadoop Distributed File System (HDFS). Hive dikembangkan oleh Facebook pada tahun 2008 untuk mengatasi tantangan dalam menulis program MapReduce secara langsung, sehingga analis data yang terbiasa menggunakan SQL dapat melakukan query dan analisis data besar di Hadoop dengan lebih mudah dan efisien.
+\begin{lstlisting}[language=bash]
+kubectl get hpa -n tts -w
+kubectl get pods -n tts -w
+\end{lstlisting}
 
-Hive menerjemahkan perintah HiveQL (varian SQL milik Hive) menjadi job MapReduce, Tez, atau Spark di backend untuk mengeksekusi query tersebut secara terdistribusi pada cluster Hadoop. Dengan demikian, Hive memungkinkan pemrosesan data dalam volume besar menggunakan infrastruktur Hadoop tanpa harus memahami kompleksitas pemrograman MapReduce.
+\end{frame}
 
-Dalam konteks bisnis, Hive mempermudah tim data analyst dan business intelligence dalam mengakses dan menganalisis data di Hadoop menggunakan perintah SQL yang familiar. Hal ini mempercepat adopsi Hadoop dalam organisasi, mengurangi kebutuhan pelatihan teknis mendalam, serta memungkinkan integrasi data warehouse berbasis Hadoop dengan alat visualisasi atau reporting yang mendukung koneksi SQL standar.
+% ============================================================
+\subsection{Demo 3 -- Rolling Update (Tanpa Downtime)}
 
-\subsection{Apache HBase}
+\begin{frame}[fragile]{Demo 3 -- Rolling Update}
 
-Apache HBase adalah database NoSQL terdistribusi yang dibangun di atas HDFS dan dirancang untuk mendukung operasi read dan write dengan kecepatan tinggi pada data dalam skala besar. HBase mengimplementasikan model penyimpanan key-value yang mirip dengan Google BigTable, memungkinkan penyimpanan miliaran baris data dengan latensi akses yang rendah.
+\begin{lstlisting}[language=bash]
+kubectl set image -n tts deploy/api api=session05-api:new-version
+kubectl rollout status -n tts deploy/api
+kubectl get pods -n tts -w
+\end{lstlisting}
 
-Dalam praktik bisnis, HBase digunakan untuk kasus penggunaan yang memerlukan lookup data secara real-time pada dataset besar. Misalnya, perusahaan telekomunikasi menggunakan HBase untuk menyimpan data penggunaan pelanggan yang terus bertambah setiap detik, memungkinkan query cepat untuk analisis operasional dan layanan pelanggan. Selain itu, HBase mendukung operasi update dan random access yang tidak efisien dilakukan pada HDFS murni, sehingga melengkapi kemampuan Hadoop dalam pemrosesan batch dengan kemampuan database real-time.
+Terraform akan destroy & recreate.
+Kubernetes melakukan rolling update bertahap dengan health check.
 
-\subsection{Apache Sqoop}
+\end{frame}
 
-Apache Sqoop adalah alat yang dirancang untuk memfasilitasi proses import dan export data antara Hadoop dan database relasional seperti MySQL, Oracle, dan PostgreSQL. Sqoop secara otomatis menghasilkan kode MapReduce untuk melakukan transfer data secara paralel, sehingga proses pemindahan data menjadi lebih cepat dan efisien.
+% ============================================================
+\subsection{Demo 4 -- Restart Otomatis Saat Crash}
 
-Dalam konteks bisnis, Sqoop memungkinkan integrasi antara data Hadoop dengan sistem enterprise yang sudah ada. Sebagai contoh, data transaksi yang diolah dalam Hadoop dapat diekspor ke database relasional untuk digunakan oleh aplikasi bisnis, atau data historis dari database relasional diimpor ke Hadoop untuk dianalisis dengan Spark atau Hive. Dengan demikian, Sqoop mendukung interoperabilitas antara ekosistem Hadoop dan infrastruktur data tradisional organisasi.
+\begin{frame}[fragile]{Demo 4 -- Automatic Restart}
 
-\subsection{Relevansi Alat-Alat dalam Ekosistem Hadoop}
+\begin{lstlisting}[language=bash]
+kubectl exec -n tts deploy/api -- kill 1
+\end{lstlisting}
 
+Pod restart otomatis karena mekanisme controller reconciliation.
 
-Beragam alat dan framework dalam ekosistem Hadoop memiliki nilai strategis dalam mendukung pemrosesan data secara efisien dan komprehensif. Integrasi alat seperti Hive, HBase, dan Sqoop memungkinkan organisasi untuk melakukan berbagai jenis pemrosesan dan penyimpanan data sesuai kebutuhan bisnis, mulai dari batch processing, real-time lookup, hingga integrasi data warehouse tradisional dengan big data platform.
+\end{frame}
 
-Dalam memilih teknologi ini, organisasi perlu mempertimbangkan beberapa faktor, seperti biaya implementasi dan operasional, skalabilitas sistem, serta keterampilan teknis tim yang akan mengelola dan mengembangkan solusi. Pelatihan dan pengembangan kompetensi sumber daya manusia menjadi penting untuk memastikan teknologi yang diadopsi dapat digunakan secara optimal untuk mencapai tujuan strategis organisasi dalam transformasi data-driven.
+% ============================================================
+\subsection{Demo 5 -- Service Discovery}
 
+\begin{frame}[fragile]{Demo 5 -- Service Discovery}
 
-\section{Apache Spark}
+\begin{lstlisting}[language=bash]
+kubectl exec -n tts deploy/web -- curl http://api:8000/healthz
+\end{lstlisting}
 
-\subsection{Pengenalan Spark}
+Tidak perlu mengetahui IP.
+DNS internal dan Service abstraction disediakan Kubernetes.
 
-Apache Spark merupakan framework pemrosesan big data yang dikembangkan untuk mengatasi keterbatasan MapReduce dalam hal kecepatan dan fleksibilitas pemrosesan. Spark awalnya dikembangkan oleh AMPLab di University of California, Berkeley pada tahun 2009, kemudian menjadi proyek open source di bawah Apache Software Foundation pada tahun 2014. Spark dirancang untuk mendukung pemrosesan data secara in-memory, sehingga dapat meningkatkan kecepatan eksekusi hingga puluhan kali lebih cepat dibandingkan dengan MapReduce yang berbasis disk I/O.
+\end{frame}
 
-Secara teknis, Spark memiliki arsitektur yang memungkinkan data disimpan dalam memori (RAM) selama proses eksekusi, meminimalkan kebutuhan pembacaan dan penulisan data ke disk yang menjadi bottleneck utama pada MapReduce. Selain itu, Spark mendukung berbagai jenis pemrosesan data dalam satu platform terpadu, termasuk batch processing, stream processing (melalui Spark Streaming), machine learning (dengan MLlib), dan graph processing (dengan GraphX). Hal ini menjadikan Spark sebagai framework yang sangat fleksibel dan serbaguna untuk berbagai kebutuhan analitik data besar.
+% ============================================================
+\subsection{Demo 6 -- Declarative Desired State}
 
-Dalam konteks bisnis, Apache Spark menawarkan kecepatan dan skalabilitas tinggi yang memungkinkan organisasi untuk menjalankan analisis data kompleks dan machine learning dalam waktu yang lebih singkat. Sebagai contoh, perusahaan e-commerce dapat menggunakan Spark untuk menganalisis perilaku pembelian pelanggan secara real-time dan mengupdate model rekomendasi produk mereka dalam hitungan menit. Selain itu, Spark memiliki API yang mendukung berbagai bahasa pemrograman populer seperti Scala, Java, Python, dan R, sehingga memudahkan integrasi dengan pipeline data yang sudah ada dan mempercepat proses pengembangan analitik.
+\begin{frame}[fragile]{Demo 6 -- Declarative Desired State}
 
-Dengan demikian, Apache Spark menjadi salah satu framework big data processing yang paling banyak diadopsi oleh organisasi modern karena kemampuannya dalam meningkatkan performa pemrosesan, mendukung berbagai jenis workload, dan memberikan fleksibilitas tinggi untuk kebutuhan analitik dan machine learning skala besar.
+\textbf{Cek Replica}
 
+\begin{lstlisting}[language=bash]
+kubectl get deploy -n tts api
+\end{lstlisting}
 
-\subsection{Spark SQL}
+\textbf{Ubah Replica}
 
-Spark SQL merupakan salah satu komponen utama dalam Apache Spark yang menyediakan kemampuan untuk melakukan query data menggunakan sintaks SQL pada data yang disimpan di berbagai sumber, termasuk HDFS, Hive, JSON, Parquet, dan JDBC. Spark SQL dikembangkan untuk menjembatani kebutuhan analis data dan data engineer yang terbiasa menggunakan SQL dengan kekuatan pemrosesan terdistribusi dan in-memory milik Spark.
+\begin{lstlisting}[language=bash]
+kubectl scale -n tts deploy/api --replicas=10
+\end{lstlisting}
 
-Secara teknis, Spark SQL memungkinkan pengguna untuk menulis query SQL standar yang kemudian dikompilasi menjadi operasi eksekusi Spark, sehingga memanfaatkan engine Spark untuk menjalankan query tersebut dengan cepat dan skalabel di cluster. Selain itu, Spark SQL mendukung DataFrame API dan Dataset API yang memungkinkan transformasi data kompleks dilakukan dengan cara deklaratif yang mudah dibaca dan dioptimasi oleh Catalyst Optimizer milik Spark.
+Kubernetes menjaga state secara kontinu.
+Terraform apply sekali lalu selesai.
 
-Dalam konteks transformasi data untuk data warehouse dan lakehouse, Spark SQL berperan penting dalam melakukan ETL (Extract, Transform, Load) secara efisien. Spark SQL dapat digunakan untuk membaca data mentah dari data lake, membersihkan dan mentransformasi data menjadi schema terstruktur, serta menuliskan hasilnya ke data warehouse tradisional atau ke lakehouse berbasis Delta Lake. Pendekatan ini mendukung pipeline data yang modern, di mana transformasi dapat dilakukan secara scalable untuk volume data yang sangat besar tanpa menurunkan performa sistem.
+\end{frame}
 
-Secara bisnis, Spark SQL memiliki relevansi strategis karena memungkinkan tim data analyst dan engineer untuk menggunakan SQL yang familiar dengan performa tinggi pada big data. Hal ini mempercepat proses pengolahan data, integrasi antar sistem, dan penyediaan data analytics-ready bagi tim business intelligence atau data science. Sebagai contoh, perusahaan fintech dapat menggunakan Spark SQL untuk melakukan transformasi transaksi keuangan harian dari data lake ke warehouse mereka untuk pelaporan keuangan dan kepatuhan regulasi.
+% ============================================================
+\subsection{Demo 7 -- Switching Environment}
 
-Dengan demikian, Spark SQL memperkuat posisi Apache Spark sebagai framework pemrosesan big data yang serbaguna, mendukung kebutuhan analitik modern yang menuntut kecepatan, skalabilitas, dan kemudahan integrasi dengan ekosistem data warehouse maupun lakehouse.
+\begin{frame}[fragile]{Demo 7 -- Switching Environment}
 
+\textbf{Switch ke Dev}
 
-\subsection{Spark vs MapReduce}
+\begin{lstlisting}[language=bash]
+kubectl delete ns tts
+kubectl apply -k overlays/dev
+\end{lstlisting}
 
-Apache Spark dan Hadoop MapReduce merupakan dua framework pemrosesan big data yang memiliki perbedaan mendasar dalam konsep, performa, fleksibilitas, dan kemudahan penggunaannya.
+\textbf{Switch ke Prod}
 
-Secara konseptual, \textbf{Hadoop MapReduce} menggunakan model pemrosesan berbasis disk I/O, di mana setiap tahap pemrosesan (Map dan Reduce) menuliskan hasil sementara ke disk sebelum dilanjutkan ke tahap berikutnya. Pendekatan ini memastikan fault tolerance yang tinggi karena data antara tahap dipersistensikan di disk, namun menimbulkan latensi yang tinggi akibat banyaknya operasi baca tulis disk.
+\begin{lstlisting}[language=bash]
+kubectl delete ns tts
+kubectl apply -k overlays/prod
+\end{lstlisting}
 
-Sementara itu, \textbf{Apache Spark} dirancang dengan arsitektur in-memory processing, di mana data dapat disimpan dalam memori (RAM) selama proses eksekusi, sehingga mengurangi waktu baca tulis disk dan meningkatkan kecepatan eksekusi secara signifikan. Spark mampu menjalankan pemrosesan batch hingga 10-100 kali lebih cepat daripada MapReduce untuk pekerjaan yang sama, terutama untuk iterative processing seperti machine learning dan analisis graph.
+\end{frame}
 
-Dalam hal fleksibilitas, MapReduce hanya dirancang untuk batch processing berbasis Map dan Reduce, sedangkan Spark mendukung berbagai workload dalam satu platform, seperti batch processing dengan Spark Core, stream processing dengan Spark Streaming, machine learning dengan MLlib, dan graph processing dengan GraphX. Hal ini menjadikan Spark sebagai framework yang serbaguna untuk kebutuhan analitik modern.
+% ============================================================
+\subsection{Demo 8 -- Koordinasi Multi-Container}
 
-Dari segi kemudahan penggunaan, MapReduce memerlukan penulisan kode pemrosesan dalam model Map dan Reduce yang relatif kompleks dan verbose, biasanya menggunakan Java. Sebaliknya, Spark menyediakan API tingkat tinggi yang mendukung Scala, Python, Java, dan R, serta mendukung operasi deklaratif melalui DataFrame dan Spark SQL, sehingga lebih mudah dipelajari dan digunakan oleh data engineer maupun data analyst.
+\begin{frame}{Demo 8 -- Koordinasi Multi-Container}
 
-Namun demikian, MapReduce tetap memiliki keunggulan pada workload yang tidak membutuhkan kecepatan tinggi dan memerlukan fault tolerance maksimal dengan biaya infrastruktur yang relatif lebih rendah. Di sisi lain, Spark membutuhkan kapasitas memori yang lebih besar agar dapat menjalankan keunggulan in-memory processing secara optimal.
+Komponen:
+\begin{itemize}
+    \item API
+    \item Redis
+    \item Worker
+    \item MinIO
+    \item Web
+\end{itemize}
 
-Dengan demikian, pemilihan antara Spark dan MapReduce perlu mempertimbangkan kebutuhan bisnis, ukuran dan kompleksitas data, kecepatan eksekusi yang diinginkan, serta infrastruktur yang tersedia dalam organisasi untuk mencapai efisiensi dan efektivitas pemrosesan data secara optimal.
+Semua dapat di-scale, di-restart, dan di-update secara independen.
 
-
-
-\section{Aplikasi Bisnis dan Contoh Kasus}
-
-\subsection{Contoh 1: Batch Processing untuk Persiapan Data Warehouse Keuangan}
-
-
-Dalam industri perbankan dan keuangan, batch processing banyak digunakan untuk mempersiapkan data warehouse yang berisi informasi transaksi keuangan yang dibutuhkan untuk pelaporan regulasi dan analisis bisnis. 
-
-\textbf{Context.} Setiap harinya, bank menghasilkan jutaan transaksi yang berasal dari ATM, mobile banking, transfer antar bank, dan pembayaran merchant. Data transaksi ini tersebar di berbagai sistem operasional dengan format dan struktur yang berbeda-beda. Untuk keperluan pelaporan keuangan, audit internal, dan perhitungan risiko, data tersebut perlu dikonsolidasikan ke dalam data warehouse yang terstruktur dengan schema yang sudah ditentukan.
-
-\textbf{Technology Choice.} Hadoop MapReduce atau Apache Spark batch processing sering digunakan untuk mendukung proses ETL (Extract, Transform, Load) dalam skala besar. Data transaksi dari berbagai sumber akan diekstrak, dibersihkan untuk menghapus duplikasi atau anomali, ditransformasikan ke dalam schema standar pelaporan keuangan, dan dimuat ke data warehouse berbasis SQL. Jika organisasi sudah mengadopsi Spark, maka Spark SQL akan digunakan untuk mempercepat transformasi data dan agregasi sebelum loading.
-
-\textbf{Business Impact.} Dengan menggunakan batch processing pada framework seperti MapReduce atau Spark, bank dapat memproses miliaran baris transaksi dalam waktu yang lebih singkat dibandingkan dengan ETL tradisional berbasis single server. Hal ini memastikan laporan keuangan harian dan bulanan dapat tersedia tepat waktu untuk kepentingan regulator seperti OJK atau Bank Indonesia. Selain itu, proses data preparation yang cepat dan akurat mendukung analisis profitabilitas produk, segmentasi nasabah, dan penilaian risiko kredit dengan data historis yang lengkap dan terpercaya.
-
-Dengan demikian, batch processing menjadi fondasi penting dalam pipeline data warehouse keuangan yang mendukung kepatuhan regulasi, pengambilan keputusan strategis, dan perencanaan bisnis jangka panjang berbasis data.
-
-
-\subsection{Contoh 2: Stream Processing untuk Operational Data Store Hampir Real-Time}
-
-
-Dalam dunia bisnis modern yang membutuhkan respon cepat, stream processing digunakan untuk membangun operational data store (ODS) yang hampir real-time, mendukung kebutuhan analitik dan operasional secara langsung.
-
-\textbf{Context.} Sebagai contoh, perusahaan e-commerce besar menangani jutaan interaksi pengguna setiap menit, termasuk klik produk, pencarian kata kunci, transaksi pembelian, dan pembaruan stok. Data ini perlu diproses secara cepat untuk mendukung fitur seperti rekomendasi produk instan, deteksi penipuan transaksi secara real-time, serta pembaruan dashboard operasional yang digunakan oleh tim marketing dan operasional untuk memantau performa penjualan.
-
-\textbf{Technology Choice.} Teknologi stream processing seperti Apache Kafka untuk ingestion dan Apache Spark Streaming atau Apache Flink untuk pemrosesan data real-time digunakan dalam skenario ini. Kafka berfungsi sebagai message broker yang menerima data event dari aplikasi web, mobile, dan sistem backend, lalu mendistribusikannya ke Spark Streaming atau Flink untuk diproses. Data yang telah diproses kemudian disimpan di operational data store berbasis NoSQL seperti Apache HBase atau database in-memory seperti Redis, sehingga dapat diakses dengan latensi rendah oleh aplikasi analitik dan dashboard.
-
-\textbf{Business Impact.} Implementasi stream processing memungkinkan perusahaan e-commerce untuk mendeteksi anomali transaksi dalam hitungan detik, sehingga mengurangi risiko kerugian akibat penipuan. Selain itu, sistem rekomendasi produk dapat diupdate hampir secara real-time berdasarkan aktivitas terakhir pengguna, meningkatkan konversi penjualan dan pengalaman pelanggan. Dashboard operasional yang terupdate setiap detik mendukung pengambilan keputusan cepat oleh tim bisnis, misalnya dalam menyesuaikan promosi flash sale berdasarkan pola pembelian yang sedang berlangsung.
-
-Dengan demikian, stream processing memainkan peran strategis dalam menciptakan ODS yang hampir real-time, mendukung kebutuhan analitik operasional, meningkatkan responsivitas bisnis, dan memberikan keunggulan kompetitif di era digital yang serba cepat.
-
-
-\section{Implikasi Strategis untuk Bisnis}
-
-Pemanfaatan teknologi big data processing seperti Hadoop MapReduce, Apache Spark, dan Apache Kafka memiliki implikasi strategis yang signifikan bagi organisasi dalam menghadapi persaingan bisnis di era digital.
-
-Pertama, teknologi ini memungkinkan \textbf{pengambilan keputusan yang lebih cepat}. Dengan kemampuan memproses data dalam volume besar secara batch maupun real-time, organisasi dapat mengakses informasi terbaru dan melakukan analisis secara instan. Contohnya, laporan keuangan yang sebelumnya hanya tersedia mingguan kini dapat dihasilkan harian atau bahkan hampir real-time, mendukung pengambilan keputusan strategis oleh manajemen dengan data yang selalu terbarui.
-
-Kedua, teknologi pemrosesan big data meningkatkan \textbf{customer insights} yang lebih mendalam. Stream processing memungkinkan analisis perilaku pengguna saat itu juga, sehingga perusahaan dapat memberikan rekomendasi produk yang relevan, penawaran personalisasi, dan layanan pelanggan berbasis data terkini. Hal ini meningkatkan kepuasan dan loyalitas pelanggan, serta membuka peluang revenue tambahan melalui cross-selling dan up-selling yang lebih tepat sasaran.
-
-Ketiga, adopsi teknologi big data processing memberikan \textbf{keunggulan kompetitif} bagi organisasi. Perusahaan yang mampu memanfaatkan data besar secara efektif dapat berinovasi lebih cepat, mengoptimalkan operasi, serta merespon perubahan pasar dan kebutuhan pelanggan dengan lebih agile dibandingkan pesaing yang masih bergantung pada proses data tradisional.
-
-Namun, terdapat beberapa pertimbangan penting dalam implementasi teknologi ini. Dari sisi \textbf{biaya}, meskipun framework seperti Hadoop dan Spark bersifat open source, diperlukan investasi infrastruktur hardware, cloud resources, dan biaya operasional cluster yang signifikan, terutama untuk pemrosesan in-memory Spark dalam skala besar. Selain itu, organisasi perlu mempertimbangkan \textbf{kebutuhan skill SDM}, karena teknologi big data processing memerlukan tim dengan kompetensi data engineering, distributed computing, dan DevOps untuk membangun, mengelola, dan mengoptimasi pipeline data.
-
-Dalam hal \textbf{skalabilitas}, teknologi seperti Spark dan Kafka dirancang untuk mendukung pertumbuhan data yang cepat dengan menambah node secara horizontal, namun \textbf{desain arsitektur} awal dan monitoring perlu direncanakan dengan baik untuk memastikan performa tetap optimal seiring bertambahnya beban kerja. Terakhir, \textbf{integrasi} dengan sistem eksisting seperti database relasional, data warehouse, dan aplikasi analitik perlu diperhatikan agar data dapat mengalir dengan lancar tanpa menimbulkan bottleneck dan overhead yang membebani infrastruktur.
-
-\section{Kesimpulan}
-
-Bab ini telah membahas berbagai konsep dan teknologi utama dalam big data processing, mulai dari proses ingestion data, paradigma batch dan stream processing, hingga pemanfaatan Hadoop MapReduce dan Apache Spark beserta ekosistem pendukungnya seperti Hive, HBase, Sqoop, dan Kafka. Pemrosesan big data berperan penting dalam mengubah data mentah yang tidak terstruktur menjadi data terstruktur yang siap dianalisis, mendukung kebutuhan business intelligence, machine learning, serta aplikasi analitik operasional secara efektif dan efisien dalam skala besar.
-
-Dengan pemahaman menyeluruh terhadap teknologi-teknologi ini, organisasi dapat merancang arsitektur data yang mampu menangani volume dan kecepatan data yang terus meningkat, menghasilkan insight bisnis yang mendalam, dan mendukung pengambilan keputusan yang cepat dan berbasis data. Selain itu, pemilihan teknologi pemrosesan yang tepat, disertai pengembangan keterampilan SDM yang memadai, akan menjadi kunci keberhasilan transformasi digital dan penciptaan keunggulan kompetitif di era ekonomi berbasis data.
+\end{frame}
