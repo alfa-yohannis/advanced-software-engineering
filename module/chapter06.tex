@@ -1,168 +1,524 @@
-\subsection{Tema Demo: Apa yang Bisa Dilakukan Kubernetes yang Tidak Bisa Dilakukan Terraform}
+\chapter{Orkestrasi Perangkat Lunak}
 
-\textbf{Perbandingan Utama}
+\section*{Tujuan Pembelajaran}
+
+Setelah mempelajari bab ini, capaian pembelajaran yang diharapkan adalah sebagai berikut:
+
+\begin{enumerate}
+    \item Memahami konsep orkestrasi container dalam konteks sistem terdistribusi modern serta menjelaskan urgensinya dibandingkan pendekatan manual pada skala produksi.
+
+    \item Menjelaskan definisi Kubernetes sebagai platform orkestrasi container berbasis \textit{declarative desired state} dan \textit{reconciliation loop}, serta mengidentifikasi arsitektur dan komponen utamanya (\textit{control plane} dan \textit{worker node}).
+
+    \item Menganalisis bagaimana Kubernetes bekerja dalam menjaga ketersediaan aplikasi melalui mekanisme \textit{self-healing}, \textit{autoscaling}, dan \textit{rolling update}, serta membandingkan perannya dengan pengelola infrastruktur seperti Terraform.
+\end{enumerate}
+\section{Pendahuluan}
+
+Perangkat lunak modern tidak lagi dijalankan sebagai satu program tunggal pada satu mesin. 
+Sebaliknya, sistem dibangun sebagai sekumpulan layanan (\textit{microservices}) yang berjalan di dalam container dan saling berkomunikasi melalui jaringan. 
+Pendekatan ini meningkatkan fleksibilitas dan skalabilitas, tetapi sekaligus menambah kompleksitas operasional.
+
+Ketika jumlah container meningkat, muncul sejumlah tantangan fundamental. 
+Bagaimana memastikan aplikasi tetap berjalan jika terjadi kegagalan? 
+Bagaimana menambah instance saat beban meningkat dan menurunkannya saat beban menurun? 
+Bagaimana melakukan pembaruan versi tanpa menyebabkan downtime? 
+Bagaimana mengelola komunikasi antar layanan tanpa mengetahui alamat IP secara manual?
+
+Pengelolaan manual tidak lagi memadai dalam lingkungan produksi yang dinamis. 
+Diperlukan sebuah sistem yang mampu mengatur, memantau, dan menyeimbangkan seluruh komponen secara otomatis. 
+Di sinilah peran orkestrasi container menjadi krusial.
+
+\section{Definisi Kubernetes}
+
+Kubernetes adalah platform orkestrasi container \textit{open-source} yang digunakan untuk mengelola deployment, scaling, dan operasi aplikasi berbasis container secara otomatis. 
+Secara konseptual, Kubernetes bekerja dengan pendekatan deklaratif. 
+Pengguna tidak lagi memberi instruksi langkah demi langkah, melainkan mendefinisikan keadaan sistem yang diinginkan (\textit{desired state}).
+
+Misalnya, seorang pengembang menyatakan bahwa aplikasi API harus memiliki tiga replica. 
+Kubernetes kemudian bertanggung jawab memastikan bahwa selalu terdapat tiga instance yang berjalan. 
+Jika satu instance gagal, sistem akan membuat instance baru. 
+Jika beban meningkat, jumlah replica dapat ditambah. 
+Jika beban menurun, replica dapat dikurangi.
+
+Dengan pendekatan ini, Kubernetes berfungsi sebagai sistem kontrol terdistribusi yang secara kontinu menjaga stabilitas dan ketersediaan aplikasi.
+
+\section{Arsitektur dan Komponen Kubernetes}
+
+Secara arsitektural, Kubernetes terdiri dari dua bagian utama: \textit{Control Plane} dan \textit{Worker Node}.
+
+\subsection{Control Plane}
+
+Control Plane merupakan pusat kendali cluster. 
+Ia bertanggung jawab atas pengambilan keputusan dan pengelolaan seluruh state sistem. 
+Komponen utamanya meliputi:
+
+\begin{itemize}
+    \item \textbf{kube-apiserver}, sebagai pintu masuk seluruh komunikasi dan konfigurasi cluster.
+    \item \textbf{etcd}, database key-value terdistribusi yang menyimpan seluruh state cluster.
+    \item \textbf{kube-scheduler}, yang menentukan node mana yang akan menjalankan Pod.
+    \item \textbf{kube-controller-manager}, yang menjalankan berbagai controller untuk memastikan desired state selalu tercapai.
+\end{itemize}
+
+\subsection{Worker Node}
+
+Worker Node adalah mesin tempat aplikasi dijalankan. 
+Di dalamnya terdapat:
+
+\begin{itemize}
+    \item \textbf{kubelet}, agen yang memastikan container dalam Pod berjalan sesuai spesifikasi.
+    \item \textbf{Container Runtime}, seperti containerd, yang menjalankan container.
+    \item \textbf{kube-proxy}, yang mengatur komunikasi jaringan antar layanan.
+\end{itemize}
+
+Struktur ini memungkinkan pemisahan yang jelas antara pengendalian sistem dan eksekusi aplikasi.
+
+\section{Bagaimana Kubernetes Bekerja}
+
+Kubernetes bekerja berdasarkan prinsip \textit{reconciliation loop}. 
+Setiap saat sistem membandingkan keadaan aktual (\textit{actual state}) dengan keadaan yang didefinisikan (\textit{desired state}). 
+Jika terdapat perbedaan, controller akan mengambil tindakan korektif.
+
+Secara umum, alur kerjanya adalah sebagai berikut:
+
+\begin{enumerate}
+    \item Pengguna mendefinisikan konfigurasi dalam file YAML (misalnya Deployment dengan tiga replica).
+    \item Konfigurasi dikirim ke kube-apiserver.
+    \item State disimpan dalam etcd.
+    \item Controller memonitor apakah kondisi aktual sesuai dengan definisi.
+    \item Jika terjadi deviasi (misalnya Pod crash), sistem akan membuat ulang secara otomatis.
+\end{enumerate}
+
+Pendekatan ini menjadikan Kubernetes bersifat:
+
+\begin{itemize}
+    \item Deklaratif.
+    \item Self-healing.
+    \item Adaptif terhadap perubahan beban.
+    \item Beroperasi secara kontinu, bukan sekali eksekusi.
+\end{itemize}
+
+Dengan mekanisme ini, Kubernetes tidak hanya menjalankan container, tetapi juga memastikan sistem tetap stabil, tersedia, dan elastis dalam menghadapi perubahan kondisi runtime.
+
+\section{Ringkasan Konseptual}
+
+Secara konseptual, Kubernetes mengelola lifecycle aplikasi yang berjalan di atas infrastruktur. 
+Ia tidak membangun mesin virtual atau jaringan, tetapi mengatur bagaimana aplikasi berperilaku selama runtime.
+
+Jika infrastruktur dapat diibaratkan sebagai kota, maka Kubernetes adalah sistem yang mengatur operasional bisnis di dalam gedung-gedung kota tersebut. 
+Ia memastikan layanan tetap aktif, mampu beradaptasi terhadap perubahan beban, dan dapat diperbarui tanpa mengganggu pengguna.
+
+Dengan demikian, Kubernetes menjadi fondasi penting dalam arsitektur perangkat lunak modern berbasis container dan sistem terdistribusi.
+
+\section{Kelebihan Kubernetes terhadap Terraform}
+
+\textbf{Mental Model}
 
 \begin{itemize}
     \item \textbf{Terraform} $\rightarrow$ Lifecycle Infrastruktur
     \item \textbf{Kubernetes} $\rightarrow$ Lifecycle Aplikasi
 \end{itemize}
 
+Fokus demo:
+\begin{itemize}
+    \item Reconciliation loop
+    \item Self-healing
+    \item Auto scaling (naik \& turun)
+    \item Rolling update
+    \item Runtime orchestration
+\end{itemize}
+
 % ============================================================
-\subsection{Demo 1 -- Self-Healing (Mustahil di Terraform)}
+\subsection{Self-Healing}
 
-\begin{frame}[fragile]{Demo 1 -- Self-Healing}
-
-\textbf{Langkah 1 -- Tampilkan Pod}
+\textbf{Langkah 1 -- Lihat pod}
 
 \begin{lstlisting}[language=bash]
 kubectl get pods -n tts
 \end{lstlisting}
 
-\textbf{Langkah 2 -- Hapus Satu Pod}
+\textbf{Langkah 2 -- Hapus satu pod}
 
 \begin{lstlisting}[language=bash]
 kubectl delete pod -n tts <nama-pod-api>
 kubectl get pods -n tts -w
 \end{lstlisting}
 
-\textbf{Poin:}
-Terraform tidak melakukan apa-apa.
+\textbf{Teaching Line}
+
+Terraform tidak melakukan apa-apa. \\
 Kubernetes merekonsiliasi desired state secara kontinu.
 
-\end{frame}
+% ============================================================
+\subsection{Horizontal Auto Scaling (Scale Up \& Down)}
+
+\textbf{Pastikan konfigurasi ter-apply}
+
+\begin{lstlisting}[language=bash]
+kubectl apply -k overlays/prod
+\end{lstlisting}
+
+\textbf{Monitor HPA secara live}
+
+\begin{lstlisting}[language=bash]
+watch -n 1 kubectl get hpa -n tts
+\end{lstlisting}
+
+\textbf{Monitor pod worker}
+
+\begin{lstlisting}[language=bash]
+watch -n 1 kubectl get pods -n tts -l app=worker
+\end{lstlisting}
+
+\textbf{Generate load (trigger scale up)}
+
+\begin{lstlisting}[language=bash]
+python ../../app/client/load_client.py \
+  --base-url http://tts.local \
+  --concurrency 20 \
+  --jobs 20 \
+  --check-mp3
+\end{lstlisting}
+
+Setelah load selesai, amati scale down otomatis.
+
+\textbf{Teaching Line}
+
+Kubernetes melakukan autoscaling naik dan turun berbasis metrik. \\
+Terraform tidak mengelola autoscaling runtime aplikasi.
 
 % ============================================================
-\subsection{Demo 2 -- Horizontal Auto Scaling (HPA)}
-
-\begin{frame}[fragile]{Demo 2 -- Horizontal Auto Scaling}
-
-\textbf{Tampilkan HPA}
+\subsection{Rolling Update Tanpa Downtime}
 
 \begin{lstlisting}[language=bash]
-kubectl get hpa -n tts
-\end{lstlisting}
-
-\textbf{Buat Beban}
-
-\begin{lstlisting}[language=bash]
-python client/load_client.py --base-url http://tts.local --concurrency 50
-\end{lstlisting}
-
-atau
-
-\begin{lstlisting}[language=bash]
-hey -n 2000 -c 50 http://tts.local/api/healthz
-\end{lstlisting}
-
-\textbf{Amati Scaling}
-
-\begin{lstlisting}[language=bash]
-kubectl get hpa -n tts -w
-kubectl get pods -n tts -w
-\end{lstlisting}
-
-\end{frame}
-
-% ============================================================
-\subsection{Demo 3 -- Rolling Update (Tanpa Downtime)}
-
-\begin{frame}[fragile]{Demo 3 -- Rolling Update}
-
-\begin{lstlisting}[language=bash]
-kubectl set image -n tts deploy/api api=session05-api:new-version
+kubectl set image -n tts deploy/worker api=session05-worker:new-version
 kubectl rollout status -n tts deploy/api
 kubectl get pods -n tts -w
 \end{lstlisting}
 
-Terraform akan destroy & recreate.
-Kubernetes melakukan rolling update bertahap dengan health check.
-
-\end{frame}
+Terraform destroy \& recreate. \\
+Kubernetes rolling update dengan health check.
 
 % ============================================================
-\subsection{Demo 4 -- Restart Otomatis Saat Crash}
-
-\begin{frame}[fragile]{Demo 4 -- Automatic Restart}
+\subsection{Restart Otomatis Saat Crash}
 
 \begin{lstlisting}[language=bash]
-kubectl exec -n tts deploy/api -- kill 1
+kubectl exec -n tts deploy/worker -- sh -c "kill 1"
+kubectl get pods -n tts -w
 \end{lstlisting}
 
-Pod restart otomatis karena mekanisme controller reconciliation.
-
-\end{frame}
+Controller Kubernetes memastikan aplikasi tetap berjalan.
 
 % ============================================================
-\subsection{Demo 5 -- Service Discovery}
-
-\begin{frame}[fragile]{Demo 5 -- Service Discovery}
+\subsection{Service Discovery}
 
 \begin{lstlisting}[language=bash]
-kubectl exec -n tts deploy/web -- curl http://api:8000/healthz
+kubectl exec -n tts deploy/web -- \
+  curl http://api:8000/healthz
 \end{lstlisting}
 
-Tidak perlu mengetahui IP.
+Tanpa mengetahui IP address. \\
 DNS internal dan Service abstraction disediakan Kubernetes.
 
-\end{frame}
-
 % ============================================================
-\subsection{Demo 6 -- Declarative Desired State}
+\subsection{Declarative Desired State}
 
-\begin{frame}[fragile]{Demo 6 -- Declarative Desired State}
-
-\textbf{Cek Replica}
+\textbf{Scale manual}
 
 \begin{lstlisting}[language=bash]
-kubectl get deploy -n tts api
+kubectl scale deploy/worker -n tts --replicas=10
+kubectl get pods -n tts
 \end{lstlisting}
 
-\textbf{Ubah Replica}
+\textbf{Kembalikan}
 
 \begin{lstlisting}[language=bash]
-kubectl scale -n tts deploy/api --replicas=10
+kubectl scale deploy/worker -n tts --replicas=1
 \end{lstlisting}
 
-Kubernetes menjaga state secara kontinu.
+Kubernetes menjaga desired state secara kontinu. \\
 Terraform apply sekali lalu selesai.
 
-\end{frame}
-
 % ============================================================
-\subsection{Demo 7 -- Switching Environment}
-
-\begin{frame}[fragile]{Demo 7 -- Switching Environment}
-
-\textbf{Switch ke Dev}
+\subsection{Switching Environment}
 
 \begin{lstlisting}[language=bash]
 kubectl delete ns tts
 kubectl apply -k overlays/dev
 \end{lstlisting}
 
-\textbf{Switch ke Prod}
+Lalu kembali ke prod:
 
 \begin{lstlisting}[language=bash]
 kubectl delete ns tts
 kubectl apply -k overlays/prod
 \end{lstlisting}
 
-\end{frame}
+Runtime environment dapat diganti cepat tanpa provisioning ulang VM.
 
 % ============================================================
-\subsection{Demo 8 -- Koordinasi Multi-Container}
+\subsection{Orkestrasi Multi-Komponen}
 
-\begin{frame}{Demo 8 -- Koordinasi Multi-Container}
+Komponen aplikasi:
 
-Komponen:
 \begin{itemize}
     \item API
-    \item Redis
     \item Worker
+    \item Redis
     \item MinIO
     \item Web
 \end{itemize}
 
-Semua dapat di-scale, di-restart, dan di-update secara independen.
+Semua:
+\begin{itemize}
+    \item Independent scaling
+    \item Independent restart
+    \item Independent update
+\end{itemize}
 
-\end{frame}
+\textbf{Kesimpulan}
+
+Terraform mengelola mesin. \\
+Kubernetes mengelola perilaku aplikasi.
+
+
+% ============================================================
+\section{Apa yang Dapat Dilakukan Terraform yang Tidak Dapat Dilakukan Kubernetes}
+
+\textbf{Perbedaan Fundamental}
+
+\begin{itemize}
+    \item \textbf{Terraform} $\rightarrow$ Infrastructure as Code (IaC) untuk lifecycle infrastruktur
+    \item \textbf{Kubernetes} $\rightarrow$ Orkestrator container untuk lifecycle aplikasi
+\end{itemize}
+
+Terraform bekerja di layer infrastruktur.
+Kubernetes bekerja di dalam infrastruktur tersebut.
+
+% ============================================================
+\subsection{Provisioning Infrastruktur Cloud}
+
+Terraform dapat membuat:
+
+\begin{itemize}
+    \item Virtual Machine (VM)
+    \item Virtual Private Cloud (VPC)
+    \item Subnet dan Network
+    \item Load Balancer
+    \item Domain Name System (DNS)
+    \item Identity and Access Management (IAM)
+\end{itemize}
+
+Contoh Terraform membuat VM di Amazon Web Services (AWS):
+
+\begin{lstlisting}[language=terraform]
+resource "aws_instance" "api_server" {
+  ami           = "ami-123456"
+  instance_type = "t3.medium"
+}
+\end{lstlisting}
+
+Perintah:
+
+\begin{lstlisting}[language=bash]
+terraform init
+terraform plan
+terraform apply
+\end{lstlisting}
+
+Kubernetes tidak dapat membuat EC2 atau VM.
+
+% ============================================================
+\subsection{Multi-Cloud Orchestration}
+
+Terraform dapat mengelola banyak provider sekaligus:
+
+\begin{itemize}
+    \item Amazon Web Services (AWS)
+    \item Google Cloud Platform (GCP)
+    \item Microsoft Azure
+    \item Cloudflare
+    \item GitHub
+\end{itemize}
+
+Contoh membuat DNS record di Cloudflare:
+
+\begin{lstlisting}[language=terraform]
+resource "cloudflare_record" "api_dns" {
+  zone_id = "xxxx"
+  name    = "api"
+  value   = "1.2.3.4"
+  type    = "A"
+}
+\end{lstlisting}
+
+Kubernetes tidak mengelola DNS eksternal cloud provider.
+
+% ============================================================
+\subsection{Infrastructure Lifecycle Management}
+
+Terraform memiliki workflow eksplisit:
+
+\begin{lstlisting}[language=bash]
+terraform plan
+terraform apply
+terraform destroy
+\end{lstlisting}
+
+Fitur utama:
+
+\begin{itemize}
+    \item Plan sebelum eksekusi
+    \item State file terpusat
+    \item Drift detection
+    \item Destruksi terkendali
+\end{itemize}
+
+Kubernetes tidak memiliki fase global "plan".
+
+% ============================================================
+\subsection{Manajemen Identity dan Keamanan Cloud}
+
+Terraform dapat mengelola:
+
+\begin{itemize}
+    \item Identity and Access Management (IAM)
+    \item Security Group
+    \item Network Access Control List (ACL)
+    \item Role dan Policy
+\end{itemize}
+
+Contoh membuat IAM Role:
+
+\begin{lstlisting}[language=terraform]
+resource "aws_iam_role" "api_role" {
+  name = "api-role"
+  assume_role_policy = data.aws_iam_policy_document.assume.json
+}
+\end{lstlisting}
+
+Kubernetes tidak mengelola IAM cloud secara langsung.
+
+% ============================================================
+\subsection{Provisioning Kubernetes Cluster Itu Sendiri}
+
+Terraform dapat membuat Kubernetes cluster:
+
+Contoh Elastic Kubernetes Service (EKS):
+
+\begin{lstlisting}[language=terraform]
+resource "aws_eks_cluster" "main" {
+  name     = "session06-cluster"
+  role_arn = aws_iam_role.eks_role.arn
+}
+\end{lstlisting}
+
+Kubernetes tidak dapat membuat dirinya sendiri.
+Ia membutuhkan infrastruktur yang sudah ada.
+
+% ============================================================
+\subsection{Destruction dan Environment Rebuild}
+
+Terraform dapat menghancurkan seluruh environment:
+
+\begin{lstlisting}[language=bash]
+terraform destroy
+\end{lstlisting}
+
+Ini dapat menghapus:
+
+\begin{itemize}
+    \item VM
+    \item Database
+    \item Load balancer
+    \item Network
+\end{itemize}
+
+Kubernetes hanya dapat menghapus resource di dalam cluster:
+
+\begin{lstlisting}[language=bash]
+kubectl delete ns tts
+\end{lstlisting}
+
+Tetapi tidak dapat menghapus VPC atau VM cloud.
+
+% ============================================================
+\subsection{Layered Architecture (Ringkasan Konseptual)}
+
+\begin{itemize}
+    \item Terraform membangun kota (infrastruktur).
+    \item Kubernetes mengelola bisnis di dalam gedung (aplikasi).
+\end{itemize}
+
+Secara teknis:
+
+\begin{itemize}
+    \item Terraform $\rightarrow$ Desired state infrastruktur.
+    \item Kubernetes $\rightarrow$ Desired state aplikasi.
+\end{itemize}
+
+Keduanya saling melengkapi, bukan saling menggantikan.
+
+
+\section{Ringkasan Perbandingan Kubernetes vs Terraform}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|p{.3\textwidth}|p{.3\textwidth}|p{.3\textwidth}|}
+\hline
+\textbf{Aspek} & \textbf{Kubernetes} & \textbf{Terraform} \\
+\hline
+\textbf{Mental Model} & Lifecycle aplikasi & Lifecycle infrastruktur \\
+\hline
+\textbf{Fokus Utama} & Orkestrasi container runtime & Infrastructure as Code (IaC) \\
+\hline
+\textbf{Self-Healing} & Ya (reconciliation loop kontinu) & Tidak (eksekusi sekali saat apply) \\
+\hline
+\textbf{Autoscaling Runtime} & Ya (HPA, scale up \& down) & Tidak mengelola autoscaling runtime \\
+\hline
+\textbf{Rolling Update} & Ya (tanpa downtime, health check) & Umumnya destroy \& recreate resource \\
+\hline
+\textbf{Restart Otomatis Saat Crash} & Ya (controller menjaga desired state) & Tidak \\
+\hline
+\textbf{Service Discovery Internal} & Ya (DNS internal dan Service abstraction) & Tidak \\
+\hline
+\textbf{Declarative Desired State} & Kontinu dan otomatis & Dieksekusi saat apply \\
+\hline
+\textbf{Switching Environment} & Cepat di dalam cluster & Melalui provisioning ulang infrastruktur \\
+\hline
+\textbf{Independent Scaling Komponen} & Ya (API, Worker, Web, dll) & Tidak (bukan orkestrator aplikasi) \\
+\hline
+\textbf{Provisioning VM/Cloud} & Tidak & Ya \\
+\hline
+\textbf{Multi-Cloud Management} & Tidak & Ya (AWS, GCP, Azure, Cloudflare, dll) \\
+\hline
+\textbf{IAM / Security Cloud} & Tidak langsung & Ya \\
+\hline
+\textbf{Plan sebelum eksekusi} & Tidak ada fase global plan & Ya (terraform plan) \\
+\hline
+\textbf{Destroy seluruh environment} & Tidak (hanya resource cluster) & Ya (terraform destroy) \\
+\hline
+\textbf{Membangun Kubernetes Cluster} & Tidak & Ya (EKS, GKE, AKS, dll) \\
+\hline
+\end{tabular}
+\caption{Perbandingan Fundamental Kubernetes dan Terraform}
+\end{table}
+
+
+\section{Layered Architecture}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|p{.4\textwidth}|p{.5\textwidth}|}
+\hline
+\textbf{Layer Infrastruktur} & \textbf{Layer Aplikasi} \\
+\hline
+Terraform membangun VPC, VM, Load Balancer, DNS, IAM & Kubernetes mengelola API, Worker, Web, Redis, MinIO \\
+\hline
+Desired state infrastruktur & Desired state aplikasi \\
+\hline
+Dieksekusi via plan/apply/destroy & Direkonsiliasi kontinu oleh controller \\
+\hline
+\end{tabular}
+\caption{Arsitektur Berlapis: Terraform dan Kubernetes}
+\end{table}

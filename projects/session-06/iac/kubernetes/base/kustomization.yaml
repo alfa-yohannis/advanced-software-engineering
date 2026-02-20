@@ -15,9 +15,8 @@ resources:
   - deploy-redis.yaml
   - svc-api.yaml
   - deploy-api.yaml
-  - hpa-api.yaml
   - svc-web.yaml
   - deploy-web.yaml
-  - hpa-web.yaml
   - deploy-worker.yaml
+  - hpa-worker.yaml
   # - ingress.yaml
