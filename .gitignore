@@ -551,3 +551,5 @@ projects/session-05/app/models
 **/.terraform/modules/modules.json
 
 projects/session-07/outputs*
+projects/session-07/module
+projects/session-07/tree.txt
