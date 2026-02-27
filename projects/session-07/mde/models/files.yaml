@@ -1,0 +1,62 @@
+core_files:
+  - template: core/terraform/modules/tts_stack/main.tf.j2
+    output: terraform/modules/tts_stack/main.tf
+  - template: core/terraform/modules/tts_stack/variables.tf.j2
+    output: terraform/modules/tts_stack/variables.tf
+  - template: core/terraform/modules/tts_stack/outputs.tf.j2
+    output: terraform/modules/tts_stack/outputs.tf
+  - template: core/kubernetes/base/deploy-api.yaml.j2
+    output: kubernetes/base/deploy-api.yaml
+  - template: core/kubernetes/base/deploy-redis.yaml.j2
+    output: kubernetes/base/deploy-redis.yaml
+  - template: core/kubernetes/base/deploy-web.yaml.j2
+    output: kubernetes/base/deploy-web.yaml
+  - template: core/kubernetes/base/deploy-worker.yaml.j2
+    output: kubernetes/base/deploy-worker.yaml
+  - template: core/kubernetes/base/hpa-worker.yaml.j2
+    output: kubernetes/base/hpa-worker.yaml
+  - template: core/kubernetes/base/ingress.yaml.j2
+    output: kubernetes/base/ingress.yaml
+  - template: core/kubernetes/base/job-minio-bootstrap.yaml.j2
+    output: kubernetes/base/job-minio-bootstrap.yaml
+  - template: core/kubernetes/base/kustomization.yaml.j2
+    output: kubernetes/base/kustomization.yaml
+  - template: core/kubernetes/base/namespace.yaml.j2
+    output: kubernetes/base/namespace.yaml
+  - template: core/kubernetes/base/pvc-minio.yaml.j2
+    output: kubernetes/base/pvc-minio.yaml
+  - template: core/kubernetes/base/statefulset-minio.yaml.j2
+    output: kubernetes/base/statefulset-minio.yaml
+  - template: core/kubernetes/base/svc-api.yaml.j2
+    output: kubernetes/base/svc-api.yaml
+  - template: core/kubernetes/base/svc-minio.yaml.j2
+    output: kubernetes/base/svc-minio.yaml
+  - template: core/kubernetes/base/svc-redis.yaml.j2
+    output: kubernetes/base/svc-redis.yaml
+  - template: core/kubernetes/base/svc-web.yaml.j2
+    output: kubernetes/base/svc-web.yaml
+
+env_files:
+  - template: terraform/env/main.tf.j2
+    output: terraform/{{ name }}/main.tf
+  - template: terraform/env/tfvars.j2
+    output: terraform/{{ name }}/{{ tfvars_filename }}
+  - template: kubernetes/overlay/kustomization.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/kustomization.yaml
+  - template: kubernetes/overlay/ingress-api.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/ingress-api.yaml
+  - template: kubernetes/overlay/ingress-web.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/ingress-web.yaml
+  - template: kubernetes/overlay/patch-images.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/patch-images.yaml
+  - template: kubernetes/overlay/patch-hpa-worker.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/patch-hpa-worker.yaml
+  - template: kubernetes/overlay/patch-replicas.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/patch-replicas.yaml
+    when: include_replicas_patch
+  - template: kubernetes/overlay/pdb-api.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/pdb-api.yaml
+    when: include_pdb
+  - template: kubernetes/overlay/pdb-web.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/pdb-web.yaml
+    when: include_pdb

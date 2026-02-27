@@ -1,0 +1,114 @@
+terraform {
+  required_version = ">= 1.5.0"
+}
+
+locals {
+  api_ctx    = "${var.project_root}/app/services/api"
+  web_ctx    = "${var.project_root}/app/services/web"
+  worker_ctx = "${var.project_root}/app/services/worker"
+
+  overlay_path = "${var.k8s_root_path}/overlays/${var.k8s_overlay}"
+
+  # Keep image tags aligned with existing overlays.
+  image_tag = var.env
+
+  # Base k8s settings reused while reconciling ConfigMap/Secret.
+  redis_url   = "redis://redis:6379/0"
+  s3_endpoint = "http://minio:9000"
+  s3_region   = "us-east-1"
+
+  ingress_host = "${var.k8s_overlay}.tts.local"
+
+  k8s_manifest_hash = sha1(join("", [
+    for f in sort(fileset(var.k8s_root_path, "**/*.yaml")) :
+    filesha1("${var.k8s_root_path}/${f}")
+  ]))
+
+  api_src_hash = sha1(join("", [
+    for f in sort(fileset(local.api_ctx, "**")) :
+    filesha1("${local.api_ctx}/${f}")
+  ]))
+
+  web_src_hash = sha1(join("", [
+    for f in sort(fileset(local.web_ctx, "**")) :
+    filesha1("${local.web_ctx}/${f}")
+  ]))
+
+  worker_src_hash = sha1(join("", [
+    for f in sort(fileset(local.worker_ctx, "**")) :
+    filesha1("${local.worker_ctx}/${f}")
+  ]))
+
+  deploy_inputs = {
+    project_root        = var.project_root
+    k8s_root_path       = var.k8s_root_path
+    env                 = var.env
+    k8s_overlay         = var.k8s_overlay
+    minikube_profile    = var.minikube_profile
+    mp3_bucket          = var.mp3_bucket
+    internal_token      = sha1(var.internal_token)
+    minio_root_user     = var.minio_root_user
+    minio_root_password = sha1(var.minio_root_password)
+    worker_replicas     = tostring(var.worker_replicas)
+    api_base_url        = var.api_base_url
+    registry_prefix     = var.image_registry_prefix
+
+    k8s_manifest_hash = local.k8s_manifest_hash
+    api_src_hash      = local.api_src_hash
+    web_src_hash      = local.web_src_hash
+    worker_src_hash   = local.worker_src_hash
+  }
+}
+
+resource "terraform_data" "deploy" {
+  input            = local.deploy_inputs
+  triggers_replace = [sha1(jsonencode(local.deploy_inputs))]
+
+  provisioner "local-exec" {
+    working_dir = var.project_root
+    interpreter = ["/bin/bash", "-lc"]
+    command     = <<-EOT
+      set -euo pipefail
+
+      minikube -p "${var.minikube_profile}" status >/dev/null
+      minikube -p "${var.minikube_profile}" addons enable ingress >/dev/null
+
+      eval "$(minikube -p '${var.minikube_profile}' docker-env)"
+
+      docker build -t ${var.image_registry_prefix}-api:${local.image_tag} app/services/api
+      docker build -t ${var.image_registry_prefix}-web:${local.image_tag} app/services/web
+      docker build -t ${var.image_registry_prefix}-worker:${local.image_tag} app/services/worker
+
+      kubectl get namespace tts >/dev/null 2>&1 || kubectl create namespace tts
+
+      kubectl -n tts create configmap tts-config \
+        --from-literal=APP_ENV="${var.env}" \
+        --from-literal=MP3_BUCKET="${var.mp3_bucket}" \
+        --from-literal=REDIS_URL="${local.redis_url}" \
+        --from-literal=API_BASE_URL="${var.api_base_url}" \
+        --from-literal=S3_ENDPOINT="${local.s3_endpoint}" \
+        --from-literal=S3_REGION="${local.s3_region}" \
+        --dry-run=client -o yaml | kubectl apply -f -
+
+      kubectl -n tts create secret generic tts-secrets \
+        --from-literal=S3_ACCESS_KEY="${var.minio_root_user}" \
+        --from-literal=S3_SECRET_KEY="${var.minio_root_password}" \
+        --from-literal=INTERNAL_TOKEN="${var.internal_token}" \
+        --dry-run=client -o yaml | kubectl apply -f -
+
+      kubectl apply -k "${local.overlay_path}"
+      kubectl -n tts patch hpa worker --type merge -p "{\"spec\":{\"maxReplicas\":${var.worker_replicas}}}"
+      kubectl -n tts scale deployment/worker --replicas=1
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    working_dir = self.input.project_root
+    interpreter = ["/bin/bash", "-lc"]
+    command     = <<-EOT
+      set -euo pipefail
+      kubectl delete -k "${self.input.k8s_root_path}/overlays/${self.input.k8s_overlay}" --ignore-not-found=true
+    EOT
+  }
+}

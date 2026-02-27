@@ -550,3 +550,4 @@ projects/session-05/app/models
 **/*.tfstate
 **/.terraform/modules/modules.json
 
+projects/session-07/outputs*

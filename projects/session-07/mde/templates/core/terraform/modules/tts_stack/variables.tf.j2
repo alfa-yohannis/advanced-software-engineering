@@ -1,0 +1,53 @@
+variable "env" {
+  type = string
+}
+
+variable "k8s_overlay" {
+  type = string
+}
+
+variable "project_root" {
+  type = string
+}
+
+variable "k8s_root_path" {
+  type = string
+}
+
+variable "mp3_bucket" {
+  type = string
+}
+
+variable "internal_token" {
+  type = string
+}
+
+variable "minio_root_user" {
+  type    = string
+  default = "minioadmin"
+}
+
+variable "minio_root_password" {
+  type    = string
+  default = "minioadmin"
+}
+
+variable "minikube_profile" {
+  type    = string
+  default = "minikube"
+}
+
+variable "worker_replicas" {
+  type    = number
+  default = 1
+}
+
+variable "api_base_url" {
+  type    = string
+  default = "http://api:8000"
+}
+
+variable "image_registry_prefix" {
+  type    = string
+  default = "session07"
+}

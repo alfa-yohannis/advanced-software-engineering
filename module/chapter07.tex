@@ -1,1 +1,29 @@
-\chapter{Deploying to Kubernetes using Terrraform}
+\chapter{Deploying to Kubernetes using Terraform}
+
+
+%Start Minikube
+%minikube start -p minikube
+%minikube addons enable ingress -p minikube
+%Deploy an environment with Terraform (example: dev)
+%cd iac/terraform/dev
+%terraform init
+%terraform apply -var-file=dev.tfvars
+%Point local host to Minikube ingress IP
+%MINIKUBE_IP=$(minikube -p minikube ip)
+%echo "$MINIKUBE_IP dev.tts.local staging.tts.local prod.tts.local" | sudo tee -a /etc/hosts
+%Verify everything is up
+%kubectl get pods -n tts
+%kubectl get svc -n tts
+%kubectl get ingress -n tts
+%Demo endpoints (for dev)
+%curl http://dev.tts.local/
+%curl http://dev.tts.local/api/healthz
+%Show replica state (non-worker = 1, worker scalable)
+%kubectl get deploy -n tts
+%kubectl get hpa -n tts
+%Optional:
+%
+%Deploy staging/prod the same way from iac/terraform/staging or iac/terraform/prod with their tfvars.
+%Tear down:
+%terraform destroy -var-file=dev.tfvars
+%

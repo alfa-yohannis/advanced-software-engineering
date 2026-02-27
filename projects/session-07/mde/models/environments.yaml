@@ -1,0 +1,36 @@
+defaults:
+  terraform_module_source: ../modules/tts_stack
+  project_root_expr: abspath("${path.module}/../../..")
+  minikube_profile: minikube
+  api_base_url: http://api:8000
+  image_registry_prefix: session07
+  minio_root_user: minioadmin
+  minio_root_password: minioadmin
+  minio_root_user_from_var: false
+  minio_root_user_sensitive: true
+  minio_root_password_from_var: false
+  minio_root_password_sensitive: true
+  internal_token_sensitive: false
+  worker_replicas: 1
+  include_replicas_patch: false
+  api_replicas: 1
+  web_replicas: 1
+  include_pdb: false
+  api_image_tag: "{{ env_name }}"
+  web_image_tag: "{{ env_name }}"
+  worker_image_tag: "{{ env_name }}"
+
+environments:
+  - name: dev
+
+  - name: alice
+
+  - name: staging
+    worker_replicas: 2
+
+  - name: prod
+    internal_token_sensitive: true
+    worker_replicas: 4
+    minio_root_user_from_var: true
+    minio_root_password_from_var: true
+    include_pdb: true
