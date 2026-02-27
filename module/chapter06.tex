@@ -1,4 +1,4 @@
-\chapter{Orkestrasi Perangkat Lunak}
+\chapter{Orkestrasi Infrastruktur Perangkat Lunak}
 
 \section*{Tujuan Pembelajaran}
 
@@ -98,15 +98,491 @@ Pendekatan ini menjadikan Kubernetes bersifat:
 
 Dengan mekanisme ini, Kubernetes tidak hanya menjalankan container, tetapi juga memastikan sistem tetap stabil, tersedia, dan elastis dalam menghadapi perubahan kondisi runtime.
 
-\section{Ringkasan Konseptual}
 
-Secara konseptual, Kubernetes mengelola lifecycle aplikasi yang berjalan di atas infrastruktur. 
-Ia tidak membangun mesin virtual atau jaringan, tetapi mengatur bagaimana aplikasi berperilaku selama runtime.
 
-Jika infrastruktur dapat diibaratkan sebagai kota, maka Kubernetes adalah sistem yang mengatur operasional bisnis di dalam gedung-gedung kota tersebut. 
-Ia memastikan layanan tetap aktif, mampu beradaptasi terhadap perubahan beban, dan dapat diperbarui tanpa mengganggu pengguna.
 
-Dengan demikian, Kubernetes menjadi fondasi penting dalam arsitektur perangkat lunak modern berbasis container dan sistem terdistribusi.
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  scale=0.5,
+  transform shape,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, minimum width=4.2cm, fill=white},
+  bigbox/.style={draw, rounded corners, align=left, inner sep=8pt, minimum width=5.3cm},
+  title/.style={font=\bfseries},
+  arrow/.style={-Latex, thick}
+]
+
+% ===== User + YAML =====
+
+\node[box, fill=purple!10] (kubectl) {\textbf{kubectl / CI/CD}\\
+Mengirim konfigurasi ke cluster};
+
+\node[box, fill=purple!10, below=10mm of kubectl] (user) {\textbf{Pengguna}\\
+Menulis \texttt{YAML} (mis. Deployment\\dengan 3 replica)};
+
+\draw[arrow] (user) -- (kubectl);
+
+% ===== Control Plane =====
+\node[bigbox, fill=blue!5, right=22mm of user, minimum height=7.4cm, inner sep=12pt] (cp) {};
+\node[font=\bfseries, above=2mm of cp] {Control Plane};
+
+\node[box, fill=blue!10, anchor=north west, minimum width=4.7cm] (apiserver)
+  at ([xshift=6pt,yshift=-18pt]cp.north west)
+{\textbf{kube-apiserver}\\
+Pintu masuk komunikasi\\dan konfigurasi};
+
+\node[box, fill=blue!10, below=10mm of apiserver, minimum width=4.7cm] (etcd)
+{\textbf{etcd}\\
+Penyimpanan \textit{state}\\(key-value terdistribusi)};
+
+\node[box, fill=blue!10, below=6mm of etcd, minimum width=4.7cm] (scheduler)
+{\textbf{kube-scheduler}\\
+Menentukan node untuk\\menjalankan Pod};
+
+\node[box, fill=blue!10, below=6mm of scheduler, minimum width=4.7cm] (controller)
+{\textbf{kube-controller-manager}\\
+Menjalankan controller\\untuk menjaga \textit{desired state}};
+
+% ===== Worker Node =====
+\node[bigbox, fill=green!5, right=50mm of cp, minimum height=7.2cm, inner sep=12pt] (wn) {};
+\node[font=\bfseries, above=2mm of wn] {Worker Node};
+
+\node[box, fill=green!10, anchor=north west, minimum width=4.7cm] (kubelet)
+  at ([xshift=6pt,yshift=-18pt]wn.north west)
+{\textbf{kubelet}\\
+Agen node; memastikan Pod\\berjalan sesuai spesifikasi};
+
+\node[box, fill=green!10, below=8mm of kubelet, minimum width=4.7cm] (runtime)
+{\textbf{Container Runtime}\\
+(mis. \texttt{containerd})\\Menjalankan container};
+
+\node[box, fill=green!10, below=6mm of runtime, minimum width=4.7cm] (proxy)
+{\textbf{kube-proxy}\\
+Mengatur jaringan dan\\komunikasi layanan};
+
+\node[box, fill=orange!15, below=10mm of wn, minimum width=4.7cm] (pods)
+{\textbf{Pods / Aplikasi}\\
+Container berjalan\\di Worker Node};
+
+% ===== Main flow =====
+\draw[arrow] (kubectl.east) -- node[above, align=center]{\footnotesize kirim\\konfigurasi} (apiserver.west);
+
+\draw[arrow]
+  (apiserver) -- 
+  node[right, xshift=2mm, align=center]
+  {\footnotesize simpan\\state}
+  (etcd);
+
+\draw[arrow] (apiserver.east) -- ++(10mm,0) |- node[pos=0.25, right, align=left]{\footnotesize request\\penjadwalan} (scheduler.east);
+
+\draw[arrow] (apiserver.east) -- ++(35mm,0) |- node[pos=0.25, left, align=right]{\footnotesize watch\\objects} (controller.east);
+
+\draw[arrow, dashed, gray]
+  (controller.west) -- ++(-9mm,0) |-
+  node[pos=0.35, left, yshift=-20mm, align=center]
+  {\footnotesize reconciliation\\loop}
+  (apiserver.west);
+
+\draw[arrow] 
+  ([yshift=-3mm]scheduler.east) -- ++(48mm,0) 
+  |- node[pos=0.2, left, align=right]
+     {\footnotesize pilih\\node} 
+  (kubelet.west);
+
+\draw[arrow] (kubelet) -- node[right, xshift=2mm, align=center]{\footnotesize jalankan} (runtime);
+
+\draw[arrow] (runtime.east) --  ++(9mm,0) |- node[right, yshift=20mm, align=left]{\footnotesize buat\\container} (pods);
+
+\draw[arrow] (proxy) -- node[right, xshift=2mm, align=center]{\footnotesize routing} (pods);
+
+% ===== Self-healing note =====
+\node[box, fill=red!10, below=10mm of pods, minimum width=4.7cm] (crash)
+{\textbf{Deviasi / Pod crash}\\
+\textit{actual state} $\neq$ \textit{desired state}\\
+Pod dibuat ulang otomatis};
+
+\draw[arrow] (pods) -- (crash);
+\draw[arrow, dashed, gray] (crash.west)  -- ++(-10mm,0) -| (controller.south);
+
+\end{tikzpicture}
+\caption{Arsitektur Kubernetes: Control Plane, Worker Node, dan alur kerja \textit{reconciliation loop} (desired state vs actual state). Pemisahan jelas: \textit{Control Plane} (kendali \& state) vs \textit{Worker Node} (eksekusi aplikasi).}
+\label{fig:k8s-architecture-reconcile}
+\end{figure}
+
+
+\section{Struktur Direktori/File Studi Kasus}
+
+Struktur direktori pada studi kasus ini merepresentasikan arsitektur orkestrasi sistem terdistribusi yang dibangun secara deklaratif menggunakan Kubernetes dan Kustomize. Folder \texttt{base} berfungsi sebagai fondasi arsitektur yang bersifat \textit{environment-agnostic}, sedangkan folder \texttt{overlays} merepresentasikan realisasi spesifik untuk setiap environment (dev, staging, dan prod). Pemisahan ini bukan sekadar teknis, tetapi mencerminkan prinsip desain modern dalam Infrastructure as Code (IaC), yaitu pemisahan antara model dasar dan variasi kontekstualnya.
+
+\subsection*{Peran Direktori \texttt{base}}
+
+Direktori \texttt{base} merupakan sumber kebenaran utama (single source of truth) bagi sistem. File \texttt{namespace.yaml} memastikan seluruh resource terisolasi dalam namespace \texttt{tts}, sehingga memudahkan pengelolaan, pembatasan akses, serta observabilitas dalam cluster multi-aplikasi. Tanpa namespace yang eksplisit, risiko konflik resource dan kompleksitas operasional akan meningkat.
+
+File \texttt{configmap-app.yaml} mendefinisikan konfigurasi non-sensitif seperti environment variable dan endpoint layanan internal. Perannya adalah memisahkan konfigurasi dari image container agar image tetap immutable dan dapat digunakan ulang lintas environment. Hal ini selaras dengan prinsip \textit{12-Factor App}, di mana konfigurasi tidak ditanamkan dalam kode atau image.
+
+File \texttt{secret-app.yaml} menyimpan kredensial sensitif seperti access key dan token internal. Dengan memisahkan secret dari konfigurasi biasa, sistem menjaga keamanan serta memungkinkan integrasi dengan secret management eksternal jika dibutuhkan pada tahap produksi yang lebih kompleks.
+
+Workload utama sistem didefinisikan melalui beberapa file Deployment: \texttt{deploy-api.yaml}, \texttt{deploy-web.yaml}, \texttt{deploy-worker.yaml}, dan \texttt{deploy-redis.yaml}. API bertanggung jawab atas logika bisnis dan pemrosesan permintaan HTTP. Web berfungsi sebagai antarmuka pengguna atau lapisan presentasi. Worker menjalankan pemrosesan latar belakang berbasis antrian (queue), sementara Redis berperan sebagai message broker atau penyimpan data sementara untuk komunikasi asinkron. Seluruhnya bersifat stateless sehingga dapat direplikasi, diskalakan, dan diperbarui tanpa ketergantungan terhadap identitas pod tertentu.
+
+Berbeda dengan komponen stateless, \texttt{statefulset-minio.yaml} digunakan untuk menjalankan MinIO sebagai object storage. StatefulSet dipilih karena memerlukan identitas pod yang stabil dan integrasi dengan persistent storage. File \texttt{pvc-minio.yaml} memastikan adanya alokasi storage yang tetap, sehingga data tidak hilang saat pod direstart atau dipindahkan. Kombinasi StatefulSet dan PVC menjamin durabilitas data, yang merupakan aspek krusial dalam sistem produksi.
+
+File \texttt{svc-api.yaml}, \texttt{svc-web.yaml}, \texttt{svc-redis.yaml}, dan \texttt{svc-minio.yaml} menyediakan abstraksi jaringan internal. Service memungkinkan komunikasi antar-pod melalui DNS internal cluster, menghilangkan ketergantungan pada alamat IP pod yang bersifat sementara. Dengan demikian, arsitektur menjadi stabil meskipun terjadi scaling atau restart.
+
+File \texttt{ingress.yaml} pada base mendefinisikan routing eksternal dasar, memetakan jalur \texttt{/api} ke service API dan jalur \texttt{/} ke service Web. Ingress berperan sebagai entry point aplikasi dari luar cluster dan bertindak sebagai reverse proxy layer.
+
+File \texttt{hpa-worker.yaml} mengatur Horizontal Pod Autoscaler untuk komponen worker. Dengan mendasarkan scaling pada metrik CPU, sistem dapat beradaptasi terhadap peningkatan beban kerja secara elastis. Autoscaling ini meningkatkan efisiensi penggunaan resource sekaligus menjaga performa layanan.
+
+File \texttt{job-minio-bootstrap.yaml} berfungsi sebagai mekanisme inisialisasi, misalnya untuk memastikan bucket pada MinIO tersedia sebelum aplikasi memanfaatkannya. Pendekatan ini mengotomatisasi provisioning dependency sehingga mengurangi intervensi manual.
+
+\subsection*{Peran Direktori \texttt{overlays}}
+
+Direktori \texttt{overlays} merepresentasikan lapisan transformasi konfigurasi untuk setiap environment. Setiap overlay mewarisi konfigurasi dari \texttt{../../base}, lalu melakukan penyesuaian melalui patch. Mekanisme ini memungkinkan variasi tanpa duplikasi file.
+
+File \texttt{patch-env.yaml} digunakan untuk mengubah variabel environment seperti nilai \texttt{ENV} atau nama bucket penyimpanan. Dengan pendekatan ini, dev, staging, dan prod dapat memiliki konfigurasi berbeda tanpa memodifikasi base. Isolasi ini mencegah tercampurnya data antar environment dan mendukung praktik promosi bertahap.
+
+File \texttt{patch-images.yaml} memungkinkan perubahan tag image container sesuai tahap pipeline CI/CD. Image yang dibangun pada tahap development dapat dipromosikan ke staging dan akhirnya ke production tanpa perubahan struktur arsitektur.
+
+File \texttt{patch-replicas.yaml} menyesuaikan jumlah replica sesuai kebutuhan kapasitas dan availability masing-masing environment. Pada production, replica biasanya lebih banyak untuk menjamin high availability, sedangkan pada development cukup satu replica untuk efisiensi resource.
+
+Ingress pada setiap overlay mendefinisikan domain berbeda, seperti \texttt{dev.tts.local}, \texttt{staging.tts.local}, dan \texttt{tts.local}. Pemisahan domain ini bukan hanya teknis, tetapi juga mencerminkan model promosi environment yang jelas dan terstruktur.
+
+Pada overlay production, ditambahkan \texttt{pdb-api.yaml} dan \texttt{pdb-web.yaml}. PodDisruptionBudget memastikan jumlah minimum pod tetap tersedia saat terjadi rolling update atau maintenance node. Dengan demikian, sistem tetap melayani permintaan tanpa downtime total. Kehadiran PDB menunjukkan tingkat kematangan arsitektur menuju kesiapan produksi.
+
+\subsection*{Sintesis Arsitektural}
+
+Secara keseluruhan, struktur direktori ini menggambarkan pendekatan arsitektur yang sistematis: base sebagai definisi model infrastruktur, dan overlay sebagai realisasi kontekstualnya. Setiap file tidak berdiri sendiri, melainkan berperan dalam menjaga konsistensi, skalabilitas, keamanan, dan ketersediaan sistem.
+
+
+\begin{lstlisting}[language=bash]
+kubernetes/
+|-- base
+|   |-- configmap-app.yaml
+|   |-- deploy-api.yaml
+|   |-- deploy-redis.yaml
+|   |-- deploy-web.yaml
+|   |-- deploy-worker.yaml
+|   |-- hpa-worker.yaml
+|   |-- ingress.yaml
+|   |-- job-minio-bootstrap.yaml
+|   |-- kustomization.yaml
+|   |-- namespace.yaml
+|   |-- pvc-minio.yaml
+|   |-- secret-app.yaml
+|   |-- statefulset-minio.yaml
+|   |-- svc-api.yaml
+|   |-- svc-minio.yaml
+|   |-- svc-redis.yaml
+|   `-- svc-web.yaml
+`-- overlays
+    |-- dev
+    |   |-- ingress-api.yaml
+    |   |-- ingress-web.yaml
+    |   |-- kustomization.yaml
+    |   |-- patch-env.yaml
+    |   `-- patch-images.yaml
+    |-- prod
+    |   |-- ingress-api.yaml
+    |   |-- ingress-web.yaml
+    |   |-- kustomization.yaml
+    |   |-- patch-configmap.yaml
+    |   |-- patch-env.yaml
+    |   |-- patch-images.yaml
+    |   |-- patch-replicas.yaml
+    |   |-- pdb-api.yaml
+    |   `-- pdb-web.yaml
+    `-- staging
+        |-- ingress-api.yaml
+        |-- ingress-web.yaml
+        |-- kustomization.yaml
+        |-- patch-configmap.yaml
+        |-- patch-env.yaml
+        |-- patch-images.yaml
+        `-- patch-replicas.yaml
+\end{lstlisting}
+
+\section{Instalasi Kubernetes dan Minikube}
+
+Bagian ini menjelaskan langkah-langkah instalasi \textit{Kubernetes Command Line Interface} (\texttt{kubectl}) dan Minikube sebagai lingkungan Kubernetes lokal. Instalasi ini ditujukan untuk pengembangan, eksperimen orkestrasi, dan simulasi lingkungan produksi secara mandiri tanpa memerlukan cluster cloud.
+
+\subsection*{1. Prasyarat Sistem}
+
+Sebelum melakukan instalasi, pastikan sistem memiliki:
+
+\begin{enumerate}
+    \item Sistem operasi Linux (direkomendasikan Ubuntu 20.04+)
+    \item Docker terpasang dan berjalan
+    \item Minimal 2 CPU dan 4GB RAM (direkomendasikan 4 CPU dan 8GB RAM)
+\end{enumerate}
+
+Verifikasi Docker berjalan dengan:
+
+\begin{lstlisting}[language=bash]
+docker --version
+docker ps
+\end{lstlisting}
+
+Jika Docker belum berjalan:
+
+\begin{lstlisting}[language=bash]
+sudo systemctl enable docker
+sudo systemctl start docker
+\end{lstlisting}
+
+\subsection*{2. Instalasi \texttt{kubectl}}
+
+Unduh versi stabil terbaru:
+
+\begin{lstlisting}[language=bash]
+curl -LO "https://dl.k8s.io/release/$(curl -L -s \
+https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+\end{lstlisting}
+
+Berikan izin eksekusi dan pindahkan ke direktori sistem:
+
+\begin{lstlisting}[language=bash]
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+\end{lstlisting}
+
+Verifikasi instalasi:
+
+\begin{lstlisting}[language=bash]
+kubectl version --client
+\end{lstlisting}
+
+\subsection*{3. Instalasi Minikube}
+
+Unduh binary Minikube:
+
+\begin{lstlisting}[language=bash]
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+\end{lstlisting}
+
+Instal ke sistem:
+
+\begin{lstlisting}[language=bash]
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+\end{lstlisting}
+
+Verifikasi instalasi:
+
+\begin{lstlisting}[language=bash]
+minikube version
+\end{lstlisting}
+
+\subsection*{4. Inisialisasi Cluster Lokal}
+
+Jalankan Minikube dengan alokasi resource yang memadai untuk eksperimen orkestrasi:
+
+\begin{lstlisting}[language=bash]
+minikube start --driver=docker --cpus=4 --memory=8192
+\end{lstlisting}
+
+Parameter:
+\begin{itemize}
+    \item \texttt{--driver=docker} menggunakan Docker sebagai runtime
+    \item \texttt{--cpus} menentukan jumlah vCPU
+    \item \texttt{--memory} menentukan alokasi RAM (MB)
+\end{itemize}
+
+Verifikasi node Kubernetes aktif:
+
+\begin{lstlisting}[language=bash]
+kubectl get nodes
+\end{lstlisting}
+
+Status \texttt{Ready} menunjukkan cluster berhasil dijalankan.
+
+\subsection*{5. Mengaktifkan Addon Penting}
+
+Untuk mendukung orkestrasi web dan autoscaling, aktifkan addon berikut:
+
+\begin{lstlisting}[language=bash]
+minikube addons enable ingress
+minikube addons enable metrics-server
+\end{lstlisting}
+
+Addon \texttt{ingress} memungkinkan routing HTTP eksternal, sedangkan \texttt{metrics-server} diperlukan untuk Horizontal Pod Autoscaler.
+
+Verifikasi addon:
+
+\begin{lstlisting}[language=bash]
+minikube addons list
+\end{lstlisting}
+
+\subsection*{6. Mengelola Lifecycle Minikube}
+
+Beberapa perintah dasar untuk pengelolaan cluster:
+
+\begin{lstlisting}[language=bash]
+minikube stop        # Menghentikan cluster
+minikube start       # Menjalankan kembali
+minikube delete      # Menghapus cluster sepenuhnya
+minikube status      # Melihat status cluster
+minikube ip          # Mendapatkan IP cluster
+\end{lstlisting}
+
+
+\section{Instalasi Lokal Kubernetes (Minikube) dan Deployment Lingkungan Production}
+
+Bagian ini menjelaskan langkah-langkah instalasi Kubernetes secara lokal menggunakan Minikube, konfigurasi cluster, deployment environment production, serta prosedur pengujian dan validasi sistem.
+
+\subsection*{1. Instalasi dan Inisialisasi Minikube}
+
+Pastikan Docker telah berjalan. Kemudian lakukan reset cluster (jika ada konfigurasi sebelumnya):
+
+\begin{lstlisting}[language=bash]
+minikube stop
+minikube delete
+\end{lstlisting}
+
+Jalankan Minikube dengan alokasi resource yang memadai untuk simulasi production:
+
+\begin{lstlisting}[language=bash]
+minikube start --cpus=4 --memory=8192
+\end{lstlisting}
+
+Aktifkan addon yang dibutuhkan:
+
+\begin{lstlisting}[language=bash]
+minikube addons enable ingress
+minikube addons enable metrics-server
+\end{lstlisting}
+
+Addon ingress diperlukan untuk routing HTTP eksternal, sedangkan metrics-server diperlukan agar Horizontal Pod Autoscaler (HPA) dapat bekerja berbasis metrik CPU.
+
+\subsection*{2. Memuat Image ke Minikube}
+
+Karena deployment production menggunakan image lokal, image perlu dimuat ke dalam environment Minikube:
+
+\begin{lstlisting}[language=bash]
+minikube image load session05-api:production
+minikube image load session05-web:production
+minikube image load session05-worker:production
+minikube image load redis:7-alpine
+minikube image load minio/minio:RELEASE.2025-09-07T16-13-09Z
+\end{lstlisting}
+
+Verifikasi bahwa image telah tersedia:
+
+\begin{lstlisting}[language=bash]
+minikube image ls
+\end{lstlisting}
+
+\subsection*{3. Deployment Lingkungan Production}
+
+Deploy seluruh resource menggunakan overlay production:
+
+\begin{lstlisting}[language=bash]
+kubectl apply -k ./overlays/prod
+\end{lstlisting}
+
+Verifikasi seluruh komponen berjalan:
+
+\begin{lstlisting}[language=bash]
+kubectl get all -n tts
+kubectl get ingress -n tts -o wide
+\end{lstlisting}
+
+Untuk memastikan routing eksternal aktif, jalankan tunnel:
+
+\begin{lstlisting}[language=bash]
+minikube tunnel
+\end{lstlisting}
+
+Ambil IP Minikube:
+
+\begin{lstlisting}[language=bash]
+minikube ip
+\end{lstlisting}
+
+Kemudian uji endpoint production:
+
+\begin{lstlisting}[language=bash]
+curl -i -H "Host: tts.local" http://<MINIKUBE_IP>/api/healthz
+\end{lstlisting}
+
+Jika sistem berjalan dengan benar, respons HTTP 200 akan diterima.
+
+\subsection*{4. Verifikasi Rolling Update}
+
+Lakukan pembaruan image secara rolling:
+
+\begin{lstlisting}[language=bash]
+kubectl set image -n tts deploy/api api=session05-api:production
+kubectl rollout status -n tts deploy/api
+kubectl get pods -n tts -w
+\end{lstlisting}
+
+Perhatikan bahwa pod diperbarui secara bertahap tanpa downtime total. Inilah keunggulan rolling update Kubernetes dibanding destroy-and-recreate tradisional.
+
+\subsection*{5. Pengujian Self-Healing}
+
+Hapus salah satu pod secara manual:
+
+\begin{lstlisting}[language=bash]
+kubectl delete pod -n tts <nama-pod>
+kubectl get pods -n tts -w
+\end{lstlisting}
+
+Kubernetes akan secara otomatis membuat pod baru untuk menjaga \textit{desired state}. Mekanisme ini disebut reconciliation loop.
+
+\subsection*{6. Pengujian Horizontal Pod Autoscaler}
+
+Pastikan HPA aktif:
+
+\begin{lstlisting}[language=bash]
+kubectl get hpa -n tts
+watch -n 1 kubectl get hpa -n tts
+\end{lstlisting}
+
+Generate beban kerja untuk memicu scale up:
+
+\begin{lstlisting}[language=bash]
+python ../../app/client/load_client.py \
+  --base-url http://tts.local \
+  --concurrency 20 \
+  --jobs 20 \
+  --check-mp3
+\end{lstlisting}
+
+Atau gunakan tool benchmarking:
+
+\begin{lstlisting}[language=bash]
+hey -n 2000 -c 50 http://tts.local/api/healthz
+\end{lstlisting}
+
+Amati jumlah pod worker meningkat saat beban naik dan kembali turun saat beban berkurang.
+
+\subsection*{7. Validasi Konfigurasi dan Environment}
+
+Pastikan konfigurasi production benar-benar terpasang:
+
+\begin{lstlisting}[language=bash]
+kubectl exec -n tts deploy/api -- printenv | egrep 'ENV|MP3_BUCKET'
+kubectl get configmap -n tts tts-config -o yaml
+\end{lstlisting}
+
+Verifikasi image yang digunakan:
+
+\begin{lstlisting}[language=bash]
+kubectl get deploy -n tts api \
+  -o jsonpath='{.spec.template.spec.containers[0].image}'; echo
+\end{lstlisting}
+
+\subsection*{8. Demonstrasi Stateful Resilience}
+
+Uji ketahanan storage:
+
+\begin{lstlisting}[language=bash]
+kubectl delete pod -n tts minio-0
+kubectl get pods -n tts -w
+\end{lstlisting}
+
+Pod MinIO akan dibuat ulang, dan data tetap tersedia karena menggunakan Persistent Volume.
+
+
 
 \section{Kelebihan Kubernetes terhadap Terraform}
 
@@ -281,7 +757,7 @@ Kubernetes mengelola perilaku aplikasi.
 
 
 % ============================================================
-\section{Apa yang Dapat Dilakukan Terraform yang Tidak Dapat Dilakukan Kubernetes}
+\section{Kelebihan Terraform terhadap Kubernetes}
 
 \textbf{Perbedaan Fundamental}
 
@@ -522,3 +998,9 @@ Dieksekusi via plan/apply/destroy & Direkonsiliasi kontinu oleh controller \\
 \end{tabular}
 \caption{Arsitektur Berlapis: Terraform dan Kubernetes}
 \end{table}
+
+\section{Ringkasan}
+
+Bab ini menempatkan orkestrasi container sebagai jawaban atas kompleksitas operasional sistem terdistribusi modern. Kubernetes diperkenalkan sebagai platform orkestrasi \textit{open-source} berbasis pendekatan deklaratif: pengguna mendefinisikan \textit{desired state} (mis. jumlah replica), lalu sistem menjaga ketersediaan secara kontinu melalui \textit{reconciliation loop}. Arsitekturnya memisahkan \textit{control plane} (kube-apiserver, etcd, scheduler, controller-manager) dan \textit{worker node} (kubelet, container runtime, kube-proxy) untuk membedakan fungsi kendali dan eksekusi.
+
+Melalui studi kasus TTS dan struktur \texttt{base}+\texttt{overlays} pada Kustomize, bab ini menunjukkan bagaimana konfigurasi dapat tetap konsisten lintas environment tanpa duplikasi. Praktik instalasi Minikube dan deployment production menegaskan kemampuan Kubernetes pada runtime: \textit{self-healing}, \textit{autoscaling} (HPA), dan \textit{rolling update} tanpa downtime total. Perbandingan dengan Terraform menegaskan pembagian peran: Terraform mengelola lifecycle infrastruktur (VM/VPC/IAM/destroy), sedangkan Kubernetes mengelola lifecycle aplikasi di dalam infrastruktur tersebut; keduanya saling melengkapi dalam arsitektur berlapis.

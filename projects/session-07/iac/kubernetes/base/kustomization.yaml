@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: tts
+
+resources:
+  - namespace.yaml
+  - pvc-minio.yaml
+  - svc-minio.yaml
+  - statefulset-minio.yaml
+  - job-minio-bootstrap.yaml
+  - svc-redis.yaml
+  - deploy-redis.yaml
+  - svc-api.yaml
+  - deploy-api.yaml
+  - svc-web.yaml
+  - deploy-web.yaml
+  - deploy-worker.yaml
+  - hpa-worker.yaml
+  # - ingress.yaml

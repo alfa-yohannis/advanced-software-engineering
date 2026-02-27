@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Kuliah Advanced Software Development</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      margin: 24px;
+      max-width: 900px;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    code {
+      background: #f6f6f6;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .status {
+      font-weight: bold;
+      margin-left: 12px;
+    }
+    pre {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 12px;
+      overflow: auto;
+      margin: 8px 0 0 0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>TTS Case Study</h1>
+<h2>MP3 Synthesis Scalability Test</h2>
+<p>
+  Flow: <code>Text → API → Queue → Synth Worker → MinIO → Web MP3</code>
+</p>
+
+<div class="card">
+  <h3>1) Create TTS Job</h3>
+  <textarea id="text">Hello. This is a real synthesized MP3 scalability test.</textarea>
+  <div style="margin-top: 12px;">
+    <button id="btn">Synthesize</button>
+    <span class="status" id="status">IDLE</span>
+  </div>
+
+  <div style="margin-top: 12px;">
+    <div>job_id: <code id="jobid">-</code></div>
+    <div>mp3_url: <code id="mp3url">-</code></div>
+  </div>
+
+  <div style="margin-top: 12px; color:#b00020;">
+    <div><strong>Error (debug):</strong></div>
+    <pre id="errorBox">-</pre>
+  </div>
+</div>
+
+<div class="card">
+  <h3>2) Play MP3</h3>
+  <audio id="player" controls preload="none" style="width: 100%;"></audio>
+</div>
+
+<script>
+const API_BASE = "/api";
+
+const btn = document.getElementById("btn");
+const statusEl = document.getElementById("status");
+const jobEl = document.getElementById("jobid");
+const mp3El = document.getElementById("mp3url");
+const textEl = document.getElementById("text");
+const player = document.getElementById("player");
+const errorBox = document.getElementById("errorBox");
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function clearError() {
+  errorBox.textContent = "-";
+}
+
+function showError(message) {
+  statusEl.textContent = "ERROR";
+  errorBox.textContent = message;
+}
+
+async function safeReadBody(res) {
+  // Try JSON first (common for FastAPI: {"detail": "..."}), fallback to text.
+  const ct = (res.headers.get("content-type") || "").toLowerCase();
+  try {
+    if (ct.includes("application/json")) {
+      const j = await res.json();
+      return JSON.stringify(j, null, 2);
+    }
+  } catch (_) {
+    // ignore JSON parse errors
+  }
+  try {
+    return await res.text();
+  } catch (_) {
+    return "<no body>";
+  }
+}
+
+async function createJob(text) {
+  const res = await fetch(`${API_BASE}/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
+
+  if (!res.ok) {
+    const body = await safeReadBody(res);
+    throw new Error(
+      `CREATE JOB FAILED\n` +
+      `URL: ${res.url}\n` +
+      `Status: ${res.status} ${res.statusText}\n` +
+      `Body:\n${body}`
+    );
+  }
+
+  // success: expect JSON { job_id: "..." }
+  return await res.json();
+}
+
+async function getJob(jobId) {
+  const res = await fetch(`${API_BASE}/jobs/${encodeURIComponent(jobId)}`);
+
+  if (!res.ok) {
+    const body = await safeReadBody(res);
+    throw new Error(
+      `GET JOB FAILED\n` +
+      `URL: ${res.url}\n` +
+      `Status: ${res.status} ${res.statusText}\n` +
+      `Body:\n${body}`
+    );
+  }
+
+  // success: expect JSON { status: "QUEUED|RUNNING|DONE|FAILED", ... }
+  return await res.json();
+}
+
+btn.onclick = async () => {
+  btn.disabled = true;
+  statusEl.textContent = "QUEUED";
+  jobEl.textContent = "-";
+  mp3El.textContent = "-";
+  clearError();
+
+  player.removeAttribute("src");
+  player.load();
+
+  try {
+    const created = await createJob(textEl.value || "hello");
+    const jobId = created.job_id;
+    jobEl.textContent = jobId;
+
+    for (let i = 0; i < 300; i++) {
+      const st = await getJob(jobId);
+      statusEl.textContent = st.status || "(no status field)";
+
+      if (st.status === "DONE") {
+        const url = `/mp3/${jobId}.mp3`;
+        mp3El.textContent = url;
+        player.src = url;
+        player.load();
+        break;
+      }
+
+      if (st.status === "FAILED") {
+        // if backend includes extra details, display them
+        const details = st.error || st.detail || JSON.stringify(st, null, 2);
+        throw new Error(`JOB FAILED\njob_id: ${jobId}\nDetails:\n${details}`);
+      }
+
+      await sleep(300);
+    }
+  } catch (e) {
+    console.error(e);
+    showError(e && e.message ? e.message : String(e));
+  } finally {
+    btn.disabled = false;
+  }
+};
+</script>
+
+</body>
+</html>
