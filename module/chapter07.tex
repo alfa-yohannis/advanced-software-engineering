@@ -213,6 +213,55 @@ mde/
 
 Direktori \texttt{models} menyimpan model deklaratif sistem melalui \texttt{environments.yaml} dan \texttt{files.yaml}. Berkas pertama memuat \textit{defaults} dan daftar environment, sedangkan berkas kedua mendefinisikan aturan render dari template ke berkas output. Struktur ini membuat variasi environment terlihat eksplisit pada level model.
 
+\begin{figure}[htbp]
+\centering
+\scalebox{0.85}{%
+\begin{tikzpicture}[
+  classbox/.style={draw, rounded corners=2pt, align=left, font=\scriptsize, inner sep=4pt},
+  basebox/.style={classbox, fill=blue!8, text width=3.4cm},
+  envbox/.style={classbox, fill=green!7, text width=3.1cm},
+  inh/.style={-{Triangle[open, length=4mm, width=3mm]}, thick}
+]
+\node[basebox] (base) {
+  \textbf{EnvironmentDefaults}\\
+  \rule{\linewidth}{0.2pt}\\
+  + worker\_replicas: 1\\
+  + include\_replicas\_patch: false\\
+  + include\_pdb: false
+};
+
+\node[envbox, below left=14mm and 19mm of base] (dev) {
+  \textbf{DevEnvironment}\\
+  \rule{\linewidth}{0.2pt}\\
+  + name: dev\\
+  + (tanpa override)
+};
+
+\node[envbox, below=14mm of base] (stg) {
+  \textbf{StagingEnvironment}\\
+  \rule{\linewidth}{0.2pt}\\
+  + name: staging\\
+  + worker\_replicas: 2\\
+  + include\_replicas\_patch: true
+};
+
+\node[envbox, below right=14mm and 19mm of base] (prod) {
+  \textbf{ProdEnvironment}\\
+  \rule{\linewidth}{0.2pt}\\
+  + name: prod\\
+  + worker\_replicas: 4\\
+  + include\_pdb: true
+};
+
+\draw[inh] (dev.north) -- (base.south) node[midway, left, xshift=-1mm] {\scriptsize inherits};
+\draw[inh] (stg.north) -- (base.south) node[midway, right, xshift=1mm] {\scriptsize inherits};
+\draw[inh] (prod.north) -- (base.south) node[midway, right, xshift=1mm] {\scriptsize inherits};
+\end{tikzpicture}
+}%
+\caption{Model variasi environment dengan pola inheritance: setiap environment mewarisi \textit{defaults} dan hanya mengisi nilai override yang diperlukan.}
+\label{fig:mde-models-inheritance}
+\end{figure}
+
 \begin{lstlisting}[language=bash,caption={Listing: Cuplikan model environment (mde/models/environments.yaml)}]
 defaults:
   worker_replicas: 1

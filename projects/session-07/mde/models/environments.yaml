@@ -33,4 +33,4 @@ environments:
     worker_replicas: 4
     minio_root_user_from_var: true
     minio_root_password_from_var: true
-    include_pdb: true
+    include_pdb: true # Include Pod Disruption Budget in production environment
