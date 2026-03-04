@@ -25,6 +25,9 @@ environments:
 
   - name: alice
 
+  - name: bob
+    worker_replicas: 10
+
   - name: staging
     worker_replicas: 2
 
