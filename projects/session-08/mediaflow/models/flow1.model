@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ASCII"?>
+<mediaflow:Graph xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mediaflow="mediaflow" xmi:id="_qoJgoBwYEfG_Eu00KUW-gA">
+  <nodes xsi:type="mediaflow:Resource" xmi:id="_srZx0BwYEfG_Eu00KUW-gA" name="input_video" uri="file:///home/user/alfa/mediaflow/input.mp4" external="true">
+    <ports xmi:id="_f5UxABwZEfG_Eu00KUW-gA" name="input_video_out" direction="OUT" owner="_srZx0BwYEfG_Eu00KUW-gA"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource" xmi:id="_VTxHkBwZEfG_Eu00KUW-gA" name="output_video" uri="file:///home/user/alfa/mediaflow/output.mp4" external="true">
+    <ports xmi:id="_pfXeMBwZEfG_Eu00KUW-gA" name="output_video_in" owner="_VTxHkBwZEfG_Eu00KUW-gA"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Scaler" xmi:id="_eT0y0BwZEfG_Eu00KUW-gA" name="scaler_720" command="scale=1080:720" replicas="1" width="720" height="1080">
+    <ports xmi:id="_5rAmYBwZEfG_Eu00KUW-gA" name="scaler_720_video_in" owner="_eT0y0BwZEfG_Eu00KUW-gA"/>
+    <ports xmi:id="_9ofIkBwZEfG_Eu00KUW-gA" name="scaler_720_video_out" owner="_eT0y0BwZEfG_Eu00KUW-gA"/>
+  </nodes>
+  <edges xmi:id="__0K9ABwZEfG_Eu00KUW-gA" name="edge_input_video_to_scaler_720" source="_f5UxABwZEfG_Eu00KUW-gA" target="_5rAmYBwZEfG_Eu00KUW-gA"/>
+  <edges xmi:id="_SwI3wBwaEfG_Eu00KUW-gA" name="edge_scaler_720_to_output_video" source="_9ofIkBwZEfG_Eu00KUW-gA" target="_pfXeMBwZEfG_Eu00KUW-gA"/>
+</mediaflow:Graph>
