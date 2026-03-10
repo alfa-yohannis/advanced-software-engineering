@@ -23,9 +23,9 @@ defaults:
 environments:
   - name: dev
 
-  - name: alice
+  # - name: alice
 
-  - name: bob
+  - name: qa
     worker_replicas: 10
 
   - name: staging

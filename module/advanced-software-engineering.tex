@@ -63,8 +63,25 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
     numbers=left,
     numberstyle=\tiny\color{gray},
     backgroundcolor=\color{lightgray!10},
+    tabsize=2
+}
+
+\lstdefinelanguage{yaml}{
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    backgroundcolor=\color{lightgray!10},
     tabsize=2,
-    captionpos=b
+    morecomment=[l]{\#},
+    literate=
+      *{-}{{{\color{blue}\bfseries-}}}1
+       {:}{{{\color{blue}\bfseries:}}}1
 }
 
 \lstdefinestyle{SqlStyle}{
@@ -169,6 +186,7 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	keywordstyle=\color{blue},
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
+	ndkeywordstyle=\color{green}\bfseries,
 	breaklines=true,
 	showstringspaces=false,
 	tabsize=4,
@@ -184,6 +202,58 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	morestring=[s]{"}{"},
 	%	stringstyle=\color{teal}\ttfamily,
 	%	showstringspaces=false
+}
+
+\lstdefinelanguage{emfatic}{
+	language=Java,
+	keywords={namespace, package, enum, class, 
+		abstract, attr, val, ref, extends, uri, prefix},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywords={String, int, boolean},
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{\#},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
+\lstdefinelanguage{mediaflow}{
+	language=Java,
+	keywords={graph, resource, scaler, edge, transcoder, port, 
+		GSTREAMER, VIDEO, IN, OUT, FFMPEG, true, false},
+	ndkeywords={mediaType, uri, command, backend, replicas, width, height,  
+		backend, external, true,from, to, videoCodec, audioCodec, container, bitrate},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{\#},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{teal}\ttfamily,
+	showstringspaces=false
 }
 
 \usepackage{plantuml}
@@ -210,19 +280,20 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 \begin{document}
       
 
-	\include{titlepage}
+	 \include{titlepage}
 	
-	% Contents Page
-	\tableofcontents
+	 % Contents Page
+	 \tableofcontents
 	
-	\include{pendahuluan}
-	\include{chapter01}
-	\include{chapter02}
-	\include{chapter03}
-	\include{chapter04}
-	\include{chapter05}
-	\include{chapter06}
-	\include{chapter07}
+	 \include{pendahuluan}
+	 \include{chapter01}
+	 \include{chapter02}
+	 \include{chapter03}
+	 \include{chapter04}
+	 \include{chapter05}
+	 \include{chapter06}
+	 \include{chapter07}
+	\include{chapter08}
 
 	\cite{020practical}
 	\backmatter
