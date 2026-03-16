@@ -1,0 +1,21 @@
+graph demo {
+  resource input1 [mediaType=VIDEO] uri="file:///home/alfa/videos/input.mp4" 
+  external=true {
+    port inputOut OUT
+  }
+
+  scaler resize720 backend=FFMPEG command="ffmpeg -i input.mp4 -vf scale=1280:720 
+      scaled.mp4" replicas=1 width=1280 height=720 {
+    port resizeIn IN
+    port resizeOut OUT
+  }
+  
+  resource output1 [mediaType=VIDEO] uri="file:///home/alfa/videos/output.mp4" 
+      external=true {
+    port outputIn IN
+  }
+
+
+  edge edge1 from inputOut to resizeIn
+  edge edge2 from resizeOut to outputIn
+}

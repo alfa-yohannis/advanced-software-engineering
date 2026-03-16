@@ -76,7 +76,7 @@ Edge:
 ;
 
 QualifiedPortName returns string:
-    ID '.' ID
+    ID ('.' ID)?
 ;
 
 Direction returns string:
