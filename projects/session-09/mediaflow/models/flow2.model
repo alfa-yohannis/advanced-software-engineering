@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ASCII"?>
+<mediaflow:Graph xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mediaflow="mediaflow" xmi:id="_graphFlow2">
+  <nodes xsi:type="mediaflow:Resource" xmi:id="_inputResource" name="input_master" mediaType="VIDEO" uri="file:///home/user/alfa/mediaflow/master.mov" external="true">
+    <ports xmi:id="_inputOut" name="input_master_out" direction="OUT" owner="_inputResource"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Scaler" xmi:id="_scaler1080" name="scaler_1080" backend="FFMPEG" command="scale=1920:1080" replicas="1" width="1920" height="1080">
+    <ports xmi:id="_scalerIn" name="scaler_1080_in" direction="IN" owner="_scaler1080"/>
+    <ports xmi:id="_scalerOutA" name="scaler_1080_out_h264" direction="OUT" owner="_scaler1080"/>
+    <ports xmi:id="_scalerOutB" name="scaler_1080_out_vp9" direction="OUT" owner="_scaler1080"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Transcoder" xmi:id="_transcoderH264" name="transcoder_h264" backend="FFMPEG" command="ffmpeg -c:v libx264 -c:a aac" replicas="1" videoCodec="h264" audioCodec="aac" container="mp4" bitrate="4000">
+    <ports xmi:id="_transcoderH264In" name="transcoder_h264_in" direction="IN" owner="_transcoderH264"/>
+    <ports xmi:id="_transcoderH264Out" name="transcoder_h264_out" direction="OUT" owner="_transcoderH264"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Transcoder" xmi:id="_transcoderVp9" name="transcoder_vp9" backend="GSTREAMER" command="vp9enc bitrate=2500 ! webmmux" replicas="2" videoCodec="vp9" audioCodec="opus" container="webm" bitrate="2500">
+    <ports xmi:id="_transcoderVp9In" name="transcoder_vp9_in" direction="IN" owner="_transcoderVp9"/>
+    <ports xmi:id="_transcoderVp9Out" name="transcoder_vp9_out" direction="OUT" owner="_transcoderVp9"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource" xmi:id="_outputMp4" name="output_mp4" mediaType="VIDEO" uri="file:///home/user/alfa/mediaflow/output-1080p.mp4" external="true">
+    <ports xmi:id="_outputMp4In" name="output_mp4_in" direction="IN" owner="_outputMp4"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource" xmi:id="_outputWebm" name="output_webm" mediaType="VIDEO" uri="file:///home/user/alfa/mediaflow/output-1080p.webm" external="true">
+    <ports xmi:id="_outputWebmIn" name="output_webm_in" direction="IN" owner="_outputWebm"/>
+  </nodes>
+  <edges xmi:id="_edgeInputToScaler" name="edge_input_to_scaler" source="_inputOut" target="_scalerIn"/>
+  <edges xmi:id="_edgeScalerToH264" name="edge_scaler_to_h264" source="_scalerOutA" target="_transcoderH264In"/>
+  <edges xmi:id="_edgeScalerToVp9" name="edge_scaler_to_vp9" source="_scalerOutB" target="_transcoderVp9In"/>
+  <edges xmi:id="_edgeH264ToOutput" name="edge_h264_to_output" source="_transcoderH264Out" target="_outputMp4In"/>
+  <edges xmi:id="_edgeVp9ToOutput" name="edge_vp9_to_output" source="_transcoderVp9Out" target="_outputWebmIn"/>
+</mediaflow:Graph>

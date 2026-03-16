@@ -1,0 +1,68 @@
+@namespace(uri="mediaflow", prefix="mediaflow")
+package mediaflow;
+
+enum MediaType {
+  VIDEO = 1;
+  AUDIO = 2;
+  SUBTITLE = 3;
+  IMAGE = 4;
+  IMAGE_SEQUENCE = 5;
+}
+
+enum Backend {
+  FFMPEG;
+  GSTREAMER;
+  CUSTOM;
+}
+
+enum Direction {
+  IN;
+  OUT;
+}
+
+abstract class NamedElement {
+  attr String name;
+}
+
+class Graph extends NamedElement {
+  val Node[*] nodes;
+  val Edge[*] edges;
+}
+
+abstract class Node extends NamedElement {
+  val Port[*] ports;
+}
+
+class Resource extends Node {
+  attr MediaType mediaType;
+  attr String uri;
+  attr boolean external;
+}
+
+abstract class Transformer extends Node {
+  attr Backend backend;
+  attr String command;
+  attr int replicas;
+}
+
+class Scaler extends Transformer {
+  attr int width;
+  attr int height;
+}
+
+class Transcoder extends Transformer {
+  attr String videoCodec;
+  attr String audioCodec;
+  attr String container;
+  attr int bitrate;
+}
+
+class Port extends NamedElement {
+  attr Direction direction;
+  ref Node owner;
+}
+
+class Edge extends NamedElement {
+  ref Port source;
+  ref Port target;
+}

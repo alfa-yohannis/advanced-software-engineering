@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: mediaflow.xtext
+Bundle-ManifestVersion: 2
+Bundle-Name: mediaflow.xtext
+Bundle-Vendor: My Company
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: mediaflow.xtext; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: mediaflow,
+ org.eclipse.xtext,
+ org.eclipse.xtext.xbase,
+ org.eclipse.equinox.common;bundle-version="3.19.0",
+ org.eclipse.xtext.xbase.lib;bundle-version="2.40.0",
+ org.antlr.runtime;bundle-version="[3.2.0,3.2.1)",
+ org.eclipse.emf.ecore,
+ org.eclipse.emf.common
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Export-Package: yohannis.alfa.mediaflow.services,
+ yohannis.alfa.mediaflow.formatting2,
+ yohannis.alfa.mediaflow.scoping,
+ yohannis.alfa.mediaflow.parser.antlr.internal,
+ yohannis.alfa.mediaflow,
+ yohannis.alfa.mediaflow.serializer,
+ yohannis.alfa.mediaflow.generator,
+ yohannis.alfa.mediaflow.parser.antlr,
+ yohannis.alfa.mediaflow.validation
+Import-Package: org.apache.log4j

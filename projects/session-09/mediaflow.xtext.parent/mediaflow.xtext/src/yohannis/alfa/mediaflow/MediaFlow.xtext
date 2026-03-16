@@ -1,0 +1,93 @@
+grammar yohannis.alfa.mediaflow.MediaFlow with org.eclipse.xtext.common.Terminals
+
+import "mediaflow" as mediaflow
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+Model returns mediaflow::Graph:
+    Graph
+;
+
+
+Graph returns mediaflow::Graph:
+    'graph' name=ID '{'
+        nodes+=Node*
+        edges+=Edge*
+    '}'
+;
+
+Node returns mediaflow::Node:
+    Resource | Transformer
+;
+
+Transformer returns mediaflow::Transformer:
+    Scaler | Transcoder
+;
+
+Resource returns mediaflow::Resource:
+    'resource' name=ID
+    '[' 'mediaType' '=' mediaType=MediaType ']'
+    'uri' '=' uri=STRING
+    'external' '=' external=EBoolean
+    '{'
+        ports+=Port*
+    '}'
+;
+
+Scaler returns mediaflow::Scaler:
+    'scaler' name=ID
+    'backend' '=' backend=Backend
+    'command' '=' command=STRING
+    'replicas' '=' replicas=INT
+    'width' '=' width=INT
+    'height' '=' height=INT
+    '{'
+        ports+=Port*
+    '}'
+;
+
+Transcoder returns mediaflow::Transcoder:
+    'transcoder' name=ID
+    'backend' '=' backend=Backend
+    'command' '=' command=STRING
+    'replicas' '=' replicas=INT
+    'videoCodec' '=' videoCodec=STRING
+    'audioCodec' '=' audioCodec=STRING
+    'container' '=' container=STRING
+    'bitrate' '=' bitrate=INT
+    '{'
+        ports+=Port*
+    '}'
+;
+
+Port returns mediaflow::Port:
+    'port' name=ID direction=Direction
+;
+
+Edge returns mediaflow::Edge:
+    'edge' name=ID
+    'from' source=[mediaflow::Port|ID]
+    'to' target=[mediaflow::Port|ID]
+;
+
+enum MediaType returns mediaflow::MediaType:
+    VIDEO='VIDEO' |
+    AUDIO='AUDIO' |
+    SUBTITLE='SUBTITLE' |
+    IMAGE='IMAGE' |
+    IMAGE_SEQUENCE='IMAGE_SEQUENCE'
+;
+
+enum Backend returns mediaflow::Backend:
+    FFMPEG='FFMPEG' |
+    GSTREAMER='GSTREAMER' |
+    CUSTOM='CUSTOM'
+;
+
+enum Direction returns mediaflow::Direction:
+    IN='IN' |
+    OUT='OUT'
+;
+
+EBoolean returns ecore::EBoolean:
+    'true' | 'false'
+;

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ASCII"?>
+<mediaflow:Graph
+    xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:mediaflow="mediaflow"
+    name="demo">
+  <nodes xsi:type="mediaflow:Resource"
+      name="inputVideo"
+      uri="file:///home/alfa/videos/input.mp4"
+      external="true">
+    <ports name="inputOut"
+        direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Scaler"
+      name="resize720"
+      command="ffmpeg -i input.mp4 -vf scale=1280:720 &#xA;      scaled.mp4"
+      replicas="1"
+      width="1280"
+      height="720">
+    <ports name="resizeIn"/>
+    <ports name="resizeOut"
+        direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource"
+      name="outputVideo"
+      uri="file:///home/alfa/videos/output.mp4"
+      external="true">
+    <ports name="outputIn"/>
+  </nodes>
+  <edges name="e1"
+      source="//@nodes.0/@ports.0"
+      target="//@nodes.1/@ports.0"/>
+  <edges name="e2"
+      source="//@nodes.1/@ports.1"
+      target="//@nodes.2/@ports.0"/>
+</mediaflow:Graph>
