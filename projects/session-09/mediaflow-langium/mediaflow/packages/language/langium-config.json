@@ -1,0 +1,16 @@
+{
+    "projectName": "MediaFlow",
+    "languages": [
+        {
+            "id": "media-flow",
+            "grammar": "src/media-flow.langium",
+            "fileExtensions": [
+                "mediaflow"
+            ],
+            "textMate": {
+                "out": "syntaxes/media-flow.tmLanguage.json"
+            }
+        }
+    ],
+    "out": "src/generated"
+}
