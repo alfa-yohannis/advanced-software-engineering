@@ -1,0 +1,771 @@
+\chapter{Textual Domain-Specific Language}
+\label{chap:dsl-textual}
+
+\section*{Tujuan Pembelajaran}
+\begin{enumerate}
+  \item Menjelaskan keterbatasan pendekatan koding pipeline media secara manual dan alasan penggunaan \textit{Domain-Specific Language} (DSL) sebagai solusi berbasis model.
+  \item Menerapkan metodologi umum pengembangan DSL, mulai dari perumusan masalah domain, perancangan \textit{abstract model}, definisi \textit{concrete syntax}, hingga validasi dan transformasi artefak.
+  \item Menganalisis \textit{trade-off} implementasi DSL menggunakan ANTLR, Xtext, dan Langium, lalu menentukan pendekatan yang paling sesuai untuk konteks kebutuhan tim dan sistem.
+\end{enumerate}
+
+\section{Pendahuluan}
+
+Pada banyak proyek media engineering, pipeline pemrosesan sering dibangun langsung sebagai kode atau skrip manual (misalnya rangkaian perintah \texttt{ffmpeg}, konfigurasi shell, atau potongan kode orkestrasi ad-hoc). Pendekatan ini terlihat cepat di awal, tetapi skala kompleksitas meningkat tajam ketika alur mulai bercabang, parameter transformasi bertambah, dan target output menjadi beragam.
+
+Ketika pipeline dikodekan manual, tim harus menangani banyak masalah sekaligus: duplikasi definisi node-transformasi, inkonsistensi parameter antarlingkungan, kesalahan referensi koneksi, serta rendahnya keterlacakan antara desain alur dan artefak eksekusi. Kesalahan umumnya baru terlihat pada tahap integrasi atau runtime, sehingga biaya perbaikan menjadi lebih tinggi.
+
+Karena itu, domain ini membutuhkan \textit{Domain-Specific Language} (DSL) sebagai lapisan abstraksi deklaratif. Dengan DSL, struktur pipeline dinyatakan sebagai model yang konsisten, dapat divalidasi sebelum eksekusi, dan dapat diturunkan secara sistematis ke artefak teknis. Bab ini memperlihatkan bagaimana kebutuhan tersebut dijawab melalui tiga pendekatan implementasi: ANTLR, Xtext, dan Langium.
+
+\section{Deskripsi Masalah Domain yang Diselesaikan}
+
+\subsection{Konteks Domain}
+
+Domain yang dibahas adalah orkestrasi pemrosesan media digital end-to-end, misalnya alur dari file sumber, proses transformasi (scaling/transcoding), hingga distribusi ke beberapa format keluaran. Dalam pendekatan manual, alur ini biasanya ditulis sebagai skrip/prosedur teknis yang panjang dan tersebar, sehingga sulit dipelihara saat jumlah skenario bertambah.
+
+Dalam studi kasus \textit{MediaFlow}, pipeline direpresentasikan sebagai graf terarah yang terdiri dari komponen pemrosesan (\texttt{Node}), titik koneksi (\texttt{Port}), dan relasi aliran data (\texttt{Edge}). Pendekatan ini dipilih karena mampu merepresentasikan topologi linear maupun bercabang dengan struktur yang konsisten.
+
+\begin{figure}[htbp]
+\centering
+\scalebox{0.69}{
+\begin{tikzpicture}[
+  node distance=18mm and 18mm,
+  >=Latex,
+  res/.style={draw, rounded corners, minimum width=3.2cm, minimum height=0.95cm, align=center, fill=blue!8},
+  scl/.style={draw, rounded corners, minimum width=3.4cm, minimum height=0.95cm, align=center, fill=green!10},
+  trn/.style={draw, rounded corners, minimum width=3.6cm, minimum height=0.95cm, align=center, fill=orange!14},
+  arr/.style={->, thick}
+]
+  \node[res] (input) {\textbf{Resource}\\input\_master};
+  \node[scl, right=of input] (scaler1080) {\textbf{Scaler}\\scaler\_1080};
+  \node[trn, right=of scaler1080, yshift=10mm] (h264) {\textbf{Transcoder}\\transcoder\_h264};
+  \node[trn, right=of scaler1080, yshift=-10mm] (vp9) {\textbf{Transcoder}\\transcoder\_vp9};
+  \node[res, right=of h264] (outmp4) {\textbf{Resource}\\output\_mp4};
+  \node[res, right=of vp9] (outwebm) {\textbf{Resource}\\output\_webm};
+
+  \draw[arr] (input) -- node[above, font=\scriptsize, yshift=15pt]{input\_master\_out} (scaler1080);
+  \draw[arr] (scaler1080) -- node[above, font=\scriptsize, xshift=-25pt]{scaler\_1080\_out\_h264} (h264);
+  \draw[arr] (scaler1080) -- node[below, font=\scriptsize, xshift=-25pt]{scaler\_1080\_out\_vp9} (vp9);
+  \draw[arr] (h264) -- node[above, font=\scriptsize, yshift=15pt]{transcoder\_h264\_out} (outmp4);
+  \draw[arr] (vp9) -- node[below, font=\scriptsize, yshift=-15pt]{transcoder\_vp9\_out} (outwebm);
+\end{tikzpicture}
+}
+\caption{Representasi visual DSL MediaFlow untuk topologi bercabang: satu scaler menuju dua transcoder dan dua output (diadaptasi dari Bab 8).}
+\label{fig:ch09-mediaflow-visual-dsl}
+\end{figure}
+
+Gambar~\ref{fig:ch09-mediaflow-visual-dsl} memperlihatkan bentuk visual dari model DSL yang menjadi fokus domain masalah pada bab ini, yaitu kebutuhan mengelola alur bercabang secara konsisten dari satu sumber ke beberapa keluaran.
+
+\subsection{Target Model DSL}
+
+Target DSL pada bagian ini menggunakan model acuan bersama yang lebih representatif terhadap alur media ujung-ke-ujung. Model memuat \texttt{Resource} input, \texttt{Scaler}, komponen encoder yang direpresentasikan sebagai \texttt{Transcoder}, serta \texttt{Resource} output. Dengan struktur ini, relasi \texttt{Node--Port--Edge} tidak hanya mencakup parsing dasar, tetapi juga skenario linking antartahap transformasi yang umum dipakai pada pipeline nyata.
+
+\begin{lstlisting}[
+  language=mediaflow,
+  caption={Target DSL MediaFlow},
+  label={lst:ch09-shared-dsl},
+  basicstyle=\ttfamily\scriptsize
+]
+graph demo {
+  resource inputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/input.mp4" external=true {
+    port inputOut OUT
+  }
+
+  scaler resize720 backend=FFMPEG command="ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4" replicas=1 width=1280 height=720 {
+    port resizeIn IN
+    port resizeOut OUT
+  }
+
+  transcoder encoderH264 backend=FFMPEG command="ffmpeg -i scaled.mp4 -c:v libx264 -c:a aac output.mp4" replicas=1 videoCodec="libx264" audioCodec="aac" container="mp4" bitrate=2000 {
+    port encodeIn IN
+    port encodeOut OUT
+  }
+
+  resource outputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/output.mp4" external=true {
+    port outputIn IN
+  }
+
+  edge e1 from inputOut to resizeIn
+  edge e2 from resizeOut to encodeIn
+  edge e3 from encodeOut to outputIn
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-shared-dsl} menunjukkan target model bersama yang konsisten dengan grammar proyek: dua \texttt{Resource} (input dan output), satu \texttt{Scaler}, satu \texttt{Transcoder} sebagai komponen encoder, serta tiga \texttt{Edge} untuk mengalirkan data dari input ke output. Karena dipakai bersama oleh ANTLR, Xtext, dan Langium, listing ini menjadi basis perbandingan perilaku parser, linking, dan validasi antarpendekatan.
+
+\subsection{Masalah Utama}
+
+Permasalahan inti yang muncul ketika pipeline dikembangkan secara manual dapat dirangkum sebagai berikut:
+\begin{enumerate}
+  \item \textbf{Kompleksitas topologi pipeline.} Ketika jumlah transformasi dan output bertambah, skrip manual sulit dibaca sebagai satu desain alur yang utuh.
+  \item \textbf{Inkoherensi konfigurasi antarkomponen.} Properti seperti backend, codec, bitrate, atau arah port rentan tidak sinkron karena didefinisikan di banyak lokasi kode.
+  \item \textbf{Kesalahan referensi koneksi.} Relasi \texttt{source/target} mudah salah tulis dan sulit diverifikasi tanpa mekanisme linking formal.
+  \item \textbf{Biaya perubahan requirement tinggi.} Perubahan target output atau strategi pemrosesan sering memaksa edit manual berulang di banyak berkas.
+  \item \textbf{Keterlacakan desain rendah.} Sulit menelusuri keterkaitan antara niat desain pipeline dan detail implementasi sebelum sistem dijalankan.
+\end{enumerate}
+
+Masalah-masalah tersebut menunjukkan bahwa pendekatan manual tidak cukup skalabel. Diperlukan DSL untuk menaikkan level abstraksi dari kode implementatif ke model domain yang eksplisit, tervalidasi, dan lebih mudah dievolusikan.
+
+\subsection{Kebutuhan Pemodelan}
+
+Berdasarkan masalah di atas, kebutuhan pemodelan untuk domain \textit{MediaFlow} adalah:
+\begin{enumerate}
+  \item \textbf{Representasi deklaratif berbasis domain} yang mampu menyatakan pipeline sebagai graf, bukan skrip prosedural yang sulit dipelihara.
+  \item \textbf{Abstract model yang stabil} agar elemen inti (\texttt{Graph}, \texttt{Node}, \texttt{Port}, \texttt{Edge}) tetap konsisten meskipun syntax berkembang.
+  \item \textbf{Validasi struktural dan semantik} untuk mencegah model invalid sejak awal, sebelum masuk ke tahap transformasi/generasi.
+  \item \textbf{Mekanisme linking referensi yang tegas} agar relasi antar-elemen dapat diselesaikan secara deterministik dan dapat ditelusuri.
+  \item \textbf{Kemudahan transformasi ke artefak turunan} seperti XMI atau JSON agar model dapat diintegrasikan ke pipeline tooling lain.
+  \item \textbf{Dukungan evolusi bahasa} supaya fitur baru dapat ditambahkan tanpa merusak kontrak model yang sudah ada.
+\end{enumerate}
+
+Kebutuhan ini menjadi dasar pemilihan dan perbandingan tiga pendekatan implementasi DSL pada bab ini: ANTLR, Xtext, dan Langium.
+
+\section{Metodologi Umum Pemodelan}
+
+Section ini merangkum alur kerja umum yang sama untuk ketiga pendekatan (ANTLR, Xtext, dan Langium). Tujuannya adalah memastikan tim memiliki kerangka pikir yang konsisten: mulai dari masalah domain, turun ke model abstrak, lalu ke implementasi bahasa dan artefak turunannya.
+
+\subsection{Langkah 1: Perumusan Batas Domain}
+
+Tahap pertama adalah menetapkan batas domain secara eksplisit: apa yang dimodelkan, apa yang tidak dimodelkan, siapa pengguna bahasa, dan keputusan apa yang ingin diwakili oleh model. Pada konteks \textit{MediaFlow}, batas domain mencakup pemodelan pipeline media berbasis graf (node, port, edge), bukan implementasi detail engine multimedia.
+
+Output utama tahap ini adalah \textit{domain scope statement} yang memuat \textit{in-scope/out-of-scope}, asumsi awal, dan target penggunaan model (misalnya konfigurasi pipeline, validasi desain, atau input generator).
+
+\textbf{Input tahap ini:} problem statement domain, tujuan stakeholder, batasan teknis, dan contoh skenario penggunaan.
+
+\textbf{Output tahap ini:} \textit{domain scope statement}, daftar \textit{in-scope/out-of-scope}, asumsi kerja, dan tujuan penggunaan model.
+
+\textbf{Contoh:} \textit{In-scope} hanya memodelkan elemen \texttt{Resource/Scaler/Transcoder}, \textit{out-of-scope} tidak mencakup detail autoscaling cluster atau retry policy runtime.
+
+\subsection{Langkah 2: Identifikasi Konsep Inti dan Relasi}
+
+Setelah batas domain jelas, konsep inti diekstraksi sebagai kandidat elemen model, misalnya \texttt{Graph}, \texttt{Node}, \texttt{Port}, \texttt{Edge}, serta enumerasi domain seperti \texttt{Direction}, \texttt{Backend}, dan \texttt{MediaType}. Setiap konsep perlu diikuti relasi yang jelas: kontainmen, referensi, serta arah dependensi.
+
+Fokus tahap ini adalah menemukan struktur domain yang stabil. Jika relasi inti sudah tepat, evolusi fitur bahasa berikutnya akan lebih aman karena bertumpu pada fondasi model yang konsisten.
+
+\textbf{Input tahap ini:} dokumen scope domain, skenario alur bisnis/teknis, dan istilah domain awal.
+
+\textbf{Output tahap ini:} daftar konsep inti, peta relasi antarkonsep, dan glosarium domain yang disepakati.
+
+\textbf{Contoh:} \texttt{input\_master} dan \texttt{output\_mp4} diidentifikasi sebagai \texttt{Resource} yang merepresentasikan media atau file lainnya, \texttt{scaler\_1080} sebagai \texttt{Scaler} yang merupakan komponen untuk mengubah resolusi media, \texttt{transcoder\_h264} sebagai \texttt{Transcoder} yang merepresentasikan komponen untuk mengubah codec/container, serta \texttt{edge\_scaler\_to\_h264} sebagai \texttt{Edge} yang merepresentasikan aliran media dari satu port ke port lain.
+
+\subsection{Langkah 3: Perancangan Abstract Model}
+
+Tahap ketiga menerjemahkan konsep dan relasi menjadi \textit{abstract model} formal (metamodel/AST domain). Di sini ditentukan kardinalitas, pewarisan, tipe atribut, serta kontrak referensi yang menjadi dasar validitas model.
+
+Prinsip pentingnya adalah \textit{syntax-independent semantics}: makna model harus tetap sama walau nanti ditulis dalam concrete syntax berbeda. Dengan kata lain, abstract model harus menjadi sumber kebenaran utama, bukan sekadar efek samping dari parser.
+
+\textbf{Input tahap ini:} daftar konsep inti dan relasi domain dari tahap sebelumnya.
+
+\textbf{Output tahap ini:} rancangan abstract model (metamodel/AST), hirarki elemen, kardinalitas, tipe atribut, dan kontrak referensi.
+
+\textbf{Contoh:} \texttt{Graph} memiliki \texttt{nodes[*]} dan \texttt{edges[*]}; notasi \texttt{[*]} berarti kardinalitas ``banyak'' (0..*), sehingga satu graph boleh memiliki nol, satu, atau banyak node/edge. Pada model \texttt{flow2}, misalnya, \texttt{nodes[*]} berisi beberapa instans (\texttt{input\_master}, \texttt{scaler\_1080}, dua \texttt{transcoder}, dua \texttt{output}), sedangkan \texttt{Edge.source} dan \texttt{Edge.target} masing-masing mereferensikan objek \texttt{Port}.
+
+\subsection{Langkah 4: Definisi Aturan Semantik dan Validasi}
+
+Sesudah abstract model tersedia, aturan semantik dirumuskan untuk mencegah model yang secara sintaks valid tetapi salah secara domain. Contoh aturan: larangan koneksi \texttt{IN->IN}, kewajiban \texttt{source/target} mengarah ke port yang ada, dan konsistensi properti transformasi.
+
+Aturan validasi sebaiknya dipisah menjadi dua lapis: \textbf{validasi struktural} (tipe, kardinalitas, referensi) dan \textbf{validasi domain} (aturan bisnis/operasional). Pemisahan ini memudahkan debugging dan evolusi bahasa.
+
+\textbf{Input tahap ini:} abstract model final kandidat dan aturan bisnis domain.
+
+\textbf{Output tahap ini:} katalog aturan validasi (struktural + domain), tingkat severity (\textit{error/warning}), serta kriteria model valid.
+
+\textbf{Contoh:} aturan validasi menetapkan bahwa \texttt{edge.source} wajib menunjuk port \texttt{OUT}, sedangkan \texttt{edge.target} wajib menunjuk port \texttt{IN}. Jadi koneksi seperti \texttt{OUT->IN} dinyatakan valid, sedangkan \texttt{IN->IN} atau \texttt{OUT->OUT} ditolak.
+
+\subsection{Langkah 5: Perancangan Concrete Syntax}
+
+Concrete syntax dirancang agar tetap setia pada abstract model, mudah ditulis manusia, dan tetap ramah tooling. Keputusan penting meliputi pemilihan keyword, bentuk deklarasi atribut, format referensi antarelemen, serta strategi penanganan ambiguitas.
+
+Pada tahap ini, tim juga menentukan konvensi authoring agar model mudah direview (misalnya urutan deklarasi elemen, aturan penamaan, dan format konsisten). Konvensi yang baik menurunkan biaya kolaborasi dan mengurangi error interpretasi.
+
+\textbf{Input tahap ini:} abstract model dan katalog aturan validasi.
+
+\textbf{Output tahap ini:} spesifikasi concrete syntax (grammar awal), konvensi penulisan model, dan contoh dokumen DSL representatif.
+
+\textbf{Contoh:} notasi DSL ditetapkan dalam bentuk \texttt{resource inputVideo ...} untuk mendefinisikan node sumber/tujuan media dan \texttt{edge e1 from inputOut to resizeIn} untuk mendefinisikan aliran antar-port. Urutan deklarasi node lebih dulu lalu edge memudahkan pembacaan dan linking.
+
+\subsection{Langkah 6: Parsing, Linking, dan Resolusi Referensi}
+
+Setelah syntax didefinisikan, implementasi parser membentuk struktur model dari teks, lalu proses linking menyelesaikan referensi simbol antar-elemen. Di sinilah kualitas desain nama dan scope sangat menentukan: semakin jelas aturan visibilitas simbol, semakin sedikit error ambigu.
+
+Secara metodologis, tahap ini harus menghasilkan jejak yang bisa ditelusuri dari token teks ke objek model. Ketertelusuran ini penting untuk debugging parser, validasi, dan pembangunan fitur editor.
+
+\textbf{Input tahap ini:} grammar concrete syntax, aturan visibilitas simbol, dan kumpulan model contoh.
+
+\textbf{Output tahap ini:} parser aktif, mekanisme linking/scoping, model hasil resolusi referensi, dan diagnostik parse/linking.
+
+\textbf{Contoh:} token \texttt{inputOut} pada deklarasi edge dipetakan ke objek \texttt{Port} milik node \texttt{inputVideo}. Jika nama port tidak ditemukan, sistem mengeluarkan error linking seperti ``unknown source port'', sehingga kesalahan referensi terdeteksi sebelum transformasi.
+
+\subsection{Langkah 7: Transformasi Model dan Artefak}
+
+Model yang sudah tervalidasi diturunkan ke artefak target melalui transformasi, misalnya XMI, JSON, konfigurasi pipeline, atau representasi perantara lain. Tahap ini menjembatani model konseptual ke implementasi teknis yang dapat dijalankan sistem lain.
+
+Prinsip utama transformasi adalah deterministik dan reproducible: input model yang sama harus menghasilkan output yang sama, sehingga hasil mudah diuji dan diotomasi dalam pipeline CI/CD.
+
+\textbf{Input tahap ini:} model yang lolos validasi dan spesifikasi format artefak target.
+
+\textbf{Output tahap ini:} artefak hasil transformasi (misalnya XMI/JSON), aturan mapping model-ke-output, dan skrip/prosedur generate yang repeatable.
+
+\textbf{Contoh:} berkas \texttt{test.mediaflow} ditransform menjadi \texttt{output/test.xmi} (alur EMF/Xtext) dan \texttt{output/test.json} (alur CLI Langium). Pada output JSON, elemen node biasanya muncul sebagai \texttt{children} dan koneksi sebagai \texttt{edges}, sehingga struktur graph tetap terbaca.
+
+\subsection{Langkah 8: Strategi Pengujian dan Iterasi}
+
+Metodologi ditutup dengan strategi pengujian berlapis: uji parsing, uji linking, uji validasi semantik, dan uji generator/output. Selain \textit{happy path}, wajib ada kasus negatif agar batas validitas bahasa benar-benar teruji.
+
+Hasil pengujian menjadi umpan balik iteratif untuk memperbaiki abstract model, grammar, dan aturan validasi. Dengan iterasi ini, evolusi bahasa berjalan terkendali dan tetap kompatibel dengan kebutuhan domain yang berkembang.
+
+\textbf{Input tahap ini:} implementasi parser/linking/validator/generator dan korpus model uji.
+
+\textbf{Output tahap ini:} hasil uji terukur, daftar temuan perbaikan, rencana iterasi versi berikutnya, dan baseline bahasa yang terversi.
+
+\textbf{Contoh:} test negatif dengan edge ke port yang tidak ada harus menghasilkan error. Setelah perbaikan dilakukan (misalnya pembetulan nama port atau aturan scope), test diulang hingga lolos, lalu versi bahasa dinaikkan secara terkontrol.
+
+\section{Implementasi Detail dengan ANTLR}
+
+Bagian ini membahas implementasi DSL \textit{MediaFlow} menggunakan ANTLR dengan pendekatan \textit{parser-first}. Fokusnya adalah bagaimana grammar diterjemahkan menjadi parser, lalu dipetakan secara eksplisit ke abstract model melalui \textit{visitor} khusus.
+
+\subsection{Arsitektur Implementasi}
+
+Implementasi ANTLR pada proyek ini dapat dipahami sebagai lima lapisan utama:
+\begin{enumerate}
+  \item \textbf{Grammar DSL (\texttt{MediaFlow.g4}).} Lapisan ini mendefinisikan token, aturan parser, prioritas struktur, serta bentuk konkret bahasa.
+  \item \textbf{Artefak parser hasil generasi ANTLR.} Dari grammar, ANTLR menghasilkan \texttt{Lexer}, \texttt{Parser}, \texttt{BaseVisitor}, dan kelas konteks parse tree.
+  \item \textbf{Kelas abstract model (AST domain).} Kelas seperti \texttt{Graph}, \texttt{Node}, \texttt{Port}, \texttt{Edge}, \texttt{Scaler}, dan \texttt{Transcoder} menjadi representasi struktur semantik.
+  \item \textbf{Lapisan pemetaan parse tree ke AST.} \texttt{AstBuilder} mengunjungi node parse tree dan membangun objek domain, termasuk resolusi referensi \texttt{edge.source} dan \texttt{edge.target}.
+  \item \textbf{Entry point eksekusi.} Kelas \texttt{Main} membaca berkas input DSL, menjalankan parser, mencetak parse tree untuk observasi, lalu memicu pembangunan AST.
+\end{enumerate}
+
+Secara alur, data bergerak dari \texttt{.mediaflow} (teks) $\rightarrow$ parse tree ANTLR $\rightarrow$ AST domain tervalidasi referensi. Arsitektur ini memberi kontrol penuh, tetapi menuntut implementasi manual untuk linking, validasi semantik, dan diagnostik domain.
+
+\subsection{Langkah Implementasi}
+
+Langkah implementasi ANTLR pada studi kasus ini dapat diringkas sebagai berikut.
+
+\textbf{Langkah 1: Merancang grammar konkret.} Grammar mendefinisikan elemen inti seperti \texttt{graph}, \texttt{resource}, \texttt{scaler}, \texttt{transcoder}, \texttt{port}, dan \texttt{edge}. Struktur model ditetapkan sebagai satu \texttt{graph} yang berisi kumpulan \texttt{node} dan \texttt{edge}. Target model yang harus diterima parser ANTLR menggunakan listing bersama pada Listing~\ref{lst:ch09-shared-dsl}.
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Potongan aturan grammar ANTLR untuk struktur utama MediaFlow},
+  label={lst:ch09-antlr-grammar},
+  basicstyle=\ttfamily\scriptsize
+]
+model : graph EOF ;
+
+graph
+  : 'graph' name=ID '{'
+      node*
+      edge*
+    '}'
+  ;
+
+edge
+  : 'edge' name=ID
+    'from' source=ID
+    'to' target=ID
+  ;
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-antlr-grammar} memuat tiga rule parser inti. Rule \texttt{model} adalah \textit{entry rule}, rule \texttt{graph} mendefinisikan struktur blok graf, dan rule \texttt{edge} mendefinisikan koneksi antar-port melalui pasangan \texttt{from}/\texttt{to}.
+
+\noindent Kata kunci \texttt{EOF} pada rule \texttt{model : graph EOF ;} adalah token bawaan ANTLR yang menandakan akhir berkas input. Kehadiran \texttt{EOF} memastikan parser tidak berhenti setelah menemukan satu \texttt{graph} saja, tetapi juga memverifikasi bahwa tidak ada token sisa di belakangnya. Dengan demikian, typo atau fragmen teks tambahan setelah blok \texttt{graph} tetap terdeteksi sebagai error sintaks.
+
+\noindent Pada listing yang sama, simbol \texttt{ID} \textbf{bukan} didefinisikan di rule parser \texttt{graph} atau \texttt{edge}, melainkan berasal dari rule lexer pada bagian bawah file \texttt{MediaFlow.g4}, yaitu \texttt{ID : [a-zA-Z\_][a-zA-Z\_0-9]* ;}. Artinya, setiap kemunculan \texttt{name=ID}, \texttt{source=ID}, dan \texttt{target=ID} mengambil token identifier dari rule lexer tersebut. Pada tahap semantik, \texttt{source} dan \texttt{target} awalnya masih berupa teks (nama port), kemudian dipetakan ke objek \texttt{Port} aktual saat proses linking di \texttt{AstBuilder}.
+
+\textbf{Langkah 2: Menghasilkan parser dari grammar.} Plugin \texttt{antlr4-maven-plugin} pada \texttt{pom.xml} menggenerasi lexer/parser secara otomatis saat build.
+
+\textbf{Langkah 3: Menyiapkan kelas abstract model.} Kelas domain didefinisikan secara terpisah dari parse tree agar struktur semantik tidak bergantung pada kelas konteks ANTLR.
+
+\textbf{Langkah 4: Membangun \textit{AstBuilder} berbasis visitor.} Setiap rule parser dipetakan ke objek AST. Pada tahap ini, atribut literal (angka, string, enum) diparsing menjadi tipe domain.
+
+\textbf{Langkah 5: Melakukan linking referensi secara manual.} Karena \texttt{edge} menyimpan referensi berbasis nama port, proses linking dilakukan dua tahap:
+\begin{enumerate}
+  \item registrasi seluruh port ke indeks nama saat node diproses;
+  \item resolusi \texttt{source}/\texttt{target} setelah seluruh parse selesai.
+\end{enumerate}
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Sketsa resolusi referensi edge pada AstBuilder},
+  label={lst:ch09-antlr-linking},
+  basicstyle=\ttfamily\scriptsize
+]
+private void resolveEdges() {
+    for (Edge e : unresolvedEdges) {
+        e.source = portIndex.get(e.sourceName);
+        e.target = portIndex.get(e.targetName);
+
+        if (e.source == null) throw new RuntimeException("Unknown source port: " + e.sourceName);
+        if (e.target == null) throw new RuntimeException("Unknown target port: " + e.targetName);
+    }
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-antlr-linking} memperlihatkan inti mekanisme linking manual: nama port pada \texttt{sourceName}/\texttt{targetName} dicari pada \texttt{portIndex}, lalu dikonversi menjadi referensi objek \texttt{Port}. Jika nama tidak ditemukan, proses dihentikan dengan error agar model invalid tidak lanjut ke tahap berikutnya.
+
+\textbf{Langkah 6: Menyusun entry point eksekusi.} \texttt{Main} bertugas membaca berkas input, menjalankan parser, dan memanggil \texttt{AstBuilder} untuk memperoleh model domain.
+
+\textbf{Langkah 7: Menjalankan \textit{smoke test} pipeline parser.} Verifikasi awal dapat dilakukan dengan menjalankan parser pada \texttt{input/test.mediaflow}.
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Contoh eksekusi parser ANTLR pada proyek MediaFlow},
+  label={lst:ch09-antlr-run},
+  basicstyle=\ttfamily\scriptsize
+]
+mvn -f mediaflow.antlr/pom.xml compile exec:java
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-antlr-run} adalah perintah \textit{smoke test} untuk memverifikasi pipeline minimum ANTLR, yaitu generasi parser, pemrosesan input DSL, dan pembentukan AST berjalan tanpa kegagalan.
+
+\subsection{Titik Ekstensi}
+
+Beberapa titik ekstensi yang relevan untuk pengembangan lanjutan adalah:
+\begin{enumerate}
+  \item \textbf{Penambahan elemen DSL baru.} Misalnya menambahkan \texttt{Filter} atau \texttt{Muxer} pada rule \texttt{node}, lalu menyesuaikan AST dan visitor.
+  \item \textbf{Validasi semantik domain.} Contohnya: larangan koneksi \texttt{IN} ke \texttt{IN}, kewajiban minimal satu output pada \texttt{Graph}, atau aturan backend-kompatibilitas codec.
+  \item \textbf{Strategi resolusi simbol.} Evolusi dari nama sederhana ke nama berkualifikasi (misalnya \texttt{node.port}) untuk mengurangi ambiguitas skala besar.
+  \item \textbf{Pelaporan error yang lebih ramah pengguna.} Mengubah \texttt{RuntimeException} menjadi \textit{diagnostic report} dengan lokasi baris/kolom.
+  \item \textbf{Transformasi output.} Setelah AST terbentuk, dapat ditambahkan generator ke JSON, YAML, atau IR lain untuk tahap orkestrasi pipeline.
+\end{enumerate}
+
+\subsection{Risiko dan Pitfall Umum}
+
+Risiko implementasi ANTLR pada konteks ini umumnya muncul pada area berikut:
+\begin{enumerate}
+  \item \textbf{Kopling grammar--AST yang rapat.} Perubahan kecil grammar dapat memaksa refaktor visitor dan kelas AST secara serentak.
+  \item \textbf{Linking berbasis nama global.} Jika hanya nama port sederhana yang dipakai, potensi benturan nama meningkat saat model membesar.
+  \item \textbf{Urutan deklarasi grammar yang ketat.} Rule \texttt{graph} dengan pola \texttt{node* edge*} membatasi fleksibilitas authoring karena edge harus muncul setelah seluruh node.
+  \item \textbf{Validasi semantik belum otomatis.} Tidak seperti framework DSL level lebih tinggi, ANTLR tidak menyediakan validasi domain secara bawaan; semua aturan harus ditulis manual.
+  \item \textbf{Kualitas diagnostik bergantung implementasi.} Tanpa strategi \textit{error recovery} yang baik, pesan error cenderung teknis dan sulit dipahami pengguna domain.
+\end{enumerate}
+
+Mitigasi yang disarankan adalah menjaga kontrak nama secara eksplisit, menambah tes negatif sejak awal, dan memisahkan jelas tanggung jawab grammar, linking, dan validasi.
+Karena prinsip pengujian dan evaluasi bersifat lintas-pendekatan, pembahasan detailnya dipusatkan pada Section~\ref{sec:ch09-pengujian-evaluasi} agar tidak terduplikasi di setiap implementasi.
+
+\section{Implementasi Detail dengan Xtext}
+
+Bagian ini membahas implementasi DSL \textit{MediaFlow} menggunakan Xtext dengan pendekatan \textit{metamodel-centric}. Berbeda dari ANTLR murni, Xtext menyediakan ekosistem lengkap untuk parser, linker, validasi, dan fitur editor yang terintegrasi.
+
+\subsection{Arsitektur Implementasi}
+
+Arsitektur implementasi Xtext pada proyek ini terdiri dari beberapa lapisan:
+\begin{enumerate}
+  \item \textbf{Grammar Xtext (\texttt{MediaFlow.xtext}).} Grammar menjadi pusat definisi concrete syntax sekaligus pengikat ke metamodel EMF.
+  \item \textbf{Metamodel EMF yang diimpor.} Melalui deklarasi \texttt{import "mediaflow" as mediaflow}, elemen grammar langsung dipetakan ke kelas Ecore seperti \texttt{Graph}, \texttt{Node}, \texttt{Port}, dan \texttt{Edge}.
+  \item \textbf{Runtime services.} Xtext menghasilkan parser, serializer, linker, dan infrastruktur runtime berbasis dependency injection.
+  \item \textbf{Layer kustomisasi domain.} Kelas seperti \texttt{MediaFlowScopeProvider} dan \texttt{MediaFlowValidator} menjadi titik utama untuk aturan semantik khusus domain.
+  \item \textbf{Tooling IDE/Web.} Modul \texttt{mediaflow.xtext.ui}, \texttt{mediaflow.xtext.ide}, dan \texttt{mediaflow.xtext.web} menyediakan fondasi editor, content assist, dan web integration.
+\end{enumerate}
+
+Dengan arsitektur ini, pengembangan tidak berhenti di parser saja, tetapi langsung terhubung ke pengalaman authoring model yang lebih kaya.
+
+\subsection{Langkah Implementasi}
+
+Langkah implementasi Xtext pada studi kasus ini dapat dijabarkan sebagai berikut.
+
+\textbf{Langkah 1: Menyiapkan target model parser.} Implementasi Xtext menggunakan dokumen target bersama pada Listing~\ref{lst:ch09-shared-dsl} sebagai acuan uji awal parser dan linking. Dengan acuan yang sama, kualitas resolusi referensi dan validasi dapat dibandingkan lebih objektif terhadap ANTLR dan Langium.
+
+\textbf{Langkah 2: Menulis grammar Xtext dan memetakan ke metamodel EMF.}
+\begin{lstlisting}[
+  language=bash,
+  caption={Potongan grammar Xtext MediaFlow yang terikat ke metamodel EMF},
+  label={lst:ch09-xtext-grammar},
+  basicstyle=\ttfamily\scriptsize
+]
+grammar yohannis.alfa.mediaflow.MediaFlow with org.eclipse.xtext.common.Terminals
+
+import "mediaflow" as mediaflow
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+Model returns mediaflow::Graph:
+    Graph
+;
+
+Graph returns mediaflow::Graph:
+    'graph' name=ID '{'
+        nodes+=Node*
+        edges+=Edge*
+    '}'
+;
+
+Edge returns mediaflow::Edge:
+    'edge' name=ID
+    'from' source=[mediaflow::Port|ID]
+    'to' target=[mediaflow::Port|ID]
+;
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-xtext-grammar} memperlihatkan dua hal penting. Pertama, rule \texttt{returns mediaflow::...} mengikat syntax langsung ke kelas Ecore. Kedua, notasi \texttt{[mediaflow::Port|ID]} menyatakan \textit{cross-reference} dari teks ke objek \texttt{Port}, sehingga nilai \texttt{from}/\texttt{to} dapat di-resolve oleh mekanisme linking Xtext.
+
+\textbf{Langkah 3: Mengatur scoping untuk resolusi referensi port.}
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Kustomisasi scope untuk referensi \texttt{Edge.source} dan \texttt{Edge.target}},
+  label={lst:ch09-xtext-scope},
+  basicstyle=\ttfamily\scriptsize
+]
+@Override
+public IScope getScope(EObject context, EReference reference) {
+    if (context instanceof Edge
+            && (reference == MediaflowPackage.Literals.EDGE__SOURCE
+             || reference == MediaflowPackage.Literals.EDGE__TARGET)) {
+
+        Graph graph = EcoreUtil2.getContainerOfType(context, Graph.class);
+        if (graph == null) {
+            return IScope.NULLSCOPE;
+        }
+
+        List<Port> ports = new ArrayList<>();
+        for (Node node : graph.getNodes()) {
+            ports.addAll(node.getPorts());
+        }
+
+        return Scopes.scopeFor(ports);
+    }
+
+    return super.getScope(context, reference);
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-xtext-scope} menjelaskan bagaimana kandidat referensi untuk \texttt{source}/\texttt{target} dibatasi ke seluruh \texttt{Port} di dalam \texttt{Graph} yang sama. Tanpa scoping ini, resolusi bisa gagal atau menjadi ambigu saat model bertambah kompleks.
+
+\textbf{Langkah 4: Menyiapkan validator untuk aturan semantik domain.}
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Kerangka validator Xtext untuk aturan semantik MediaFlow},
+  label={lst:ch09-xtext-validator},
+  basicstyle=\ttfamily\scriptsize
+]
+public class MediaFlowValidator extends AbstractMediaFlowValidator {
+
+//  public static final String INVALID_NAME = "invalidName";
+//
+//  @Check
+//  public void checkGreetingStartsWithCapital(Greeting greeting) {
+//      if (!Character.isUpperCase(greeting.getName().charAt(0))) {
+//          warning("Name should start with a capital",
+//                  MediaFlowPackage.Literals.GREETING__NAME,
+//                  INVALID_NAME);
+//      }
+//  }
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-xtext-validator} menunjukkan bahwa kelas validator sudah tersedia sebagai \textit{extension point}. Pada tahap pengembangan lanjut, aturan contoh diganti dengan aturan domain nyata, misalnya validasi arah port, validasi siklus graf, atau konsistensi kombinasi backend dan codec.
+
+\textbf{Langkah 5: Menjalankan build terpadu untuk memastikan modul runtime, UI, dan test terkompilasi.}
+\begin{lstlisting}[
+  language=bash,
+  caption={Contoh perintah build proyek Xtext MediaFlow},
+  label={lst:ch09-xtext-build},
+  basicstyle=\ttfamily\scriptsize
+]
+mvn -f mediaflow.xtext.parent/pom.xml clean verify
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-xtext-build} digunakan sebagai verifikasi awal bahwa konfigurasi Tycho multi-modul (runtime, IDE, web, dan tests) berada dalam kondisi konsisten.
+
+\subsection{Titik Ekstensi}
+
+Titik ekstensi penting pada implementasi Xtext meliputi:
+\begin{enumerate}
+  \item \textbf{Validator kustom (\texttt{@Check}).} Menambahkan aturan semantik domain yang tidak cukup ditangkap grammar.
+  \item \textbf{Scope provider.} Mengontrol visibilitas simbol agar linking lebih presisi.
+  \item \textbf{Formatter.} Menstandarkan format dokumen DSL agar mudah dibaca dan direview.
+  \item \textbf{Proposal provider dan outline.} Meningkatkan pengalaman authoring di editor melalui completion dan navigasi struktur.
+  \item \textbf{Generator M2T.} Menurunkan model ke artefak target seperti konfigurasi, skrip, atau representasi perantara.
+\end{enumerate}
+
+\subsection{Risiko dan Pitfall Umum}
+
+Beberapa risiko yang umum muncul saat implementasi Xtext adalah:
+\begin{enumerate}
+  \item \textbf{Mengandalkan default linking tanpa scoping eksplisit.} Referensi antar-elemen dapat menjadi ambigu pada model besar.
+  \item \textbf{Kontrak grammar dan metamodel tidak sinkron.} Perubahan Ecore tanpa penyesuaian grammar (atau sebaliknya) memicu error parse/link yang sulit dilacak.
+  \item \textbf{Validator domain belum diisi.} Model bisa lolos parse tetapi tetap salah secara semantik bisnis.
+  \item \textbf{Konfigurasi Tycho multi-modul lebih kompleks.} Kesalahan kecil pada dependensi plugin dapat menyebabkan build gagal di tahap integrasi.
+  \item \textbf{Scaffold test belum domain-spesifik.} Test bawaan generator sering perlu diganti total agar benar-benar menguji bahasa yang dibangun.
+\end{enumerate}
+
+Mitigasi praktisnya adalah menambahkan aturan validasi secara inkremental, memperkuat test negatif untuk linking, dan menjaga perubahan grammar-metamodel tetap sinkron dalam satu commit.
+Kerangka pengujian untuk Xtext mengikuti strategi evaluasi lintas-pendekatan pada Section~\ref{sec:ch09-pengujian-evaluasi}, dengan penyesuaian pada tooling build Tycho dan validator \texttt{@Check}.
+
+\section{Implementasi Detail dengan Langium}
+
+Bagian ini membahas implementasi DSL \textit{MediaFlow} menggunakan Langium pada ekosistem TypeScript/Node.js. Pendekatan ini cocok ketika kebutuhan utama adalah language server modern, integrasi VS Code, dan generator berbasis JavaScript.
+
+\subsection{Arsitektur Implementasi}
+
+Arsitektur implementasi Langium pada proyek ini dapat diringkas sebagai berikut:
+\begin{enumerate}
+  \item \textbf{Grammar Langium (\texttt{media-flow.langium}).} Grammar mendefinisikan concrete syntax, terminal, dan rule parser.
+  \item \textbf{Artefak hasil generasi Langium.} Dari grammar, Langium menghasilkan AST type, grammar metadata, dan modul layanan bahasa.
+  \item \textbf{Layanan kustom bahasa.} Kelas seperti \texttt{MediaFlowScopeProvider} dan \texttt{MediaFlowValidator} memperluas perilaku default.
+  \item \textbf{Lapisan CLI dan generator.} Paket \texttt{packages/cli} mem-parsing berkas DSL dan menghasilkan artefak JSON (ELK graph) untuk visualisasi/layout lanjutan.
+  \item \textbf{Ekstensi editor.} Paket \texttt{packages/extension} menyediakan integrasi language server ke VS Code.
+\end{enumerate}
+
+Dengan arsitektur ini, alur kerja mencakup authoring model, validasi, dan generasi output dalam satu stack TypeScript yang konsisten.
+
+\subsection{Langkah Implementasi}
+
+Langkah implementasi Langium pada studi kasus ini dapat dijabarkan sebagai berikut.
+
+\textbf{Langkah 1: Menyiapkan dokumen input parser.} Implementasi Langium memakai target model bersama pada Listing~\ref{lst:ch09-shared-dsl} sebagai \textit{smoke test} awal parser dan linker. Pemakaian dokumen yang sama membantu menjaga kesetaraan skenario uji saat membandingkan hasil dengan ANTLR dan Xtext.
+
+\textbf{Langkah 2: Menulis grammar Langium untuk struktur model dan referensi.}
+\begin{lstlisting}[
+  language=bash,
+  caption={Potongan grammar Langium MediaFlow untuk rule inti dan cross-reference},
+  label={lst:ch09-langium-grammar},
+  basicstyle=\ttfamily\scriptsize
+]
+entry Model:
+    elements+=Element*;
+
+Graph:
+    'graph' name=ID '{'
+        elements+=GraphElement*
+    '}'
+;
+
+Edge:
+    'edge' name=ID
+    'from' source=[Port:QualifiedPortName]
+    'to' target=[Port:QualifiedPortName]
+;
+
+QualifiedPortName returns string:
+    ID ('.' ID)?
+;
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-langium-grammar} memperlihatkan bahwa root model dapat memuat elemen graf, dan referensi \texttt{Edge} menggunakan \texttt{QualifiedPortName}. Pola ini memungkinkan nama port sederhana (\texttt{portA}) maupun berkualifikasi (\texttt{nodeA.portA}) untuk kebutuhan model yang lebih besar.
+
+\textbf{Langkah 3: Menyesuaikan scope agar referensi port tidak ambigu.}
+\begin{lstlisting}[
+  style=JavaScript,
+  caption={Kustomisasi scope provider Langium untuk nama port sederhana dan berkualifikasi},
+  label={lst:ch09-langium-scope},
+  basicstyle=\ttfamily\scriptsize
+]
+if (referenceType === 'Port' && (isModel(root) || isGraph(root))) {
+    const graphs = isModel(root) ? root.elements : [root];
+    const descriptions: AstNodeDescription[] = [];
+    const portsBySimpleName = new Map<string, AstNodeDescription[]>();
+
+    for (const graph of graphs) {
+        for (const element of graph.elements) {
+            if (isNode(element)) {
+                for (const port of element.ports) {
+                    descriptions.push(this.descriptions.createDescription(
+                        port, `${element.name}.${port.name}`, document
+                    ));
+                }
+            }
+        }
+    }
+    return this.createScope(descriptions);
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-langium-scope} menjelaskan inti strategi resolusi simbol di Langium. Scope menyediakan deskripsi referensi port pada level global dokumen, sehingga mekanisme linking dapat memetakan token teks ke node AST yang benar.
+
+\textbf{Langkah 4: Menambahkan validasi semantik kustom.}
+\begin{lstlisting}[
+  style=JavaScript,
+  caption={Kerangka registrasi validator kustom pada Langium},
+  label={lst:ch09-langium-validator},
+  basicstyle=\ttfamily\scriptsize
+]
+export function registerValidationChecks(services: MediaFlowServices) {
+    const registry = services.validation.ValidationRegistry;
+    const validator = services.validation.MediaFlowValidator;
+    const checks: ValidationChecks<MediaFlowAstType> = {
+        // Example:
+        // Edge: validator.checkEdgeDirection
+    };
+    registry.register(checks, validator);
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-langium-validator} menunjukkan titik masuk untuk aturan semantik domain. Pada proyek saat ini bagian tersebut masih berupa scaffold, sehingga penguatan kualitas model bergantung pada penambahan check kustom.
+
+\textbf{Langkah 5: Mengimplementasikan generator output dari AST ke ELK JSON.}
+\begin{lstlisting}[
+  style=JavaScript,
+  caption={Sketsa generator Langium yang menurunkan model menjadi ELK JSON},
+  label={lst:ch09-langium-generator},
+  basicstyle=\ttfamily\scriptsize
+]
+export function generateOutput(model: Model, _source: string, destination: string): string {
+    const elkGraph = buildElkGraph(model);
+    fs.writeFileSync(destination, `${JSON.stringify(elkGraph, null, 2)}\n`, 'utf-8');
+    return destination;
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-langium-generator} memperlihatkan langkah M2T pada implementasi Langium: model domain diproyeksikan ke struktur graf ELK dalam format JSON untuk dipakai pipeline visualisasi.
+
+\textbf{Langkah 6: Menjalankan pipeline generate dan build workspace.}
+\begin{lstlisting}[
+  language=bash,
+  caption={Contoh perintah build dan generate pada workspace Langium MediaFlow},
+  label={lst:ch09-langium-run},
+  basicstyle=\ttfamily\scriptsize
+]
+cd mediaflow-langium/mediaflow
+npm run langium:generate
+npm run build
+node ./packages/cli/bin/cli.js generate ./input/test.mediaflow ./output/test.json
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch09-langium-run} adalah urutan perintah minimum untuk memastikan grammar tergenerasi, paket terkompilasi, dan CLI berhasil menghasilkan artefak output dari model \texttt{.mediaflow}.
+
+\subsection{Titik Ekstensi}
+
+Titik ekstensi penting pada implementasi Langium meliputi:
+\begin{enumerate}
+  \item \textbf{Grammar rule dan terminal.} Penambahan elemen DSL baru dilakukan langsung pada \texttt{media-flow.langium}.
+  \item \textbf{Scope provider.} Aturan visibilitas simbol dapat diperketat untuk menghindari referensi ambigu.
+  \item \textbf{Validator kustom.} Aturan domain seperti arah port, larangan siklus, atau konsistensi backend dapat didaftarkan di \texttt{registerValidationChecks}.
+  \item \textbf{Generator CLI.} Output dapat diperluas dari ELK JSON ke format lain seperti YAML deployment, script pipeline, atau konfigurasi orkestrator.
+  \item \textbf{VS Code extension.} Pengalaman editor dapat ditingkatkan melalui semantic token, quick fix, dan command tambahan.
+\end{enumerate}
+
+\subsection{Risiko dan Pitfall Umum}
+
+Beberapa risiko yang umum muncul saat implementasi Langium adalah:
+\begin{enumerate}
+  \item \textbf{Validator belum diaktifkan penuh.} Grammar valid belum tentu benar secara semantik domain.
+  \item \textbf{Ambiguitas nama referensi.} Jika strategi qualified name tidak konsisten, linking dapat memilih target yang salah.
+  \item \textbf{Ketergantungan pada proses generate.} Perubahan grammar harus diikuti \texttt{langium:generate}; jika terlewat, tipe AST dan layanan bisa tidak sinkron.
+  \item \textbf{Kompleksitas monorepo/workspace Node.js.} Ketidaksesuaian versi package atau build order dapat mengganggu pipeline.
+  \item \textbf{Cakupan test masih scaffold.} Tanpa test parsing/linking/validation yang nyata, regresi grammar sulit dideteksi dini.
+\end{enumerate}
+
+Mitigasi yang disarankan adalah menjadikan \texttt{langium:generate} bagian wajib pipeline CI, menambah test negatif untuk referensi port, dan mengunci versi dependency workspace.
+Kerangka pengujian Langium juga mengikuti strategi evaluasi lintas-pendekatan pada Section~\ref{sec:ch09-pengujian-evaluasi}, dengan fokus tambahan pada sinkronisasi \texttt{langium:generate}, build workspace, dan stabilitas output CLI.
+
+\section{Pengujian dan Evaluasi Lintas Pendekatan}
+\label{sec:ch09-pengujian-evaluasi}
+
+Karena target model DSL dan tujuan evaluasi sama untuk ANTLR, Xtext, dan Langium, strategi pengujian dipusatkan dalam satu section ini. Pendekatan ini menjaga konsistensi kualitas, memudahkan perbandingan hasil antarpipeline, dan mencegah duplikasi kriteria validitas.
+
+\subsection{Tujuan Evaluasi}
+
+Evaluasi lintas-pendekatan difokuskan pada empat aspek utama:
+\begin{enumerate}
+  \item \textbf{Kebenaran parsing.} Model valid harus dapat diparse, sementara model sintaks salah harus ditolak secara konsisten.
+  \item \textbf{Kebenaran linking referensi.} Referensi \texttt{source}/\texttt{target} harus ter-resolve ke port yang tepat dan menolak simbol yang tidak dikenal.
+  \item \textbf{Kebenaran validasi semantik.} Aturan domain (misalnya arah koneksi port atau konsistensi konfigurasi) harus menghasilkan diagnosis yang tepat.
+  \item \textbf{Konsistensi artefak turunan.} Generator harus menghasilkan output deterministik untuk input model yang sama.
+\end{enumerate}
+
+\subsection{Strategi Pengujian Berlapis}
+
+Strategi yang disarankan untuk ketiga pendekatan adalah:
+\begin{enumerate}
+  \item \textbf{Uji parsing model valid dan invalid.}
+  \item \textbf{Uji linking referensi} untuk kasus normal, \textit{unknown reference}, dan potensi ambiguitas simbol.
+  \item \textbf{Uji validasi semantik} untuk aturan domain yang wajib dipenuhi sebelum transformasi.
+  \item \textbf{Uji generator/output} dengan verifikasi struktur dan stabilitas hasil.
+  \item \textbf{Uji regresi dan integrasi build} agar evolusi grammar tidak merusak perilaku lama.
+\end{enumerate}
+
+\subsection{Korpus Uji Minimum}
+
+Untuk konteks pembelajaran, set minimal yang direkomendasikan adalah:
+\begin{enumerate}
+  \item satu model \textit{happy path} (valid end-to-end),
+  \item satu model dengan referensi port salah (\textit{unresolved reference}),
+  \item satu model yang melanggar aturan semantik domain,
+  \item satu skenario uji output generator untuk memastikan artefak turunan tetap konsisten.
+\end{enumerate}
+
+\section{Perbandingan ANTLR vs Xtext vs Langium}
+
+\subsection{Perbandingan Aspek Teknis}
+
+Perbandingan teknis utama ketiga pendekatan dirangkum pada Tabel~\ref{tab:ch09-perbandingan-teknis}. Fokus tabel ini adalah karakteristik implementasi bahasa: seberapa manual prosesnya, bagaimana linking dikelola, serta seperti apa dukungan validasi dan evolusi model.
+
+\begin{table}[h]
+\centering
+\caption{Perbandingan aspek teknis ANTLR, Xtext, dan Langium pada studi kasus MediaFlow}
+\label{tab:ch09-perbandingan-teknis}
+\scriptsize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.11\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|}
+\hline
+\textbf{Aspek} & \textbf{ANTLR} & \textbf{Xtext} & \textbf{Langium} \\
+\hline
+Fokus utama & Parser framework general-purpose dengan kontrol pada level rendah. & Framework DSL berbasis EMF dengan ekosistem lengkap (parser, linking, validasi, editor). & Framework DSL modern di ekosistem TypeScript/Node.js dengan fokus language server dan tool web. \\
+\hline
+Representasi model & AST domain dibangun manual lewat visitor (\texttt{AstBuilder}). & Grammar terikat langsung ke metamodel Ecore (\texttt{returns mediaflow::...}). & AST type dihasilkan otomatis dari grammar Langium. \\
+\hline
+Linking referensi & Manual: indeks simbol dan resolusi referensi ditulis sendiri. & Semi-otomatis dengan \textit{cross-reference} + \textit{scope provider} kustom. & Semi-otomatis dengan \textit{reference resolution} + \textit{scope provider} kustom. \\
+\hline
+Validasi semantik & Tidak ada bawaan domain-level; seluruh aturan ditulis manual. & Titik ekstensi kuat melalui \texttt{@Check} pada validator. & Titik ekstensi melalui \texttt{registerValidationChecks} dan validator service. \\
+\hline
+Evolusi bahasa & Sangat fleksibel, tetapi biaya perubahan tinggi karena banyak bagian manual. & Stabil untuk ekosistem EMF; perubahan perlu sinkronisasi grammar--metamodel. & Cepat berevolusi untuk use case web/editor modern; perlu disiplin regenerasi artefak. \\
+\hline
+Target runtime utama & JVM/Java runtime. & JVM + ekosistem Eclipse/Tycho/EMF. & Node.js/TypeScript + VS Code extension. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+Berdasarkan Tabel~\ref{tab:ch09-perbandingan-teknis}, ANTLR unggul pada kontrol detail implementasi, Xtext unggul pada integrasi model-driven berbasis EMF, dan Langium unggul pada kelincahan pengembangan language tooling di stack JavaScript modern.
+
+\subsection{Perbandingan Aspek Tooling dan Produktivitas}
+
+Selain sisi teknis, faktor tooling dan produktivitas tim juga menentukan keberhasilan proyek DSL. Ringkasan perbandingannya ditunjukkan pada Tabel~\ref{tab:ch09-perbandingan-tooling}.
+
+\begin{table}[h]
+\centering
+\caption{Perbandingan tooling dan produktivitas pengembangan}
+\label{tab:ch09-perbandingan-tooling}
+\scriptsize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.11\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|}
+\hline
+\textbf{Aspek} & \textbf{ANTLR} & \textbf{Xtext} & \textbf{Langium} \\
+\hline
+Kurva belajar awal & Menengah: grammar mudah dimulai, tetapi linking/validasi manual menambah beban. & Menengah--tinggi: banyak konsep (EMF, Tycho, modul runtime/UI) tetapi terstruktur. & Rendah--menengah untuk tim JavaScript; pola generator dan workspace relatif familiar. \\
+\hline
+Produktivitas awal proyek & Cepat untuk proof-of-concept parser sederhana. & Baik untuk proyek DSL enterprise yang butuh ekosistem lengkap. & Cepat untuk prototipe sampai produk dengan editor modern dan CLI. \\
+\hline
+Editor support & Perlu dibangun/diintegrasikan terpisah. & Sangat kuat di ekosistem Eclipse (content assist, outline, formatter, dsb.). & Kuat di VS Code melalui extension + language server. \\
+\hline
+Build \& CI pipeline & Umumnya sederhana (Maven/Gradle + runtime Java). & Lebih kompleks karena multi-modul Tycho/Eclipse plugin. & Relatif ringan dengan npm workspace dan pipeline TypeScript standar. \\
+\hline
+Kesesuaian tim & Cocok untuk tim compiler/parser yang butuh kontrol penuh. & Cocok untuk tim model-driven yang sudah memakai EMF/Eclipse. & Cocok untuk tim web/platform yang dominan TypeScript/Node.js. \\
+\hline
+Maintainability jangka panjang & Bergantung kualitas desain manual AST/linking. & Tinggi jika disiplin pada kontrak metamodel dan validasi. & Tinggi jika disiplin pada regenerasi artefak dan test language services. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+Tabel~\ref{tab:ch09-perbandingan-tooling} menegaskan bahwa pilihan tool tidak hanya soal fitur parser, tetapi juga kecocokan dengan kompetensi tim, target editor, dan kompleksitas operasional pipeline build.
+
+\subsection{Panduan Pemilihan Pendekatan}
+
+Panduan pemilihan praktis pada konteks MediaFlow dapat dirumuskan sebagai berikut:
+\begin{enumerate}
+  \item \textbf{Pilih ANTLR} jika prioritas utama adalah kontrol penuh atas grammar, parse tree, dan proses linking manual, serta tim nyaman mengelola infrastruktur bahasa dari level rendah.
+  \item \textbf{Pilih Xtext} jika proyek menuntut integrasi kuat dengan EMF/Ecore, validasi model enterprise, dan pengalaman tooling kaya di ekosistem Eclipse.
+  \item \textbf{Pilih Langium} jika target utama adalah language tooling berbasis web/VS Code, stack TypeScript, dan siklus iterasi cepat dari grammar ke generator CLI.
+\end{enumerate}
+
+Dalam praktik kurikulum, urutan pembelajaran yang direkomendasikan adalah:
+\begin{enumerate}
+  \item mulai dari ANTLR untuk memahami fondasi parsing dan linking secara eksplisit;
+  \item lanjut ke Xtext untuk melihat otomatisasi model-driven dalam ekosistem EMF;
+  \item akhiri dengan Langium untuk konteks language engineering modern berbasis TypeScript.
+\end{enumerate}
+
+Dengan pendekatan bertahap tersebut, mahasiswa memahami \textit{trade-off} secara konseptual dan operasional, bukan sekadar menghafal perbedaan fitur antarframework.
+
+\section{Ringkasan}
+
+Bab ini menegaskan bahwa koding pipeline media secara manual cepat menimbulkan masalah ketika skenario bertambah kompleks: konfigurasi tersebar, referensi koneksi rawan salah, dan validasi semantik sulit dilakukan sebelum runtime. Karena itu, DSL diperlukan sebagai lapisan abstraksi domain agar alur pemrosesan dapat dinyatakan secara deklaratif, konsisten, dan tervalidasi sejak awal. Metodologi umum yang dibahas mengikuti delapan tahap berurutan, dari perumusan batas domain hingga pengujian-iterasi, dengan artefak input/output yang jelas pada setiap tahap.
+
+Implementasi menggunakan ANTLR, Xtext, dan Langium menunjukkan bahwa ketiganya dapat menyelesaikan kebutuhan domain yang sama, tetapi dengan trade-off berbeda. ANTLR cocok untuk kontrol rendah-level dan transparansi proses parser/linking, Xtext kuat untuk ekosistem model-driven berbasis EMF, sedangkan Langium unggul untuk language tooling modern di stack TypeScript/VS Code. Dengan memahami perbedaan teknis, produktivitas, dan konteks tim, pemilihan pendekatan dapat dilakukan secara rasional sesuai target sistem yang dibangun.

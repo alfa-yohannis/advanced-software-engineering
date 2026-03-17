@@ -180,6 +180,31 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 }
 
 % Define Java language style for listings
+\lstdefinestyle{JavaStyle}{
+	language=Java,
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue},
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	ndkeywordstyle=\color{green}\bfseries,
+	breaklines=true,
+	showstringspaces=false,
+	tabsize=4,
+	captionpos=b,
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{gray}\ttfamily,
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	%	stringstyle=\color{teal}\ttfamily,
+	%	showstringspaces=false
+}
+
+% Define Java language style for listings
 \lstdefinestyle{JavaScript}{
 	language=Java,
 	basicstyle=\ttfamily\scriptsize,
@@ -293,7 +318,9 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	 \include{chapter05}
 	 \include{chapter06}
 	 \include{chapter07}
-	\include{chapter08}
+	 \include{chapter08}
+	\include{chapter09}
+
 
 	\cite{020practical}
 	\backmatter

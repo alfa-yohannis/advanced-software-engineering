@@ -562,3 +562,5 @@ projects/session-09/mediaflow-langium/package-lock.json
 *.onnx.json
 projects/session-09/mediaflow-langium/mediaflow/output/*
 module/module
+projects/session-09/module
+projects/session-09/slides
