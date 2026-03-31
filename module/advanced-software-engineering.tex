@@ -154,6 +154,28 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	showstringspaces=false
 }
 
+\lstdefinelanguage{xml} {
+	keywords={},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywords={iex},
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{\#},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
 \lstdefinelanguage{terraform} {
 	keywords={variable, bool, type, number, string, default, locals, resource, dynamic, 
 				module, content, output},
@@ -320,6 +342,7 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	 \include{chapter07}
 	 \include{chapter08}
 	\include{chapter09}
+	\include{chapter10}
 
 
 	\cite{020practical}
