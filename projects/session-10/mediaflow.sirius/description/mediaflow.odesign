@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<description:Group xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:description="http://www.eclipse.org/sirius/description/1.1.0" xmlns:description_1="http://www.eclipse.org/sirius/diagram/description/1.1.0" xmlns:style="http://www.eclipse.org/sirius/diagram/description/style/1.1.0" xmlns:tool="http://www.eclipse.org/sirius/diagram/description/tool/1.1.0" xmlns:tool_1="http://www.eclipse.org/sirius/description/tool/1.1.0" name="mediaflow" version="15.4.0.202401051836">
+  <ownedViewpoints name="graph" modelFileExtension="mediaflow" icon="/mediaflow.sirius/icons/resource.png">
+    <ownedRepresentations xsi:type="description_1:DiagramDescription" name="MediaFlow diagram" initialisation="true" showOnStartup="true" domainClass="mediaflow::Graph" enablePopupBars="true" synchronized="true">
+      <metamodel href="mediaflow#/"/>
+      <defaultLayer name="Default">
+
+        <!-- Edge mapping connecting Ports -->
+        <edgeMappings name="EdgeMapping" semanticCandidatesExpression="feature:edges" sourceMapping="//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']/@borderedNodeMappings[name='PortInResource'] //@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']/@borderedNodeMappings[name='PortInScaler'] //@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='TranscoderNode']/@borderedNodeMappings[name='PortInTranscoder']" targetMapping="//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']/@borderedNodeMappings[name='PortInResource'] //@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']/@borderedNodeMappings[name='PortInScaler'] //@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='TranscoderNode']/@borderedNodeMappings[name='PortInTranscoder']" targetFinderExpression="feature:target" sourceFinderExpression="feature:source" domainClass="mediaflow::Edge" useDomainElement="true">
+          <style targetArrow="InputFillClosedArrow" sizeComputationExpression="3">
+            <strokeColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+            <centerLabelStyleDescription labelSize="9" showIcon="false" labelExpression="feature:name">
+              <labelColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+            </centerLabelStyleDescription>
+          </style>
+        </edgeMappings>
+
+        <!-- Resource Container (light blue) -->
+        <containerMappings name="ResourceContainer" semanticCandidatesExpression="feature:nodes" domainClass="mediaflow::Resource">
+          <borderedNodeMappings name="PortInResource" semanticCandidatesExpression="feature:ports" domainClass="mediaflow::Port">
+            <style xsi:type="style:SquareDescription" labelExpression="aql:self.name" labelSize="7" labelPosition="border" width="2" height="2" resizeKind="NSEW">
+              <borderColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_blue']"/>
+              <labelColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+              <color xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_blue']"/>
+            </style>
+          </borderedNodeMappings>
+          <style xsi:type="style:FlatContainerStyleDescription" borderSizeComputationExpression="1" labelSize="11" iconPath="/mediaflow.sirius/icons/resource.png" labelExpression="aql:self.name + ' [' + self.mediaType.toString() + ']'" roundedCorner="true">
+            <borderColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_blue']"/>
+            <labelColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+            <backgroundColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='light_blue']"/>
+            <foregroundColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='light_blue']"/>
+          </style>
+        </containerMappings>
+
+        <!-- Scaler Node (ellipse, green) -->
+        <nodeMappings name="ScalerNode" semanticCandidatesExpression="feature:nodes" domainClass="mediaflow::Scaler">
+          <borderedNodeMappings name="PortInScaler" semanticCandidatesExpression="feature:ports" domainClass="mediaflow::Port">
+            <style xsi:type="style:SquareDescription" labelExpression="aql:self.name" labelSize="7" labelPosition="border" width="2" height="2" resizeKind="NSEW">
+              <borderColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_green']"/>
+              <labelColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+              <color xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_green']"/>
+            </style>
+          </borderedNodeMappings>
+          <style xsi:type="style:EllipseNodeDescription" borderSizeComputationExpression="1" labelSize="11" iconPath="/mediaflow.sirius/icons/scaler.png" labelExpression="aql:self.name + ' (' + self.width + 'x' + self.height + ')'" labelPosition="node" horizontalDiameterComputationExpression="12" verticalDiameterComputationExpression="8" resizeKind="NSEW">
+            <borderColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_green']"/>
+            <labelColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+            <color xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='light_green']"/>
+          </style>
+        </nodeMappings>
+
+        <!-- Transcoder Node (ellipse, orange) -->
+        <nodeMappings name="TranscoderNode" semanticCandidatesExpression="feature:nodes" domainClass="mediaflow::Transcoder">
+          <borderedNodeMappings name="PortInTranscoder" semanticCandidatesExpression="feature:ports" domainClass="mediaflow::Port">
+            <style xsi:type="style:SquareDescription" labelExpression="aql:self.name" labelSize="7" labelPosition="border" width="2" height="2" resizeKind="NSEW">
+              <borderColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_orange']"/>
+              <labelColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+              <color xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_orange']"/>
+            </style>
+          </borderedNodeMappings>
+          <style xsi:type="style:EllipseNodeDescription" borderSizeComputationExpression="1" labelSize="11" iconPath="/mediaflow.sirius/icons/transcoder.png" labelExpression="aql:self.name + ' [' + self.videoCodec + '/' + self.audioCodec + ']'" labelPosition="node" horizontalDiameterComputationExpression="12" verticalDiameterComputationExpression="8" resizeKind="NSEW">
+            <borderColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='dark_orange']"/>
+            <labelColor xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='black']"/>
+            <color xsi:type="description:SystemColor" href="environment:/viewpoint#//@systemColors/@entries[name='light_orange']"/>
+          </style>
+        </nodeMappings>
+
+        <!-- Palette Tools -->
+        <toolSections name="Nodes" icon="/mediaflow.sirius/icons/resource.png">
+          <!-- Create Resource -->
+          <ownedTools xsi:type="tool:ContainerCreationDescription" name="Resource" iconPath="/mediaflow.sirius/icons/resource.png" containerMappings="//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']" forceRefresh="true">
+            <variable name="container"/>
+            <viewVariable name="containerView"/>
+            <initialOperation>
+              <firstModelOperations xsi:type="tool_1:ChangeContext" browseExpression="var:container">
+                <subModelOperations xsi:type="tool_1:CreateInstance" typeName="mediaflow::Resource" referenceName="nodes">
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="name" valueExpression="aql:'newResource'"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="mediaType" valueExpression="aql:mediaflow::MediaType::VIDEO"/>
+                </subModelOperations>
+              </firstModelOperations>
+            </initialOperation>
+          </ownedTools>
+          <!-- Create Scaler -->
+          <ownedTools xsi:type="tool:NodeCreationDescription" name="Scaler" iconPath="/mediaflow.sirius/icons/scaler.png" nodeMappings="//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']" forceRefresh="true">
+            <variable name="container"/>
+            <viewVariable name="containerView"/>
+            <initialOperation>
+              <firstModelOperations xsi:type="tool_1:ChangeContext" browseExpression="var:container">
+                <subModelOperations xsi:type="tool_1:CreateInstance" typeName="mediaflow::Scaler" referenceName="nodes">
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="name" valueExpression="aql:'newScaler'"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="width" valueExpression="aql:1920"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="height" valueExpression="aql:1080"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="replicas" valueExpression="aql:1"/>
+                </subModelOperations>
+              </firstModelOperations>
+            </initialOperation>
+          </ownedTools>
+          <!-- Create Transcoder -->
+          <ownedTools xsi:type="tool:NodeCreationDescription" name="Transcoder" iconPath="/mediaflow.sirius/icons/transcoder.png" nodeMappings="//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='TranscoderNode']" forceRefresh="true">
+            <variable name="container"/>
+            <viewVariable name="containerView"/>
+            <initialOperation>
+              <firstModelOperations xsi:type="tool_1:ChangeContext" browseExpression="var:container">
+                <subModelOperations xsi:type="tool_1:CreateInstance" typeName="mediaflow::Transcoder" referenceName="nodes">
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="name" valueExpression="aql:'newTranscoder'"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="replicas" valueExpression="aql:1"/>
+                </subModelOperations>
+              </firstModelOperations>
+            </initialOperation>
+          </ownedTools>
+        </toolSections>
+
+        <toolSections name="Connections" icon="/mediaflow.sirius/icons/edge.png">
+          <!-- Create Port -->
+          <ownedTools xsi:type="tool:NodeCreationDescription" name="Port" iconPath="/mediaflow.sirius/icons/port.png" nodeMappings="//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']/@borderedNodeMappings[name='PortInResource'] //@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']/@borderedNodeMappings[name='PortInScaler'] //@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='TranscoderNode']/@borderedNodeMappings[name='PortInTranscoder']">
+            <variable name="container"/>
+            <viewVariable name="containerView"/>
+            <initialOperation>
+              <firstModelOperations xsi:type="tool_1:ChangeContext" browseExpression="var:container">
+                <subModelOperations xsi:type="tool_1:CreateInstance" typeName="mediaflow::Port" referenceName="ports">
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="name" valueExpression="aql:'newPort'"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="direction" valueExpression="aql:mediaflow::Direction::IN"/>
+                </subModelOperations>
+              </firstModelOperations>
+            </initialOperation>
+          </ownedTools>
+          <!-- Create Edge -->
+          <ownedTools xsi:type="tool:EdgeCreationDescription" name="Edge" iconPath="/mediaflow.sirius/icons/edge.png" edgeMappings="//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@edgeMappings[name='EdgeMapping']" forceRefresh="true">
+            <sourceVariable name="source"/>
+            <targetVariable name="target"/>
+            <sourceViewVariable name="sourceView"/>
+            <targetViewVariable name="targetView"/>
+            <initialOperation>
+              <firstModelOperations xsi:type="tool_1:ChangeContext" browseExpression="aql:source.eContainer().eContainer()">
+                <subModelOperations xsi:type="tool_1:CreateInstance" typeName="mediaflow::Edge" referenceName="edges">
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="name" valueExpression="aql:'edge_' + source.name + '_to_' + target.name"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="source" valueExpression="var:source"/>
+                  <subModelOperations xsi:type="tool_1:SetValue" featureName="target" valueExpression="var:target"/>
+                </subModelOperations>
+              </firstModelOperations>
+            </initialOperation>
+          </ownedTools>
+        </toolSections>
+
+      </defaultLayer>
+    </ownedRepresentations>
+    <ownedJavaExtensions qualifiedClassName="mediaflow.sirius.Services"/>
+  </ownedViewpoints>
+</description:Group>

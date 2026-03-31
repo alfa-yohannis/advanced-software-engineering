@@ -36,7 +36,7 @@ scaler
       'height' '=' height=INT
       '{'
         port*
-      '}'
+      '}' 
     ;
 
 transcoder

@@ -3,7 +3,6 @@ package yohannis.alfa.mediaflow.antlr;
 import yohannis.alfa.mediaflow.antlr.ast.*;
 import yohannis.alfa.mediaflow.antlr.generated.*;
 
-
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import org.antlr.v4.runtime.tree.Trees;

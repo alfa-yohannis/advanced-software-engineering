@@ -16,6 +16,6 @@ graph demo {
   }
 
 
-  edge edge1 from inputOut to resizeIn
-  edge edge2 from resizeOut to outputIn
+  edge edge1 from input1.inputOut to resize720.resizeIn
+  edge edge2 from resize720.resizeOut to output1.outputIn
 }
