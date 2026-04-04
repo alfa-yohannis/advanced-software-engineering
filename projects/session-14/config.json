@@ -1,0 +1,9 @@
+{
+  "siakad": {
+    "login_url": "https://siakad.pradita.ac.id/login",
+    "daftar_hadir_url": "https://siakad.pradita.ac.id/dosen/daftar_hadir",
+    "username": "alfa.ryano@pradita.ac.id",
+    "password": "Admin1234!"
+  },
+  "schedule_dir": "./schedule-data"
+}

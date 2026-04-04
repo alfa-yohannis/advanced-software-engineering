@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="358px" preserveAspectRatio="none" style="width:961px;height:358px;" version="1.1" viewBox="0 0 961 358" width="961px" zoomAndPan="magnify"><defs><filter height="300%" id="f1byijdijy5lup" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[8c0b028467f56d431bb2fb24b887d1bb]
+cluster claude_node--><polygon fill="#ECECFF" filter="url(#f1byijdijy5lup)" points="171,42,181,32,368,32,368,311,358,321,171,321,171,42" style="stroke: #9370DB; stroke-width: 1.5;"/><line style="stroke: #9370DB; stroke-width: 1.5;" x1="358" x2="367" y1="42" y2="33"/><line style="stroke: #9370DB; stroke-width: 1.5;" x1="171" x2="358" y1="42" y2="42"/><line style="stroke: #9370DB; stroke-width: 1.5;" x1="358" x2="358" y1="42" y2="321"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="121" x="205" y="56.2676">Claude (Orchestrator)</text><!--MD5=[c8c7527c9e03bc0b035be36856e2d4d8]
+cluster gemini_node--><polygon fill="#ECECFF" filter="url(#f1byijdijy5lup)" points="567,42,577,32,764,32,764,311,754,321,567,321,567,42" style="stroke: #9370DB; stroke-width: 1.5;"/><line style="stroke: #9370DB; stroke-width: 1.5;" x1="754" x2="763" y1="42" y2="33"/><line style="stroke: #9370DB; stroke-width: 1.5;" x1="567" x2="754" y1="42" y2="42"/><line style="stroke: #9370DB; stroke-width: 1.5;" x1="754" x2="754" y1="42" y2="321"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="94" x="614.5" y="56.2676">Gemini (Worker)</text><!--MD5=[fb9c4749d98f1bef6ab2a9bb3ec74111]
+entity claude_resp--><rect fill="#F5F5FF" filter="url(#f1byijdijy5lup)" height="103.6016" style="stroke: #9370DB; stroke-width: 1.5;" width="146" x="196" y="77"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="191" y="82"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="191" y="170.6016"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="88" x="206" y="98.2676">Responsibilities:</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="113" x="206" y="112.2012">- Read schedule CSV</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="126" x="206" y="126.1348">- Plan execution order</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="86" x="206" y="140.0684">- Dispatch tasks</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="103" x="206" y="154.002">- Monitor progress</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="87" x="206" y="167.9355">- Handle retries</text><!--MD5=[f6df47efecbb0a35812142acd69bd732]
+entity claude_mcp--><rect fill="#F5F5FF" filter="url(#f1byijdijy5lup)" height="61.8008" style="stroke: #9370DB; stroke-width: 1.5;" width="123" x="207.5" y="216"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="202.5" y="221"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="202.5" y="267.8008"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="72" x="217.5" y="237.2676">MCP Servers:</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="103" x="217.5" y="251.2012">- siakad-csv-reader</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="77" x="217.5" y="265.1348">- shared-state</text><!--MD5=[beddb6371d63cfddef8759fb8c81cfa6]
+entity gemini_resp--><rect fill="#F5F5FF" filter="url(#f1byijdijy5lup)" height="103.6016" style="stroke: #9370DB; stroke-width: 1.5;" width="149" x="591" y="77"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="586" y="82"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="586" y="170.6016"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="88" x="601" y="98.2676">Responsibilities:</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="119" x="601" y="112.2012">- Browser automation</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="94" x="601" y="126.1348">- Login to SIAKAD</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="125" x="601" y="140.0684">- Fill attendance forms</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="129" x="601" y="154.002">- Screenshot &amp; validate</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="89" x="601" y="167.9355">- Error recovery</text><!--MD5=[a2626e71fbb6da6d64c92aa8c90b1e57]
+entity gemini_mcp--><rect fill="#F5F5FF" filter="url(#f1byijdijy5lup)" height="61.8008" style="stroke: #9370DB; stroke-width: 1.5;" width="110" x="610.5" y="216"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="605.5" y="221"/><rect fill="#F5F5FF" height="5" style="stroke: #9370DB; stroke-width: 1.5;" width="10" x="605.5" y="267.8008"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="72" x="620.5" y="237.2676">MCP Servers:</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="90" x="620.5" y="251.2012">- siakad-browser</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="77" x="620.5" y="265.1348">- shared-state</text><!--MD5=[5b5b6116e9ca12b5be308e1a61d0aa39]
+entity csv--><path d="M6,294.5 C6,284.5 70.5,284.5 70.5,284.5 C70.5,284.5 135,284.5 135,294.5 L135,331.3672 C135,341.3672 70.5,341.3672 70.5,341.3672 C70.5,341.3672 6,341.3672 6,331.3672 L6,294.5 " fill="#FFFFDE" filter="url(#f1byijdijy5lup)" style="stroke: #AAAA33; stroke-width: 1.5;"/><path d="M6,294.5 C6,304.5 70.5,304.5 70.5,304.5 C70.5,304.5 135,304.5 135,294.5 " fill="none" style="stroke: #AAAA33; stroke-width: 1.5;"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="109" x="16" y="319.7676">schedule-data/*.csv</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="84" x="16" y="333.7012">(local CSV files)</text><!--MD5=[799e9543975076390d2a6ceafec8df6c]
+entity queue--><path d="M409,287 L526,287 C531,287 531,312.9004 531,312.9004 C531,312.9004 531,338.8008 526,338.8008 L409,338.8008 C404,338.8008 404,312.9004 404,312.9004 C404,312.9004 404,287 409,287 " fill="#FFFFDE" filter="url(#f1byijdijy5lup)" style="stroke: #AAAA33; stroke-width: 1.5;"/><path d="M526,287 C521,287 521,312.9004 521,312.9004 C521,338.8008 526,338.8008 526,338.8008 " fill="none" style="stroke: #AAAA33; stroke-width: 1.5;"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="107" x="409" y="303.2676">Shared Task Queue</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="72" x="409" y="317.2012">(tasks/*.json)</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="97" x="409" y="331.1348">shared-state MCP</text><!--MD5=[50a490cd54b9178a6f8def0ee5368dad]
+entity siakad--><path d="M808.3931,292.0096 C811.97,285.8265 816.8804,286.0929 821.1757,291.196 C825.4887,285.3001 829.6197,285.2214 834.5815,290.4114 C838.258,283.4658 843.3697,283.2856 848.5766,288.675 C850.8208,282.9109 856.8594,280.3256 861.3827,286.158 C864.8832,280.255 868.8314,279.9606 872.9539,285.5306 C876.8625,278.6241 881.8303,278.5693 885.7657,285.5059 C890.5682,279.8598 895.8637,279.2921 899.091,287.0696 C903.771,282.6668 909.6846,283.1199 911.1251,290.4051 C915.1244,285.0036 921.5359,284.6346 924.3423,291.6726 C928.7344,286.7497 932.8455,286.4305 936.4687,292.5193 C942.773,294.0851 944.7228,299.3151 940.7108,304.5258 C946.7856,305.3693 947.7689,308.8899 945.3567,313.9274 C949.4791,319.4356 946.7795,324.1353 940.2907,324.6128 C944.4971,329.5063 941.4452,333.6353 936.0332,334.3029 C933.7784,339.8894 928.8222,341.3302 924.8376,336.0919 C920.9962,341.4068 916.4893,341.7273 912.1666,336.6805 C908.2751,344.1656 903.9774,343.7294 898.9441,337.8066 C895.6967,344.2723 891.2179,344.8018 886.8142,338.9448 C882.8227,346.6443 877.5421,346.6611 872.9156,339.5403 C868.4488,344.539 864.1257,344.3061 861.2866,337.8831 C856.5504,345.5501 850.8698,345.421 846.6752,337.3793 C843.0923,341.9774 839.0425,343.0112 835.5783,337.2521 C831.5238,342.2508 826.5634,342.9093 822.9851,336.7163 C817.4286,342.6085 812.8318,341.9842 808.5623,335.2465 C802.485,332.7578 801.9799,329.0136 805.7356,324.0438 C800.5502,322.4287 798.64,319.8244 801.8488,314.7127 C797.8073,309.6247 799.6264,304.6036 806.0423,303.3878 C801.8634,298.6718 801.7577,294.4914 808.3931,292.0096 " fill="#FFF0F0" style="stroke: #CC6666; stroke-width: 1.5;"/><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="85" x="815" y="310.2676">SIAKAD Website</text><text fill="#000000" font-family="Trebuchet MS" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="114" x="815" y="324.2012">(Playwright browser)</text><!--MD5=[50fd458b2809128f22e92b3b17e44ab8]
+link csv to claude_node--><path d="M135.03,313 C142.0938,313 149.4323,313 156.8712,313 C160.5906,313 164.3351,313 168.0829,313 C169.0198,313 169.957,313 170.894,313 " fill="none" id="csv-&gt;claude_node" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="170.894,313,161.894,309,165.894,313,161.894,317,170.894,313" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[ade592494b782789457aebf603604721]
+link claude_node to queue--><path d="M368.4625,313 C368.6883,313 368.9142,313 369.1401,313 C370.0435,313 370.9469,313 371.8498,313 C373.6557,313 375.4599,313 377.2601,313 C384.4608,313 391.5963,313 398.51,313 " fill="none" id="claude_node-queue" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="403.82,313,394.82,309,398.82,313,394.82,317,403.82,313" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="368.4625,313,377.4625,317,373.4625,313,377.4625,309,368.4625,313" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[2073f737093efa6b9b759a4988a07ad2]
+link queue to gemini_node--><path d="M536.06,313 C543.0313,313 550.2305,313 557.4961,313 C559.3125,313 561.1331,313 562.9553,313 C563.8664,313 564.7779,313 565.6895,313 C565.9174,313 566.1453,313 566.3732,313 " fill="none" id="queue-gemini_node" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="566.3732,313,557.3732,309,561.3732,313,557.3732,317,566.3732,313" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="531.05,313,540.05,317,536.05,313,540.05,309,531.05,313" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[ae9fa003d6782f4e89fdd81db54c6d58]
+link gemini_node to siakad--><path d="M764.317,313 C764.5446,313 764.7721,313 764.9997,313 C765.9101,313 766.8208,313 767.7317,313 C769.5534,313 771.3755,313 773.1957,313 C780.4767,313 787.7275,313 794.8,313 " fill="none" id="gemini_node-&gt;siakad" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="799.89,313,790.89,309,794.89,313,790.89,317,799.89,313" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[a7a3cf614993d532c86189ed2463f10b]
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName "Trebuchet MS"
+skinparam defaultFontSize 12
+
+left to right direction
+
+skinparam node {
+    BackgroundColor #ECECFF
+    BorderColor #9370DB
+    FontStyle bold
+}
+
+skinparam component {
+    BackgroundColor #F5F5FF
+    BorderColor #9370DB
+}
+
+skinparam database {
+    BackgroundColor #FFFFDE
+    BorderColor #AAAA33
+}
+
+skinparam queue {
+    BackgroundColor #FFFFDE
+    BorderColor #AAAA33
+}
+
+skinparam cloud {
+    BackgroundColor #FFF0F0
+    BorderColor #CC6666
+}
+
+database "schedule-data/*.csv\n(local CSV files)" as csv
+
+node "Claude (Orchestrator)" as claude_node {
+    component "Responsibilities:\n- Read schedule CSV\n- Plan execution order\n- Dispatch tasks\n- Monitor progress\n- Handle retries" as claude_resp
+    component "MCP Servers:\n- siakad-csv-reader\n- shared-state" as claude_mcp
+}
+
+queue "Shared Task Queue\n(tasks/*.json)\nshared-state MCP" as queue
+
+node "Gemini (Worker)" as gemini_node {
+    component "Responsibilities:\n- Browser automation\n- Login to SIAKAD\n- Fill attendance forms\n- Screenshot & validate\n- Error recovery" as gemini_resp
+    component "MCP Servers:\n- siakad-browser\n- shared-state" as gemini_mcp
+}
+
+cloud "SIAKAD Website\n(Playwright browser)" as siakad
+
+csv - -> claude_node
+claude_node <- -> queue
+queue <- -> gemini_node
+gemini_node - -> siakad
+
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 17:22:07 WIB 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 25.0.1+8-Ubuntu-124.04
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: GB
+--></g></svg>

@@ -9,8 +9,13 @@
   <nodes xsi:type="mediaflow:Scaler" xmi:id="_eT0y0BwZEfG_Eu00KUW-gA" name="scaler_720" command="scale=1080:720" replicas="1" width="720" height="1080">
     <ports xmi:id="_5rAmYBwZEfG_Eu00KUW-gA" name="scaler_720_video_in" owner="_eT0y0BwZEfG_Eu00KUW-gA"/>
     <ports xmi:id="_9ofIkBwZEfG_Eu00KUW-gA" name="scaler_720_video_out" direction="OUT" owner="_eT0y0BwZEfG_Eu00KUW-gA"/>
+    <ports name="newPort" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource" name="newResource" external="true">
+    <ports name="newPort"/>
   </nodes>
   <edges xmi:id="__0K9ABwZEfG_Eu00KUW-gA" name="edge_input_video_to_scaler_720" source="_f5UxABwZEfG_Eu00KUW-gA" target="_5rAmYBwZEfG_Eu00KUW-gA"/>
   <edges xmi:id="_SwI3wBwaEfG_Eu00KUW-gA" name="edge_scaler_720_to_output_video" source="_9ofIkBwZEfG_Eu00KUW-gA" target="_pfXeMBwZEfG_Eu00KUW-gA"/>
   <edges name="edge_newPort_to_newPort"/>
+  <edges name="edge_newPort_to_newPort" source="//@nodes.2/@ports.2" target="//@nodes.3/@ports.0"/>
 </mediaflow:Graph>

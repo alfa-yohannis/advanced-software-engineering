@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "siakad-browser": {
+      "command": "./mcp-servers/browser-automation/run.sh",
+      "env": {
+        "DISPLAY": ":0"
+      }
+    },
+    "siakad-csv-reader": {
+      "command": "./mcp-servers/csv-reader/run.sh"
+    },
+    "shared-state": {
+      "command": "./agents/run_shared_state.sh"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "siakad-browser": {
+      "command": "/data2/projects/advanced-software-engineering/projects/session-14/mcp-servers/browser-automation/run.sh",
+      "args": [],
+      "env": {
+        "DISPLAY": ":0"
+      }
+    }
+  }
+}

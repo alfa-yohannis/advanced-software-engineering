@@ -1,0 +1,49 @@
+@startuml
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+
+participant "Claude\n(Orchestrator)" as C
+participant "Shared Task Queue\n(shared-state MCP)" as Q
+participant "Gemini\n(Worker)" as G
+participant "SIAKAD Website\n(Playwright)" as S
+
+C -> Q : clear_tasks()
+C -> C : read CSV schedule data\n(via csv-reader MCP)
+C -> Q : create_task("login")
+
+G -> Q : get_next_pending_task()
+Q --> G : task info
+G -> Q : update_task(in_progress)
+G -> S : launch_browser()
+G -> S : login_siakad()
+G -> Q : update_task(completed)
+
+C -> Q : get_task()
+Q --> C : completed status
+
+loop For each CSV record
+    C -> Q : create_task("fill_attendance")
+    G -> Q : get_next_pending_task()
+    Q --> G : task info
+    G -> Q : update_task(in_progress)
+    G -> S : set_date_picker()
+    G -> S : find_schedule_row()
+    G -> S : click_absensi()
+    G -> S : fill_form()
+    G -> S : submit_form()
+    G -> S : take_screenshot()
+    G -> Q : update_task(completed)
+    C -> Q : get_task()
+    Q --> C : completed status
+end
+
+C -> Q : create_task("close_browser")
+G -> Q : get_next_pending_task()
+Q --> G : task info
+G -> S : close_browser()
+G -> Q : update_task(completed)
+
+C -> C : Print summary
+G -> G : Exit
+
+@enduml

@@ -1,0 +1,61 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName "Trebuchet MS"
+skinparam defaultFontSize 12
+
+left to right direction
+
+skinparam node {
+    BackgroundColor #ECECFF
+    BorderColor #9370DB
+    FontStyle bold
+}
+
+skinparam component {
+    BackgroundColor #F5F5FF
+    BorderColor #9370DB
+}
+
+skinparam database {
+    BackgroundColor #FFFFDE
+    BorderColor #AAAA33
+}
+
+skinparam queue {
+    BackgroundColor #FFFFDE
+    BorderColor #AAAA33
+}
+
+skinparam cloud {
+    BackgroundColor #FFF0F0
+    BorderColor #CC6666
+}
+
+' ── External data source ──
+database "schedule-data/*.csv\n(local CSV files)" as csv
+
+' ── Claude (Orchestrator) ──
+node "Claude (Orchestrator)" as claude_node {
+    component "Responsibilities:\n- Read schedule CSV\n- Plan execution order\n- Dispatch tasks\n- Monitor progress\n- Handle retries" as claude_resp
+    component "MCP Servers:\n- siakad-csv-reader\n- shared-state" as claude_mcp
+}
+
+' ── Shared Task Queue ──
+queue "Shared Task Queue\n(tasks/*.json)\nshared-state MCP" as queue
+
+' ── Gemini (Worker) ──
+node "Gemini (Worker)" as gemini_node {
+    component "Responsibilities:\n- Browser automation\n- Login to SIAKAD\n- Fill attendance forms\n- Screenshot & validate\n- Error recovery" as gemini_resp
+    component "MCP Servers:\n- siakad-browser\n- shared-state" as gemini_mcp
+}
+
+' ── External system ──
+cloud "SIAKAD Website\n(Playwright browser)" as siakad
+
+' ── Connections ──
+csv --> claude_node
+claude_node <--> queue
+queue <--> gemini_node
+gemini_node --> siakad
+
+@enduml

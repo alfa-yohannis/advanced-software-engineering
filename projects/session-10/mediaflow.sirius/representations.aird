@@ -12,7 +12,7 @@
         <description xmi:type="description_1:DiagramDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']"/>
         <target xmi:type="mediaflow:Graph" href="flow2.mediaflow#_graphFlow2"/>
       </ownedRepresentationDescriptors>
-      <ownedRepresentationDescriptors xmi:type="viewpoint:DRepresentationDescriptor" uid="_zFQQcizaEfGKobnzlBFwUw" name="flow1 diagram" repPath="#_zFQQcCzaEfGKobnzlBFwUw" changeId="1774946001769">
+      <ownedRepresentationDescriptors xmi:type="viewpoint:DRepresentationDescriptor" uid="_zFQQcizaEfGKobnzlBFwUw" name="flow1 diagram" repPath="#_zFQQcCzaEfGKobnzlBFwUw" changeId="1775049273950">
         <description xmi:type="description_1:DiagramDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']"/>
         <target xmi:type="mediaflow:Graph" href="flow1.mediaflow#_qoJgoBwYEfG_Eu00KUW-gA"/>
       </ownedRepresentationDescriptors>
@@ -488,8 +488,19 @@
             <styles xmi:type="notation:ShapeStyle" xmi:id="_zvXkcSzaEfGKobnzlBFwUw" fontName="Noto Sans"/>
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvXkcizaEfGKobnzlBFwUw"/>
           </children>
+          <children xmi:type="notation:Node" xmi:id="_sTmAcC3MEfGil-9124Oung" type="3001" element="_sTcPcC3MEfGil-9124Oung">
+            <children xmi:type="notation:Node" xmi:id="_sTnOkC3MEfGil-9124Oung" type="5001">
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_sTnOkS3MEfGil-9124Oung" x="25" y="1"/>
+            </children>
+            <children xmi:type="notation:Node" xmi:id="_sTocsC3MEfGil-9124Oung" type="3003" element="_sTcPcS3MEfGil-9124Oung">
+              <styles xmi:type="notation:ShapeStyle" xmi:id="_sTocsS3MEfGil-9124Oung" fontName="Noto Sans"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_sTocsi3MEfGil-9124Oung"/>
+            </children>
+            <styles xmi:type="notation:ShapeStyle" xmi:id="_sTmngC3MEfGil-9124Oung" fontName="Noto Sans" fontHeight="7"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_sTmngS3MEfGil-9124Oung" x="126" y="76" width="24" height="20"/>
+          </children>
           <styles xmi:type="notation:ShapeStyle" xmi:id="_zvUhISzaEfGKobnzlBFwUw" fontName="Noto Sans" fontHeight="11"/>
-          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvUhIizaEfGKobnzlBFwUw" x="438" y="214" width="247" height="84"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvUhIizaEfGKobnzlBFwUw" x="438" y="294" width="247" height="84"/>
         </children>
         <children xmi:type="notation:Node" xmi:id="_zvVvQizaEfGKobnzlBFwUw" type="2002" element="_zuQKKCzaEfGKobnzlBFwUw">
           <children xmi:type="notation:Node" xmi:id="_zvVvRSzaEfGKobnzlBFwUw" type="5006"/>
@@ -509,7 +520,7 @@
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvXkfizaEfGKobnzlBFwUw" x="183" y="34" width="24" height="20"/>
           </children>
           <styles xmi:type="notation:ShapeStyle" xmi:id="_zvVvQyzaEfGKobnzlBFwUw" fontName="Noto Sans" fontHeight="11"/>
-          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvVvRCzaEfGKobnzlBFwUw" x="36" y="214"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvVvRCzaEfGKobnzlBFwUw" x="108" y="72"/>
         </children>
         <children xmi:type="notation:Node" xmi:id="_zvVvSSzaEfGKobnzlBFwUw" type="2002" element="_zuQKKyzaEfGKobnzlBFwUw">
           <children xmi:type="notation:Node" xmi:id="_zvVvTCzaEfGKobnzlBFwUw" type="5006"/>
@@ -529,40 +540,76 @@
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvYLhSzaEfGKobnzlBFwUw" x="-16" y="30" width="24" height="20"/>
           </children>
           <styles xmi:type="notation:ShapeStyle" xmi:id="_zvVvSizaEfGKobnzlBFwUw" fontName="Noto Sans" fontHeight="11"/>
-          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvVvSyzaEfGKobnzlBFwUw" x="888" y="204"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvVvSyzaEfGKobnzlBFwUw" x="720" y="84"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_m6spIC3MEfGil-9124Oung" type="2002" element="_m6bjYC3MEfGil-9124Oung">
+          <children xmi:type="notation:Node" xmi:id="_m66rkC3MEfGil-9124Oung" type="5006"/>
+          <children xmi:type="notation:Node" xmi:id="_m67SoC3MEfGil-9124Oung" type="7001">
+            <styles xmi:type="notation:SortingStyle" xmi:id="_m67SoS3MEfGil-9124Oung"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="_m67Soi3MEfGil-9124Oung"/>
+          </children>
+          <children xmi:type="notation:Node" xmi:id="_ntn64C3MEfGil-9124Oung" type="3012" element="_ntfYAC3MEfGil-9124Oung">
+            <children xmi:type="notation:Node" xmi:id="_ntpJAC3MEfGil-9124Oung" type="5010">
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_ntpJAS3MEfGil-9124Oung" x="25" y="1"/>
+            </children>
+            <children xmi:type="notation:Node" xmi:id="_nttacC3MEfGil-9124Oung" type="3003" element="_ntfYAS3MEfGil-9124Oung">
+              <styles xmi:type="notation:ShapeStyle" xmi:id="_nttacS3MEfGil-9124Oung" fontName="Noto Sans"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_nttaci3MEfGil-9124Oung"/>
+            </children>
+            <styles xmi:type="notation:ShapeStyle" xmi:id="_ntn64S3MEfGil-9124Oung" fontName="Noto Sans" fontHeight="7"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ntn64i3MEfGil-9124Oung" x="-12" y="48" width="24" height="20"/>
+          </children>
+          <styles xmi:type="notation:ShapeStyle" xmi:id="_m6spIS3MEfGil-9124Oung" fontName="Noto Sans" fontHeight="11"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_m6spIi3MEfGil-9124Oung" x="774" y="360"/>
         </children>
         <styles xmi:type="notation:DiagramStyle" xmi:id="_zFRekizaEfGKobnzlBFwUw"/>
         <edges xmi:type="notation:Edge" xmi:id="_zvZZoyzaEfGKobnzlBFwUw" type="4001" element="_zuQxOyzaEfGKobnzlBFwUw" source="_zvXkfCzaEfGKobnzlBFwUw" target="_zvWWUCzaEfGKobnzlBFwUw">
           <children xmi:type="notation:Node" xmi:id="_zvZZpyzaEfGKobnzlBFwUw" type="6001">
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZqCzaEfGKobnzlBFwUw" x="4" y="47"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZqCzaEfGKobnzlBFwUw" x="-5" y="-7"/>
           </children>
           <children xmi:type="notation:Node" xmi:id="_zvZZqSzaEfGKobnzlBFwUw" type="6002">
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZqizaEfGKobnzlBFwUw" x="2" y="-4"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZqizaEfGKobnzlBFwUw" x="2"/>
           </children>
           <children xmi:type="notation:Node" xmi:id="_zvZZqyzaEfGKobnzlBFwUw" type="6003">
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZrCzaEfGKobnzlBFwUw" x="-3" y="-7"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZrCzaEfGKobnzlBFwUw" x="-4"/>
           </children>
           <styles xmi:type="notation:ConnectorStyle" xmi:id="_zvZZpCzaEfGKobnzlBFwUw"/>
           <styles xmi:type="notation:FontStyle" xmi:id="_zvZZpSzaEfGKobnzlBFwUw" fontName="Noto Sans"/>
-          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_zvZZpizaEfGKobnzlBFwUw" points="[12, -1, -193, 5]$[195, -6, -10, 0]"/>
+          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_zvZZpizaEfGKobnzlBFwUw" points="[6, 10, -127, -206]$[125, 204, -8, -12]"/>
           <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_zvZZrSzaEfGKobnzlBFwUw" id="(0.5,0.5)"/>
           <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_zvZZrizaEfGKobnzlBFwUw" id="(0.5,0.5)"/>
         </edges>
         <edges xmi:type="notation:Edge" xmi:id="_zvZZryzaEfGKobnzlBFwUw" type="4001" element="_zuQxQCzaEfGKobnzlBFwUw" source="_zvW9YCzaEfGKobnzlBFwUw" target="_zvYLgyzaEfGKobnzlBFwUw">
           <children xmi:type="notation:Node" xmi:id="_zvZZsyzaEfGKobnzlBFwUw" type="6001">
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZtCzaEfGKobnzlBFwUw" x="11" y="54"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZtCzaEfGKobnzlBFwUw" x="-54" y="22"/>
           </children>
           <children xmi:type="notation:Node" xmi:id="_zvZZtSzaEfGKobnzlBFwUw" type="6002">
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZtizaEfGKobnzlBFwUw" y="10"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZtizaEfGKobnzlBFwUw" x="-11" y="3"/>
           </children>
           <children xmi:type="notation:Node" xmi:id="_zvZZtyzaEfGKobnzlBFwUw" type="6003">
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZuCzaEfGKobnzlBFwUw" y="10"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvZZuCzaEfGKobnzlBFwUw" x="-12" y="3"/>
           </children>
           <styles xmi:type="notation:ConnectorStyle" xmi:id="_zvZZsCzaEfGKobnzlBFwUw"/>
           <styles xmi:type="notation:FontStyle" xmi:id="_zvZZsSzaEfGKobnzlBFwUw" fontName="Noto Sans"/>
-          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_zvZZsizaEfGKobnzlBFwUw" points="[0, 0, -175, 0]$[175, 0, 0, 0]"/>
+          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_zvZZsizaEfGKobnzlBFwUw" points="[0, -11, -7, 189]$[7, -200, 0, 0]"/>
           <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_zvaAsCzaEfGKobnzlBFwUw" id="(1.0,0.4583333333333333)"/>
           <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_zvaAsSzaEfGKobnzlBFwUw" id="(0.0,0.55)"/>
+        </edges>
+        <edges xmi:type="notation:Edge" xmi:id="_txZbMC3MEfGil-9124Oung" type="4001" element="_txStiC3MEfGil-9124Oung" source="_sTmAcC3MEfGil-9124Oung" target="_ntn64C3MEfGil-9124Oung">
+          <children xmi:type="notation:Node" xmi:id="_txaCQC3MEfGil-9124Oung" type="6001">
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_txaCQS3MEfGil-9124Oung" x="-73" y="40"/>
+          </children>
+          <children xmi:type="notation:Node" xmi:id="_txb3cC3MEfGil-9124Oung" type="6002">
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_txb3cS3MEfGil-9124Oung" y="10"/>
+          </children>
+          <children xmi:type="notation:Node" xmi:id="_txcegC3MEfGil-9124Oung" type="6003">
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_txcegS3MEfGil-9124Oung" y="10"/>
+          </children>
+          <styles xmi:type="notation:ConnectorStyle" xmi:id="_txZbMS3MEfGil-9124Oung"/>
+          <styles xmi:type="notation:FontStyle" xmi:id="_txZbMi3MEfGil-9124Oung" fontName="Noto Sans"/>
+          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_txZbMy3MEfGil-9124Oung" points="[0, 0, -170, -37]$[170, 37, 0, 0]"/>
+          <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_txdsoC3MEfGil-9124Oung" id="(1.0,0.35)"/>
+          <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_txdsoS3MEfGil-9124Oung" id="(0.0,0.3)"/>
         </edges>
       </data>
     </ownedAnnotationEntries>
@@ -584,6 +631,14 @@
         <target xmi:type="mediaflow:Port" href="flow1.mediaflow#_9ofIkBwZEfG_Eu00KUW-gA"/>
         <semanticElements xmi:type="mediaflow:Port" href="flow1.mediaflow#_9ofIkBwZEfG_Eu00KUW-gA"/>
         <ownedStyle xmi:type="diagram:Square" uid="_zuQKIyzaEfGKobnzlBFwUw" labelSize="7" borderColor="77,137,20" width="2" height="2" color="77,137,20">
+          <description xmi:type="style:SquareDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']/@borderedNodeMappings[name='PortInScaler']/@style"/>
+        </ownedStyle>
+        <actualMapping xmi:type="description_1:NodeMapping" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']/@borderedNodeMappings[name='PortInScaler']"/>
+      </ownedBorderedNodes>
+      <ownedBorderedNodes xmi:type="diagram:DNode" uid="_sTcPcC3MEfGil-9124Oung" name="newPort" outgoingEdges="_txStiC3MEfGil-9124Oung" width="2" height="2" resizeKind="NSEW">
+        <target xmi:type="mediaflow:Port" href="flow1.mediaflow#//@nodes.2/@ports.2"/>
+        <semanticElements xmi:type="mediaflow:Port" href="flow1.mediaflow#//@nodes.2/@ports.2"/>
+        <ownedStyle xmi:type="diagram:Square" uid="_sTcPcS3MEfGil-9124Oung" labelSize="7" borderColor="77,137,20" width="2" height="2" color="77,137,20">
           <description xmi:type="style:SquareDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']/@borderedNodeMappings[name='PortInScaler']/@style"/>
         </ownedStyle>
         <actualMapping xmi:type="description_1:NodeMapping" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@nodeMappings[name='ScalerNode']/@borderedNodeMappings[name='PortInScaler']"/>
@@ -640,6 +695,31 @@
       <ownedStyle xmi:type="diagram:EdgeStyle" uid="_zuQxQSzaEfGKobnzlBFwUw" targetArrow="InputFillClosedArrow" size="3" strokeColor="0,0,0">
         <description xmi:type="style:EdgeStyleDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@edgeMappings[name='EdgeMapping']/@style"/>
         <centerLabelStyle xmi:type="diagram:CenterLabelStyle" uid="_zuQxQizaEfGKobnzlBFwUw" labelSize="9" showIcon="false"/>
+      </ownedStyle>
+      <actualMapping xmi:type="description_1:EdgeMapping" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@edgeMappings[name='EdgeMapping']"/>
+    </ownedDiagramElements>
+    <ownedDiagramElements xmi:type="diagram:DNodeContainer" uid="_m6bjYC3MEfGil-9124Oung" name="newResource [VIDEO]">
+      <target xmi:type="mediaflow:Resource" href="flow1.mediaflow#//@nodes.3"/>
+      <semanticElements xmi:type="mediaflow:Resource" href="flow1.mediaflow#//@nodes.3"/>
+      <ownedBorderedNodes xmi:type="diagram:DNode" uid="_ntfYAC3MEfGil-9124Oung" name="newPort" incomingEdges="_txStiC3MEfGil-9124Oung" width="2" height="2" resizeKind="NSEW">
+        <target xmi:type="mediaflow:Port" href="flow1.mediaflow#//@nodes.3/@ports.0"/>
+        <semanticElements xmi:type="mediaflow:Port" href="flow1.mediaflow#//@nodes.3/@ports.0"/>
+        <ownedStyle xmi:type="diagram:Square" uid="_ntfYAS3MEfGil-9124Oung" labelSize="7" borderColor="39,76,114" width="2" height="2" color="39,76,114">
+          <description xmi:type="style:SquareDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']/@borderedNodeMappings[name='PortInResource']/@style"/>
+        </ownedStyle>
+        <actualMapping xmi:type="description_1:NodeMapping" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']/@borderedNodeMappings[name='PortInResource']"/>
+      </ownedBorderedNodes>
+      <ownedStyle xmi:type="diagram:FlatContainerStyle" uid="_m6cxgC3MEfGil-9124Oung" labelSize="11" iconPath="/mediaflow.sirius/icons/resource.png" borderSize="1" borderSizeComputationExpression="1" borderColor="39,76,114" backgroundColor="194,239,255" foregroundColor="194,239,255">
+        <description xmi:type="style:FlatContainerStyleDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']/@style"/>
+      </ownedStyle>
+      <actualMapping xmi:type="description_1:ContainerMapping" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@containerMappings[name='ResourceContainer']"/>
+    </ownedDiagramElements>
+    <ownedDiagramElements xmi:type="diagram:DEdge" uid="_txStiC3MEfGil-9124Oung" name="edge_newPort_to_newPort" sourceNode="_sTcPcC3MEfGil-9124Oung" targetNode="_ntfYAC3MEfGil-9124Oung">
+      <target xmi:type="mediaflow:Edge" href="flow1.mediaflow#//@edges.3"/>
+      <semanticElements xmi:type="mediaflow:Edge" href="flow1.mediaflow#//@edges.3"/>
+      <ownedStyle xmi:type="diagram:EdgeStyle" uid="_txStiS3MEfGil-9124Oung" targetArrow="InputFillClosedArrow" size="3" strokeColor="0,0,0">
+        <description xmi:type="style:EdgeStyleDescription" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@edgeMappings[name='EdgeMapping']/@style"/>
+        <centerLabelStyle xmi:type="diagram:CenterLabelStyle" uid="_txStii3MEfGil-9124Oung" labelSize="9" showIcon="false"/>
       </ownedStyle>
       <actualMapping xmi:type="description_1:EdgeMapping" href="description/mediaflow.odesign#//@ownedViewpoints[name='graph']/@ownedRepresentations[name='MediaFlow%20diagram']/@defaultLayer/@edgeMappings[name='EdgeMapping']"/>
     </ownedDiagramElements>

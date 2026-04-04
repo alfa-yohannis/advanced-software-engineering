@@ -1,0 +1,40 @@
+graph LR
+    subgraph "Claude (Orchestrator)"
+        claude["Responsibilities:
+- Read schedule CSV
+- Plan execution order
+- Dispatch tasks
+- Monitor progress
+- Handle retries
+
+MCP Servers:
+- siakad-csv-reader
+- shared-state"]
+    end
+
+    queue{{"Shared Task Queue
+(tasks/*.json)
+shared-state MCP"}}
+
+    subgraph "Gemini (Worker)"
+        gemini["Responsibilities:
+- Browser automation
+- Login to SIAKAD
+- Fill attendance forms
+- Screenshot & validate
+- Error recovery
+
+MCP Servers:
+- siakad-browser
+- shared-state"]
+    end
+
+    csv[("schedule-data/*.csv
+(local CSV files)")]
+    siakad["SIAKAD Website
+(Playwright browser)"]
+
+    claude <--> queue
+    queue <--> gemini
+    csv --> claude
+    gemini --> siakad
