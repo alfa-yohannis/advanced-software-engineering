@@ -1,0 +1,19 @@
+graph demo {
+  resource inputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/input.mp4" external=true {
+    port inputOut OUT
+  }
+
+  scaler resize720 backend=FFMPEG command="ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4" replicas=1 width=1280 height=720 {
+    port resizeIn IN
+    port resizeOut OUT
+  }
+
+  transcoder encodeMp4 backend=FFMPEG command="ffmpeg -i scaled.mp4 -c:v libx264 -c:a aac output.mp4" 
+  								replicas=1 videoCodec="libx264" audioCodec="aac" container="mp4" bitrate=2000 {
+    port encodeIn IN
+    port encodeOut OUT
+  }
+  
+  edge e1 from encodeIn to resizeIn
+  edge e2 from resizeOut to encodeIn
+}

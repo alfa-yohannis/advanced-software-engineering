@@ -41,11 +41,28 @@ echo ""
 
 cd "$SCRIPT_DIR"
 
-# Gemini needs access to both the CSV reader and browser automation tools.
-# We ensure the MCP servers are registered for the session using project scope.
+# Write Gemini MCP settings directly (gemini mcp add overwrites on each call,
+# so only the last server survives — we must write both servers at once).
 echo "Ensuring Gemini MCP servers are registered..."
-gemini mcp add --scope project siakad-browser "$SCRIPT_DIR/mcp-servers/browser-automation/run.sh" -e DISPLAY=:0
-gemini mcp add --scope project siakad-csv-reader "$SCRIPT_DIR/mcp-servers/csv-reader/run.sh"
+mkdir -p "$SCRIPT_DIR/.gemini"
+cat > "$SCRIPT_DIR/.gemini/settings.json" <<GEMINI_MCP_EOF
+{
+  "mcpServers": {
+    "siakad-browser": {
+      "command": "$SCRIPT_DIR/mcp-servers/browser-automation/run.sh",
+      "args": [],
+      "env": {
+        "DISPLAY": ":0"
+      }
+    },
+    "siakad-csv-reader": {
+      "command": "$SCRIPT_DIR/mcp-servers/csv-reader/run.sh",
+      "args": []
+    }
+  }
+}
+GEMINI_MCP_EOF
+echo "  Wrote .gemini/settings.json with both siakad-browser and siakad-csv-reader"
 echo ""
 
 #model options: https://ai.google.dev/gemini/docs/models/overview

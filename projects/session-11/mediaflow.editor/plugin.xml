@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+
+<!--
+-->
+
+<plugin>
+
+   <extension point="org.eclipse.ui.newWizards">
+      <!-- @generated mediaflow -->
+      <category
+            id="org.eclipse.emf.ecore.Wizard.category.ID"
+            name="%_UI_Wizard_category"/>
+      <wizard
+            id="mediaflow.presentation.MediaflowModelWizardID"
+            name="%_UI_MediaflowModelWizard_label"
+            class="mediaflow.presentation.MediaflowModelWizard"
+            category="org.eclipse.emf.ecore.Wizard.category.ID"
+            icon="icons/full/obj16/MediaflowModelFile.gif">
+         <description>%_UI_MediaflowModelWizard_description</description>
+         <selection class="org.eclipse.core.resources.IResource"/>
+      </wizard>
+   </extension>
+
+   <extension point="org.eclipse.ui.editors">
+      <!-- @generated mediaflow -->
+      <editor
+            id="mediaflow.presentation.MediaflowEditorID"
+            name="%_UI_MediaflowEditor_label"
+            icon="icons/full/obj16/MediaflowModelFile.gif"
+            extensions="mediaflow"
+            class="mediaflow.presentation.MediaflowEditor"
+            contributorClass="mediaflow.presentation.MediaflowActionBarContributor">
+      </editor>
+   </extension>
+
+</plugin>

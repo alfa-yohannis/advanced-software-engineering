@@ -6,6 +6,10 @@
       "env": {
         "DISPLAY": ":0"
       }
+    },
+    "shared-state": {
+      "command": "/data2/projects/advanced-software-engineering/projects/session-14/agents/run_shared_state.sh",
+      "args": []
     }
   }
 }

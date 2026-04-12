@@ -62,53 +62,39 @@ cd "$SCRIPT_DIR"
 WORKER_PROMPT=$(cat "$SCRIPT_DIR/agents/worker_prompt.md")
 ORCHESTRATOR_PROMPT=$(cat "$SCRIPT_DIR/agents/orchestrator_prompt.md")
 
-# Ensure Gemini MCP servers are registered for the worker
+# Write Gemini MCP settings directly (gemini mcp add overwrites on each call,
+# so only the last server survives — we must write both servers at once).
 echo "Registering Gemini MCP servers (worker)..."
-gemini mcp add --scope project siakad-browser "$SCRIPT_DIR/mcp-servers/browser-automation/run.sh" -e DISPLAY=:0
-gemini mcp add --scope project shared-state "$SCRIPT_DIR/agents/run_shared_state.sh"
+mkdir -p "$SCRIPT_DIR/.gemini"
+cat > "$SCRIPT_DIR/.gemini/settings.json" <<GEMINI_MCP_EOF
+{
+  "mcpServers": {
+    "siakad-browser": {
+      "command": "$SCRIPT_DIR/mcp-servers/browser-automation/run.sh",
+      "args": [],
+      "env": {
+        "DISPLAY": ":0"
+      }
+    },
+    "shared-state": {
+      "command": "$SCRIPT_DIR/agents/run_shared_state.sh",
+      "args": []
+    }
+  }
+}
+GEMINI_MCP_EOF
+echo "  Wrote .gemini/settings.json with both siakad-browser and shared-state"
 echo ""
 
-# --- Step 1: Start Gemini (Browser Worker) in the background ---
-echo "[1/2] Starting Gemini (Browser Worker)..."
-
-#model options: https://ai.google.dev/gemini/docs/models/overview
-# /model
-# 1. gemini-3.1-pro-preview                                             │
-# 2. gemini-3-flash-preview                                             │
-# 3. gemini-3.1-flash-lite-preview                                      │
-# 4. gemini-2.5-pro                                                     │
-# 5. gemini-2.5-flash                                                   │
-# 6. gemini-2.5-flash-lite
-# gemini --yolo --model gemini-3.1-pro-preview  --prompt "
-# gemini --yolo --model gemini-1.5-flash --prompt "
-
-gemini --yolo --model gemini-3-flash-preview  --prompt "
-
-$WORKER_PROMPT
-
-You are now running as the browser worker agent. Start processing tasks immediately.
-
-Instructions:
-1. Call get_next_pending_task to check for tasks.
-2. If no tasks yet, wait a moment and try again (the orchestrator is creating tasks).
-3. Process each task as described in your instructions.
-4. After completing a task, immediately check for the next one.
-5. Keep polling until you see a 'close_browser' task, execute it, then stop.
-
-Begin now — poll for tasks.
-" &
-GEMINI_PID=$!
-echo "  Gemini PID: $GEMINI_PID"
-
-# Give Gemini a moment to start up and connect to MCP servers
-sleep 3
-
-# --- Step 2: Start Claude (Orchestrator) ---
-echo "[2/2] Starting Claude (Orchestrator)..."
+# ============================================================================
+# Phase 1: Claude (Orchestrator) — batch-create all tasks
+# ============================================================================
+echo "[Phase 1/2] Claude (Orchestrator) — reading CSV and creating tasks..."
+echo ""
 
 # Generate MCP config file with absolute paths for Claude.
 # Claude CLI resolves .claude/settings.json from the git root, which may not
-# be session-11/. We use --mcp-config to pass a temp config file explicitly.
+# be session-14/. We use --mcp-config to pass a temp config file explicitly.
 MCP_CONFIG_FILE=$(mktemp /tmp/claude_mcp_XXXXXX.json)
 cat > "$MCP_CONFIG_FILE" <<MCPEOF
 {
@@ -127,24 +113,77 @@ trap "rm -f '$MCP_CONFIG_FILE'" EXIT
 cat <<CLAUPROMPT | claude -p --mcp-config "$MCP_CONFIG_FILE" --dangerously-skip-permissions --verbose
 $ORCHESTRATOR_PROMPT
 
-You are now running as the orchestrator agent. The browser worker (Gemini) is already
-running and polling for tasks.
+You are now running as the orchestrator agent.
 
 Schedule directory: $SCHEDULE_DIR
 
 Execute the workflow:
 1. Clear previous tasks with clear_tasks.
 2. List and read all schedule files from the directory above.
-3. Create a 'login' task (task_001) and wait for it to complete.
-4. For each attendance record, create a 'fill_attendance' task and wait for completion.
-5. After all records are processed, create a 'close_browser' task.
-6. Report a final summary of all tasks (completed, failed, skipped).
+3. Create a 'login' task (task_001).
+4. For each attendance record, create a 'fill_attendance' task (task_002, task_003, ...).
+5. Create a 'close_browser' task as the final task.
+6. Report the full task manifest (ID, type, params summary).
+
+Do NOT poll or wait. Just create all tasks and finish.
 
 Start now.
 CLAUPROMPT
 
+CLAUDE_EXIT=$?
+echo ""
+
+if [ $CLAUDE_EXIT -ne 0 ]; then
+    echo "Error: Claude orchestrator failed (exit $CLAUDE_EXIT). Aborting."
+    exit 1
+fi
+
+# Verify tasks were created
+TASK_COUNT=$(ls -1 "$SCRIPT_DIR/tasks/"*.json 2>/dev/null | wc -l)
+echo "Phase 1 complete: $TASK_COUNT task(s) created."
+echo ""
+
+if [ "$TASK_COUNT" -eq 0 ]; then
+    echo "Error: No tasks were created. Check orchestrator output above."
+    exit 1
+fi
+
+# ============================================================================
+# Phase 2: Gemini (Browser Worker) — process all tasks sequentially
+# ============================================================================
+echo "[Phase 2/2] Gemini (Browser Worker) — processing tasks..."
+echo ""
+
+#model options: https://ai.google.dev/gemini/docs/models/overview
+# /model
+# 1. gemini-3.1-pro-preview                                             │
+# 2. gemini-3-flash-preview                                             │
+# 3. gemini-3.1-flash-lite-preview                                      │
+# 4. gemini-2.5-pro                                                     │
+# 5. gemini-2.5-flash                                                   │
+# 6. gemini-2.5-flash-lite
+# gemini --yolo --model gemini-3.1-pro-preview  --prompt "
+# gemini --yolo --model gemini-1.5-flash --prompt "
+
+gemini --yolo --model gemini-3-flash-preview  --prompt "
+
+$WORKER_PROMPT
+
+You are now running as the browser worker agent.
+All tasks have been pre-created by the orchestrator.
+Explain Before Acting: ALWAYS provide a short, one-sentence explanation of what you are doing right before you call a tool. This acts as a progress log for the user. Do not call tools in silence.
+
+Instructions:
+1. Call get_all_tasks_ordered to get the full list of tasks.
+2. Process each task IN ORDER (login first, then fill_attendance tasks, then close_browser).
+3. For each task: mark as in_progress, execute it, then mark as completed or failed.
+4. If a fill_attendance task fails, retry up to 3 times before moving on.
+5. After the last task (close_browser), report a summary of results.
+
+Begin now — get the task list and start processing.
+"
+
 # --- Cleanup ---
 echo ""
-echo "Orchestrator finished. Waiting for Gemini worker to complete..."
-wait $GEMINI_PID 2>/dev/null
 echo "Done. All agents finished."
+

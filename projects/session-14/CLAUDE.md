@@ -1,16 +1,15 @@
 # SIAKAD Attendance Auto-Filler — Multi-Agent System
 
-## Architecture
+## Architecture (Sequential Two-Phase)
 
 ```
-Claude (Orchestrator) ──[csv-reader MCP]──> Schedule CSV files
-Claude (Orchestrator) ──[shared-state MCP]──> tasks/*.json <──[shared-state MCP]── Gemini (Worker)
-                                                               Gemini (Worker) ──[browser MCP]──> SIAKAD
+Phase 1: Claude ──[csv-reader MCP]──> reads CSV ──[shared-state MCP]──> creates tasks/*.json
+Phase 2: Gemini ──[shared-state MCP]──> reads tasks ──[browser MCP]──> fills SIAKAD forms
 ```
 
-- **Claude** = Orchestrator: reads schedule data, plans execution, dispatches tasks
-- **Gemini** = Browser Worker: executes browser automation, fills forms, validates results
-- **Communication**: shared task queue via JSON files in `tasks/` directory
+- **Claude** = Orchestrator: reads schedule data, creates ALL task files, then exits
+- **Gemini** = Browser Worker: processes all pre-created tasks sequentially
+- **Communication**: task JSON files in `tasks/` directory (no polling)
 
 ## MCP Servers
 

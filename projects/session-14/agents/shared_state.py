@@ -176,6 +176,23 @@ def get_next_pending_task() -> str:
 
 
 @mcp.tool()
+def get_all_tasks_ordered() -> str:
+    """
+    Get all tasks sorted by ID in a single call.
+
+    Called by the worker agent at startup to get the full task queue
+    for sequential processing, avoiding repeated polling.
+    """
+    tasks = []
+    for path in sorted(TASKS_DIR.glob("*.json")):
+        tasks.append(json.loads(path.read_text()))
+    return json.dumps({
+        "total": len(tasks),
+        "tasks": tasks
+    }, indent=2, ensure_ascii=False)
+
+
+@mcp.tool()
 def clear_tasks() -> str:
     """
     Remove all task files from the tasks/ directory.
