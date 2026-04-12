@@ -1,0 +1,1069 @@
+\chapter{Model-to-Model Transformation}
+\label{chap:m2m-transformation}
+
+\section*{Tujuan Pembelajaran}
+\begin{enumerate}
+  \item Menjelaskan konsep transformasi model-ke-model (\textit{model-to-model transformation}) dalam konteks \textit{Model-Driven Engineering} (MDE), termasuk peran metamodel sumber dan target serta pemetaan konseptual antar elemen domain.
+  \item Menerapkan transformasi model menggunakan dua bahasa transformasi --- ATL (\textit{ATLAS Transformation Language}) dan ETL (\textit{Epsilon Transformation Language}) --- untuk mengonversi model pipeline \textit{MediaFlow} (berbasis \texttt{mediaflow.ecore}) menjadi UML Activity Diagram.
+  \item Menganalisis \textit{trade-off} antara pendekatan deklaratif (ATL) dan pendekatan hibrid imperatif-deklaratif (ETL) dalam hal ekspresivitas, struktur kode, dan mekanisme pembuatan model output.
+\end{enumerate}
+
+\section{Pendahuluan}
+
+Pada bab-bab sebelumnya, pipeline pemrosesan media digital \textit{MediaFlow} telah dimodelkan melalui tiga pendekatan yang saling melengkapi. Bab~8 memperkenalkan metamodel domain (\texttt{mediaflow.ecore}) sebagai fondasi formal yang mendefinisikan konsep \texttt{Graph}, \texttt{Node}, \texttt{Port}, dan \texttt{Edge}. Bab~9 mengimplementasikan \textit{textual DSL} menggunakan ANTLR, Xtext, dan Langium, memungkinkan pengguna menulis model sebagai teks terstruktur. Bab~10 memperkenalkan \textit{visual DSL} menggunakan Eclipse Sirius, memungkinkan pengguna membuat dan mengedit model melalui diagram grafis.
+
+Ketiga pendekatan tersebut berfokus pada \textit{authoring} model: bagaimana model domain dibuat, diedit, dan disimpan. Namun, dalam siklus pengembangan \textit{Model-Driven Engineering} (MDE) yang lengkap, model tidak hanya dibuat --- model juga \textit{ditransformasi}. Transformasi model merupakan mekanisme sentral yang memungkinkan model pada satu tingkat abstraksi atau domain dikonversi secara otomatis ke model pada tingkat abstraksi atau domain yang berbeda.
+
+Transformasi model-ke-model (\textit{model-to-model transformation}, disingkat M2M) adalah proses mengambil satu atau lebih model sumber yang berkonformasi ke metamodel sumber, dan menghasilkan satu atau lebih model target yang berkonformasi ke metamodel target. Proses ini didefinisikan melalui sekumpulan \textit{aturan transformasi} (\textit{transformation rules}) yang memetakan elemen di model sumber ke elemen di model target.
+
+Bab ini memperlihatkan implementasi M2M yang mengonversi model pipeline \textit{MediaFlow} menjadi \textbf{UML Activity Diagram}. Transformasi ini menjembatani dua domain: dari representasi teknis pipeline media (node pemrosesan, port, dan koneksi) ke representasi alur kerja standar UML (aksi, aliran kontrol, titik awal, dan titik akhir). Dua bahasa transformasi digunakan: \textbf{ATL} (pendekatan deklaratif) dan \textbf{ETL} (pendekatan hibrid imperatif-deklaratif), sehingga pembaca dapat membandingkan gaya dan mekanisme keduanya pada masalah yang sama.
+
+\section{Deskripsi Masalah Domain yang Diselesaikan}
+
+\subsection{Konteks Domain}
+
+Domain sumber adalah pipeline pemrosesan media digital \textit{MediaFlow}, yang telah didefinisikan melalui metamodel \texttt{mediaflow.ecore}. Pipeline direpresentasikan sebagai graf terarah yang terdiri dari komponen pemrosesan (\texttt{Node} dengan subtipe \texttt{Resource}, \texttt{Scaler}, \texttt{Transcoder}), titik koneksi (\texttt{Port} dengan arah \texttt{IN} atau \texttt{OUT}), dan relasi aliran data (\texttt{Edge}).
+
+Domain target adalah \textbf{UML Activity Diagram}, sebuah diagram standar UML yang merepresentasikan alur kerja (\textit{workflow}) melalui aksi (\texttt{OpaqueAction}), aliran kontrol (\texttt{ControlFlow}), titik awal (\texttt{InitialNode}), dan titik akhir (\texttt{ActivityFinalNode}). UML Activity Diagram dipilih karena menyediakan notasi standar yang dikenal luas untuk mendeskripsikan urutan dan percabangan proses.
+
+\subsection{Target Transformasi}
+
+Target transformasi pada bab ini adalah konversi otomatis model \textit{MediaFlow} XMI menjadi model UML Activity Diagram. Dua model input digunakan sebagai korpus uji:
+\begin{enumerate}
+  \item \texttt{flow1.xmi}: topologi linier sederhana --- satu \texttt{Resource} input, satu \texttt{Scaler}, satu \texttt{Resource} output (3 node, 2 edge).
+  \item \texttt{flow2.xmi}: topologi bercabang --- satu \texttt{Resource} input, satu \texttt{Scaler}, dua \texttt{Transcoder}, dua \texttt{Resource} output (6 node, 5 edge).
+\end{enumerate}
+
+Pemetaan konseptual dari elemen \textit{MediaFlow} ke elemen UML Activity Diagram didefinisikan sebagai berikut:
+
+\begin{table}[h]
+\centering
+\caption{Pemetaan konseptual elemen MediaFlow ke elemen UML Activity Diagram}
+\label{tab:ch11-mapping-konseptual}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.27\textwidth}|>{\raggedright\arraybackslash}p{0.22\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|}
+\hline
+\textbf{Elemen MediaFlow} & \textbf{Elemen UML} & \textbf{Kondisi / Keterangan} \\
+\hline
+\texttt{Graph} & \texttt{Model} + \texttt{Activity} & Kontainer root; Activity membungkus seluruh node dan edge \\
+\hline
+\texttt{Resource} (entry) & \texttt{InitialNode} & Resource tanpa edge masuk (sumber pipeline) \\
+\hline
+\texttt{Resource} (exit) & \texttt{ActivityFinalNode} & Resource tanpa edge keluar (tujuan pipeline) \\
+\hline
+\texttt{Resource} (internal) & \texttt{OpaqueAction} & Resource dengan edge masuk dan keluar; body berisi URI \\
+\hline
+\texttt{Scaler} & \texttt{OpaqueAction} & Body berisi perintah shell (\texttt{command}) \\
+\hline
+\texttt{Transcoder} & \texttt{OpaqueAction} & Body berisi perintah shell (\texttt{command}) \\
+\hline
+\texttt{Edge} & \texttt{ControlFlow} & Menghubungkan node yang ditransformasi dari owner port sumber ke owner port target \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\noindent Tabel~\ref{tab:ch11-mapping-konseptual} memperlihatkan bahwa pemetaan bersifat kondisional: \texttt{Resource} yang sama dapat menjadi \texttt{InitialNode}, \texttt{ActivityFinalNode}, atau \texttt{OpaqueAction} tergantung pada posisinya dalam graf (ada/tidaknya edge masuk dan keluar). Pemetaan kondisional ini menjadi tantangan utama dalam penulisan aturan transformasi.
+
+\begin{figure}[htbp]
+\centering
+\scalebox{0.85}{
+\begin{tikzpicture}[>=Latex, node distance=8mm,
+  mf/.style={draw, rounded corners=3pt, minimum width=2.2cm, minimum height=0.65cm, align=center, font=\scriptsize},
+  uml/.style={draw, rounded corners=3pt, minimum width=2.2cm, minimum height=0.65cm, align=center, font=\scriptsize},
+  lbl/.style={font=\tiny\itshape, text=gray},
+  mapline/.style={->, dashed, gray, thick}]
+
+  % === Left column: MediaFlow (flow2) ===
+  \node[font=\small\bfseries] (mftitle) at (0, 0) {MediaFlow (flow2)};
+
+  \node[mf, fill=blue!12, below=6mm of mftitle] (res1) {inputVideo\\[-1pt]{\tiny Resource (entry)}};
+  \node[mf, fill=green!12, below=of res1] (sc) {resize720\\[-1pt]{\tiny Scaler}};
+  \node[mf, fill=orange!12, below left=10mm and 0mm of sc] (t1) {encodeH264\\[-1pt]{\tiny Transcoder}};
+  \node[mf, fill=orange!12, below right=10mm and 0mm of sc] (t2) {encodeVp9\\[-1pt]{\tiny Transcoder}};
+  \node[mf, fill=blue!12, below=of t1] (res2) {outputVideo1\\[-1pt]{\tiny Resource (exit)}};
+  \node[mf, fill=blue!12, below=of t2] (res3) {outputVideo2\\[-1pt]{\tiny Resource (exit)}};
+
+  \draw[->, thick] (res1) -- (sc);
+  \draw[->, thick] (sc) -- (t1);
+  \draw[->, thick] (sc) -- (t2);
+  \draw[->, thick] (t1) -- (res2);
+  \draw[->, thick] (t2) -- (res3);
+
+  % === Right column: UML Activity Diagram ===
+  \node[font=\small\bfseries] (umltitle) at (7.5, 0) {UML Activity Diagram};
+
+  \node[uml, fill=black!80, text=white, below=6mm of umltitle] (ini) {inputVideo\\[-1pt]{\tiny InitialNode}};
+  \node[uml, fill=yellow!15, below=of ini] (oa1) {resize720\\[-1pt]{\tiny OpaqueAction}};
+  \node[uml, fill=yellow!15, below left=10mm and 0mm of oa1] (oa2) {encodeH264\\[-1pt]{\tiny OpaqueAction}};
+  \node[uml, fill=yellow!15, below right=10mm and 0mm of oa1] (oa3) {encodeVp9\\[-1pt]{\tiny OpaqueAction}};
+  \node[uml, fill=red!15, below=of oa2] (fin1) {outputVideo1\\[-1pt]{\tiny ActivityFinalNode}};
+  \node[uml, fill=red!15, below=of oa3] (fin2) {outputVideo2\\[-1pt]{\tiny ActivityFinalNode}};
+
+  \draw[->, thick] (ini) -- (oa1) node[midway, right, font=\tiny]{e1: ControlFlow};
+  \draw[->, thick] (oa1) -- (oa2) node[midway, left, font=\tiny]{e2};
+  \draw[->, thick] (oa1) -- (oa3) node[midway, right, font=\tiny]{e3};
+  \draw[->, thick] (oa2) -- (fin1) node[midway, left, font=\tiny]{e4};
+  \draw[->, thick] (oa3) -- (fin2) node[midway, right, font=\tiny]{e5};
+
+  % === Mapping arrows ===
+  \draw[mapline] (res1.east) -- (ini.west) node[midway, above, lbl]{EntryResource2Initial};
+  \draw[mapline] (sc.east) -- (oa1.west) node[midway, above, lbl]{Scaler2OpaqueAction};
+  \draw[mapline] (t1.east) -- (oa2.west) node[midway, above, lbl]{Transcoder2OpaqueAction};
+  \draw[mapline] (t2.east) -- (oa3.west) node[midway, above, lbl]{Transcoder2OpaqueAction};
+  \draw[mapline] (res2.east) -- (fin1.west) node[midway, above, lbl]{ExitResource2Final};
+  \draw[mapline] (res3.east) -- (fin2.west) node[midway, above, lbl]{ExitResource2Final};
+
+\end{tikzpicture}
+}
+\caption{Visualisasi pemetaan model \texttt{flow2}: pipeline MediaFlow (kiri) ditransformasi menjadi UML Activity Diagram (kanan). Panah putus-putus menunjukkan aturan transformasi yang diterapkan pada setiap elemen.}
+\label{fig:ch11-mapping-visual}
+\end{figure}
+
+\noindent Gambar~\ref{fig:ch11-mapping-visual} memperlihatkan secara visual bagaimana setiap elemen pada model \texttt{flow2} dipetakan ke elemen UML yang sesuai. \texttt{Resource} entry (tanpa edge masuk) menjadi \texttt{InitialNode}, dua \texttt{Resource} exit (tanpa edge keluar) menjadi \texttt{ActivityFinalNode}, dan node pemrosesan (\texttt{Scaler}, \texttt{Transcoder}) menjadi \texttt{OpaqueAction}. Topologi percabangan dari scaler ke dua transcoder dipertahankan melalui \texttt{ControlFlow} pada model target.
+
+\subsection{Masalah Utama}
+
+Permasalahan yang mendorong penggunaan transformasi model otomatis pada domain ini adalah:
+\begin{enumerate}
+  \item \textbf{Kesenjangan semantik antar-domain (\textit{semantic gap}).} MediaFlow menggunakan konsep port sebagai titik koneksi, sedangkan UML Activity Diagram menghubungkan node secara langsung melalui \texttt{ControlFlow}. Edge di MediaFlow menghubungkan \texttt{Port} ke \texttt{Port}, tetapi \texttt{ControlFlow} di UML menghubungkan \texttt{ActivityNode} ke \texttt{ActivityNode}. Transformasi harus menyelesaikan indirection ini: dari port, navigasi ke node pemiliknya.
+  \item \textbf{Pemetaan kondisional.} Satu tipe elemen sumber (\texttt{Resource}) harus dipetakan ke tiga tipe elemen target yang berbeda (\texttt{InitialNode}, \texttt{ActivityFinalNode}, \texttt{OpaqueAction}) berdasarkan analisis topologi graf --- bukan hanya berdasarkan tipe statis.
+  \item \textbf{Risiko kesalahan transformasi manual.} Jika pemetaan dilakukan secara manual (misalnya menulis model UML secara langsung), risiko inkonsistensi antara model sumber dan target meningkat seiring ukuran model. Transformasi otomatis memastikan konsistensi secara deterministik.
+  \item \textbf{Kebutuhan portabilitas model.} Model UML Activity Diagram yang dihasilkan dapat dibuka di perangkat lunak pemodelan UML standar (misalnya Eclipse Papyrus), sehingga pemangku kepentingan yang tidak memahami DSL \textit{MediaFlow} tetap dapat membaca alur kerja pipeline.
+\end{enumerate}
+
+\subsection{Kebutuhan Pemodelan}
+
+Berdasarkan masalah di atas, kebutuhan transformasi model-ke-model untuk \textit{MediaFlow} adalah:
+\begin{enumerate}
+  \item \textbf{Bahasa transformasi formal} yang mendukung definisi aturan pemetaan antar-metamodel secara eksplisit dan terverifikasi.
+  \item \textbf{Helper/operation navigasi} untuk menyelesaikan indirection port-ke-node: menentukan node pemilik sebuah port, mengumpulkan edge masuk dan keluar sebuah node, serta menentukan apakah sebuah node merupakan entry atau exit.
+  \item \textbf{Aturan transformasi kondisional} yang mampu memetakan satu tipe sumber ke beberapa tipe target berdasarkan predikat topologi.
+  \item \textbf{Runner/launcher} yang mengeksekusi transformasi secara programatik dari lingkungan Eclipse, memuat metamodel, membaca model input, menjalankan aturan, dan menyimpan model output.
+  \item \textbf{Dukungan metamodel standar} untuk model target: UML2 (\url{http://www.eclipse.org/uml2/5.0.0/UML}).
+\end{enumerate}
+
+Kebutuhan ini menjadi dasar implementasi dua pendekatan transformasi (ATL dan ETL) yang dibahas pada bagian berikutnya.
+
+\section{Metodologi Umum Transformasi Model-ke-Model}
+
+Metodologi pengembangan transformasi M2M mengikuti alur yang terstruktur dari analisis metamodel hingga validasi output. Tujuh langkah berikut berlaku untuk kedua pendekatan (ATL dan ETL).
+
+\subsection{Langkah 1: Analisis Metamodel Sumber dan Target}
+
+Langkah pertama adalah memahami secara mendalam metamodel asal/sumber (\texttt{mediaflow.ecore}) dan metamodel target (UML2). Analisis meliputi hierarki kelas, atribut, referensi, dan kardinalitas pada kedua metamodel. Pada MediaFlow, hierarki \texttt{NamedElement} $\rightarrow$ \texttt{Graph} / \texttt{Node} / \texttt{Port} / \texttt{Edge} perlu dipetakan ke hierarki UML \texttt{Model} $\rightarrow$ \texttt{Activity} $\rightarrow$ \texttt{ActivityNode} / \texttt{ActivityEdge}.
+
+\textbf{Input tahap ini:} spesifikasi metamodel sumber dan target.
+
+\textbf{Output tahap ini:} pemahaman struktur dan hubungan antar-elemen pada kedua metamodel.
+
+\subsection{Langkah 2: Perancangan Pemetaan Konseptual}
+
+Sebelum menulis kode transformasi, pemetaan konseptual dirancang secara eksplisit: elemen sumber mana dipetakan ke elemen target mana, dengan kondisi apa, dan atribut mana yang dipindahkan. Tabel~\ref{tab:ch11-mapping-konseptual} merupakan hasil dari langkah ini.
+
+\textbf{Input tahap ini:} analisis kedua metamodel.
+
+\textbf{Output tahap ini:} tabel pemetaan konseptual yang menjadi spesifikasi aturan transformasi.
+
+\subsection{Langkah 3: Pemilihan Bahasa Transformasi}
+
+Pemilihan bahasa transformasi bergantung pada gaya penulisan yang diinginkan dan ekosistem tooling:
+\begin{itemize}
+  \item \textbf{ATL (ATLAS Transformation Language)}: bahasa deklaratif yang menggunakan \textit{matched rules} dan \textit{helpers}. Setiap aturan secara deklaratif mendeskripsikan pemetaan dari elemen sumber ke elemen target. ATL berjalan di atas EMFTVM (\textit{EMF Transformation Virtual Machine}).
+  \item \textbf{ETL (Epsilon Transformation Language)}: bahasa hibrid imperatif-deklaratif dari platform Epsilon. Aturan transformasi menggunakan blok \texttt{transform ... to ...} dengan \texttt{guard} untuk kondisi, dan blok \texttt{post} untuk operasi pasca-transformasi seperti pembungkusan elemen ke dalam kontainer.
+\end{itemize}
+
+\textbf{Input tahap ini:} kebutuhan gaya penulisan dan ekosistem tim.
+
+\textbf{Output tahap ini:} keputusan bahasa transformasi dan setup proyek.
+
+\subsection{Langkah 4: Definisi Helper/Operation untuk Navigasi Model}
+
+Transformasi MediaFlow memerlukan navigasi yang melampaui akses atribut langsung. Helper (ATL) atau operation (ETL) didefinisikan untuk:
+\begin{itemize}
+  \item Mengumpulkan edge masuk sebuah node (\texttt{incomingEdges}).
+  \item Mengumpulkan edge keluar sebuah node (\texttt{outgoingEdges}).
+  \item Menentukan apakah sebuah node adalah entry (\texttt{isEntry}).
+  \item Menentukan apakah sebuah node adalah exit (\texttt{isExit}).
+  \item Menemukan node pemilik port sumber sebuah edge (\texttt{sourceNode}).
+  \item Menemukan node pemilik port target sebuah edge (\texttt{targetNode}).
+\end{itemize}
+
+\textbf{Input tahap ini:} pemetaan konseptual dan struktur navigasi yang dibutuhkan.
+
+\textbf{Output tahap ini:} definisi helper/operation yang siap digunakan oleh aturan transformasi.
+
+\subsection{Langkah 5: Penulisan Aturan Transformasi}
+
+Aturan transformasi ditulis berdasarkan tabel pemetaan konseptual. Setiap baris tabel menjadi satu aturan (\textit{rule}) dengan predikat kondisi (\textit{guard}) jika diperlukan. Pada proyek ini, enam aturan utama didefinisikan:
+\begin{enumerate}
+  \item \textbf{Graph2Model}: mengonversi \texttt{Graph} menjadi \texttt{Model} dan \texttt{Activity}.
+  \item \textbf{EntryResource2Initial}: mengonversi \texttt{Resource} tanpa edge masuk menjadi \texttt{InitialNode}.
+  \item \textbf{ExitResource2Final}: mengonversi \texttt{Resource} tanpa edge keluar menjadi konsep \texttt{ActivityFinalNode}.
+  \item \textbf{InternalResource2Action}: mengonversi \texttt{Resource} internal menjadi \texttt{OpaqueAction}.
+  \item \textbf{Scaler2OpaqueAction / Transcoder2OpaqueAction}: mengonversi node pemrosesan menjadi \texttt{OpaqueAction}.
+  \item \textbf{Edge2ControlFlow}: mengonversi \texttt{Edge} menjadi \texttt{ControlFlow}.
+\end{enumerate}
+
+\textbf{Input tahap ini:} helper/operation dan pemetaan konseptual.
+
+\textbf{Output tahap ini:} berkas aturan transformasi (\texttt{.atl} atau \texttt{.etl}).
+
+\subsection{Langkah 6: Implementasi Runner/Launcher}
+
+Runner mengeksekusi transformasi secara programatik. Runner bertanggung jawab untuk:
+\begin{itemize}
+  \item Menginisialisasi \textit{resource factories} EMF dan mendaftarkan paket metamodel.
+  \item Memuat model sumber dari berkas XMI.
+  \item Membuat \textit{resource} kosong untuk model output.
+  \item Memuat dan menjalankan modul/aturan transformasi.
+  \item Menyimpan model output ke berkas UML.
+\end{itemize}
+
+\textbf{Input tahap ini:} berkas transformasi, metamodel, dan model input.
+
+\textbf{Output tahap ini:} kelas Java runner yang mengorkestrasi eksekusi transformasi.
+
+\subsection{Langkah 7: Validasi Output}
+
+Model output divalidasi dengan:
+\begin{itemize}
+  \item Membuka berkas UML di Eclipse Papyrus untuk memverifikasi bahwa Activity Diagram merender dengan benar.
+  \item Menginspeksi berkas XMI output secara langsung untuk memastikan jumlah node dan edge sesuai.
+  \item Membandingkan output ATL dan ETL untuk memastikan kedua pendekatan menghasilkan model yang ekuivalen secara semantik.
+\end{itemize}
+
+\textbf{Input tahap ini:} model output UML.
+
+\textbf{Output tahap ini:} laporan validasi dan diagram Activity yang terverifikasi.
+
+\section{Implementasi Detail}
+
+Bagian ini membahas implementasi transformasi model-ke-model \textit{MediaFlow} $\rightarrow$ UML Activity Diagram menggunakan dua bahasa: ATL dan ETL. Kedua implementasi berbagi metamodel sumber, model input, dan pemetaan konseptual yang sama.
+
+\subsection{Arsitektur Implementasi}
+
+Proyek M2M ini disusun dalam struktur modular yang memisahkan model input, aturan transformasi, runner Java, dan model output.
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Struktur direktori proyek Model-to-Model Transformation},
+  label={lst:ch11-project-structure},
+  basicstyle=\ttfamily\scriptsize
+]
+m2m/
+|-- src/m2m/
+|   |-- MediaflowToActivityATLRunner.java   # Runner ATL (EMFTVM)
+|   +-- MediaflowToActivityETLRunner.java   # Runner ETL (Epsilon)
+|-- transformer/
+|   |-- mediaflow2activity.atl              # Aturan transformasi ATL
+|   |-- mediaflow2activity.emftvm           # Bytecode ATL terkompilasi
+|   +-- mediaflow2activity.etl              # Aturan transformasi ETL
+|-- input/
+|   |-- flow1.mediaflow                     # Model input (textual DSL)
+|   |-- flow1.xmi                           # Model input (XMI, untuk ATL/ETL)
+|   |-- flow2.mediaflow                     # Model input (textual DSL)
+|   +-- flow2.xmi                           # Model input (XMI, untuk ATL/ETL)
+|-- output/
+|   |-- activity1atl.uml                    # Output ATL dari flow1
+|   |-- activity1etl.uml                    # Output ETL dari flow1
+|   |-- activity2atl.uml                    # Output ATL dari flow2
+|   +-- activity2etl.uml                    # Output ETL dari flow2
+|-- META-INF/MANIFEST.MF                    # Dependensi OSGi/Eclipse
++-- .project                               # Konfigurasi proyek Eclipse
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-project-structure} memperlihatkan pemisahan yang jelas antara empat lapisan: \textit{source layer} (runner Java di \texttt{src/}), \textit{transformation layer} (aturan di \texttt{transformer/}), \textit{input layer} (model sumber di \texttt{input/}), dan \textit{output layer} (model hasil di \texttt{output/}). Model input tersedia dalam dua format: teks DSL (\texttt{.mediaflow}) yang dibuat melalui bahasa dari Bab~9, dan XMI (\texttt{.xmi}) yang dihasilkan melalui parser atau editor Sirius dari Bab~10.
+
+\subsection{Model Input: MediaFlow XMI}
+
+Model input adalah instans \texttt{mediaflow.ecore} dalam format XMI. Berikut contoh model \texttt{flow1.xmi} yang merepresentasikan pipeline linier sederhana:
+
+\begin{lstlisting}[
+  language=xml,
+  caption={Model input \texttt{flow1.xmi}: pipeline linier (3 node, 2 edge)},
+  label={lst:ch11-flow1-xmi},
+  basicstyle=\ttfamily\scriptsize
+]
+<?xml version="1.0" encoding="ASCII"?>
+<mediaflow:Graph xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:mediaflow="mediaflow" name="demo">
+  <nodes xsi:type="mediaflow:Resource" name="inputVideo"
+      uri="file:///home/alfa/videos/input.mp4" external="true">
+    <ports name="inputOut" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Scaler" name="resize720"
+      command="ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4"
+      replicas="1" width="1280" height="720">
+    <ports name="resizeIn"/>
+    <ports name="resizeOut" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource" name="outputVideo"
+      uri="file:///home/alfa/videos/output.mp4" external="true">
+    <ports name="outputIn"/>
+  </nodes>
+  <edges name="e1" source="//@nodes.0/@ports.0"
+      target="//@nodes.1/@ports.0"/>
+  <edges name="e2" source="//@nodes.1/@ports.1"
+      target="//@nodes.2/@ports.0"/>
+</mediaflow:Graph>
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-flow1-xmi} memperlihatkan dua aspek penting. Pertama, referensi \texttt{source} dan \texttt{target} pada \texttt{Edge} menunjuk ke \texttt{Port} (bukan langsung ke \texttt{Node}), sehingga transformasi harus menyelesaikan indirection ini. Kedua, \texttt{Resource} pertama (\texttt{inputVideo}) hanya memiliki port \texttt{OUT}, sehingga merupakan entry node; sedangkan \texttt{Resource} terakhir (\texttt{outputVideo}) hanya memiliki port \texttt{IN}, sehingga merupakan exit node.
+
+\subsection{Implementasi ATL}
+
+ATL (\textit{ATLAS Transformation Language}) adalah bahasa transformasi deklaratif yang menggunakan \textit{matched rules}: setiap aturan mendeskripsikan pemetaan dari satu atau lebih elemen sumber ke satu atau lebih elemen target. ATL menggunakan paradigma \textit{source-driven}: mesin ATL melakukan iterasi atas semua elemen di model sumber dan mencocokkannya dengan aturan yang sesuai.
+
+\subsubsection{Header dan Deklarasi Modul}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Header modul ATL: deklarasi metamodel dan arah transformasi},
+  label={lst:ch11-atl-header},
+  basicstyle=\ttfamily\scriptsize
+]
+-- @atlcompiler emftvm
+-- @path Mediaflow=platform:/resource/m2m/../mediaflow/metamodels/mediaflow.ecore
+-- @path UML=http://www.eclipse.org/uml2/5.0.0/UML
+
+module mediaflow2activity;
+create OUT : UML from IN : Mediaflow;
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-atl-header} mendeklarasikan bahwa modul \texttt{mediaflow2activity} membuat model output (\texttt{OUT}) yang berkonformasi ke metamodel UML, dari model input (\texttt{IN}) yang berkonformasi ke metamodel Mediaflow. Anotasi \texttt{@atlcompiler emftvm} menentukan bahwa modul ini dikompilasi untuk EMFTVM (\textit{EMF Transformation Virtual Machine}).
+
+\subsubsection{Helper untuk Navigasi Model}
+
+Helper ATL mendefinisikan operasi yang dapat dipanggil dari dalam aturan transformasi. Enam helper utama diperlukan untuk navigasi graf:
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Helper ATL untuk navigasi graf: edge masuk/keluar, entry/exit, resolusi node},
+  label={lst:ch11-atl-helpers},
+  basicstyle=\ttfamily\scriptsize
+]
+-- Helper: collect all edges whose target port belongs to this node
+helper context Mediaflow!Node def: incomingEdges()
+    : Collection(Mediaflow!Edge) =
+    Mediaflow!Graph.allInstances()->first().edges
+        ->select(e | self.ports->includes(e.target));
+
+-- Helper: collect all edges whose source port belongs to this node
+helper context Mediaflow!Node def: outgoingEdges()
+    : Collection(Mediaflow!Edge) =
+    Mediaflow!Graph.allInstances()->first().edges
+        ->select(e | self.ports->includes(e.source));
+
+-- Helper: a node is an entry when nothing flows into it
+helper context Mediaflow!Node def: isEntry() : Boolean =
+    self.incomingEdges()->isEmpty();
+
+-- Helper: a node is an exit when nothing flows out of it
+helper context Mediaflow!Node def: isExit() : Boolean =
+    self.outgoingEdges()->isEmpty();
+
+-- Helper: resolve the Node that owns the source Port of this edge
+helper context Mediaflow!Edge def: sourceNode() : Mediaflow!Node =
+    Mediaflow!Graph.allInstances()->first().nodes
+        ->any(n | n.ports->includes(self.source));
+
+-- Helper: resolve the Node that owns the target Port of this edge
+helper context Mediaflow!Edge def: targetNode() : Mediaflow!Node =
+    Mediaflow!Graph.allInstances()->first().nodes
+        ->any(n | n.ports->includes(self.target));
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-atl-helpers} memperlihatkan pola navigasi yang menyelesaikan indirection port-ke-node. Helper \texttt{incomingEdges()} mengumpulkan semua edge yang port targetnya dimiliki oleh node ini. Helper \texttt{sourceNode()} dan \texttt{targetNode()} pada konteks \texttt{Edge} melakukan operasi sebaliknya: dari sebuah edge, temukan node yang memiliki port sumber/target edge tersebut. Navigasi ini penting karena \texttt{ControlFlow} di UML menghubungkan node secara langsung, bukan melalui port.
+
+\subsubsection{Aturan Transformasi: Graph ke Model dan Activity}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Aturan ATL \texttt{Graph2Model}: membangun root Model dan Activity UML},
+  label={lst:ch11-atl-graph-rule},
+  basicstyle=\ttfamily\scriptsize
+]
+rule Graph2Model {
+    from g : Mediaflow!Graph
+    to
+        m : UML!Model (
+            name <- g.name + 'Model',
+            packagedElement <- Sequence{a}
+        ),
+        a : UML!Activity (
+            name <- g.name + 'Activity',
+            ownedNode <-
+                Mediaflow!Resource.allInstances()
+                    ->union(Mediaflow!Scaler.allInstances())
+                    ->union(Mediaflow!Transcoder.allInstances()),
+            edge <- Mediaflow!Edge.allInstances()
+        )
+    do {
+        ('ATL transformation completed: ' + g.name + 'Activity built with '
+            + (Mediaflow!Resource.allInstances()->size()
+                + Mediaflow!Scaler.allInstances()->size()
+                + Mediaflow!Transcoder.allInstances()->size()).toString()
+            + ' node(s) and '
+            + Mediaflow!Edge.allInstances()->size().toString()
+            + ' edge(s).').debug();
+    }
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-atl-graph-rule} memperlihatkan aturan \texttt{Graph2Model} yang memproduksi dua elemen target dari satu elemen sumber. \texttt{UML!Model} menjadi kontainer root, dan \texttt{UML!Activity} membungkus seluruh node dan edge yang dihasilkan transformasi. Ekspresi \texttt{ownedNode} mengumpulkan \textit{semua} instans \texttt{Resource}, \texttt{Scaler}, dan \texttt{Transcoder} --- yang masing-masing akan ditransformasi oleh aturan lain --- dan memasukkannya ke dalam Activity. Blok \texttt{do} mengeksekusi kode imperatif setelah aturan selesai untuk mencetak ringkasan.
+
+\subsubsection{Aturan Transformasi: Resource Kondisional}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Tiga aturan ATL untuk transformasi kondisional Resource},
+  label={lst:ch11-atl-resource-rules},
+  basicstyle=\ttfamily\scriptsize
+]
+-- Rule: entry resource -> InitialNode
+rule EntryResource2Initial {
+    from r : Mediaflow!Resource (r.isEntry() and not r.isExit())
+    to t : UML!InitialNode (
+        name <- r.name
+    )
+}
+
+-- Rule: exit resource -> ActivityFinalNode
+rule ExitResource2Final {
+    from r : Mediaflow!Resource (r.isExit())
+    to t : UML!ActivityFinalNode (
+        name <- r.name
+    )
+}
+
+-- Rule: internal resource -> OpaqueAction with URI body
+rule InternalResource2Action {
+    from r : Mediaflow!Resource (not r.isEntry() and not r.isExit())
+    to t : UML!OpaqueAction (
+        name <- r.name,
+        body <- Sequence{r.uri},
+        language <- Sequence{'resource'}
+    )
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-atl-resource-rules} memperlihatkan tiga aturan yang memetakan \texttt{Resource} secara kondisional. Filter pada bagian \texttt{from} (misalnya \texttt{r.isEntry() and not r.isExit()}) menentukan aturan mana yang berlaku untuk setiap instans \texttt{Resource}. Mekanisme ini memungkinkan \textit{satu tipe sumber dipetakan ke beberapa tipe target} berdasarkan predikat topologi, yang merupakan fitur penting transformasi M2M.
+
+\subsubsection{Aturan Transformasi: Node Pemrosesan dan Edge}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Aturan ATL untuk Scaler, Transcoder, dan Edge},
+  label={lst:ch11-atl-processing-rules},
+  basicstyle=\ttfamily\scriptsize
+]
+-- Rule: Scaler node -> OpaqueAction carrying its shell command
+rule Scaler2OpaqueAction {
+    from s : Mediaflow!Scaler
+    to t : UML!OpaqueAction (
+        name <- s.name,
+        body <- Sequence{s.command},
+        language <- Sequence{'shell'}
+    )
+}
+
+-- Rule: Transcoder node -> OpaqueAction carrying its shell command
+rule Transcoder2OpaqueAction {
+    from t : Mediaflow!Transcoder
+    to tt : UML!OpaqueAction (
+        name <- t.name,
+        body <- Sequence{t.command},
+        language <- Sequence{'shell'}
+    )
+}
+
+-- Rule: Edge -> ControlFlow linking source and target activity nodes
+rule Edge2ControlFlow {
+    from e : Mediaflow!Edge
+    to cf : UML!ControlFlow (
+        name <- e.name,
+        source <- e.sourceNode(),
+        target <- e.targetNode()
+    )
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-atl-processing-rules} menunjukkan dua hal penting. Pertama, \texttt{Scaler} dan \texttt{Transcoder} menghasilkan \texttt{OpaqueAction} dengan atribut \texttt{body} berisi perintah shell dan \texttt{language} berisi \texttt{'shell'}, sehingga informasi eksekusi dari domain sumber dipertahankan di model target. Kedua, aturan \texttt{Edge2ControlFlow} menggunakan helper \texttt{sourceNode()} dan \texttt{targetNode()} untuk menyelesaikan indirection port-ke-node: \texttt{source} dan \texttt{target} pada \texttt{ControlFlow} menunjuk ke node UML yang telah ditransformasi dari node MediaFlow yang memiliki port asal edge, \textit{bukan} ke port itu sendiri.
+
+\subsection{Implementasi ETL}
+
+ETL (\textit{Epsilon Transformation Language}) adalah bahasa transformasi hibrid imperatif-deklaratif dari platform Epsilon. Berbeda dari ATL yang menggunakan \textit{matched rules} murni, ETL menyediakan blok \texttt{transform ... to ...} dengan \texttt{guard} untuk kondisi, serta blok \texttt{post} untuk operasi imperatif pasca-transformasi.
+
+\subsubsection{Operation untuk Navigasi Model}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Operation ETL untuk navigasi graf (setara dengan helper ATL)},
+  label={lst:ch11-etl-operations},
+  basicstyle=\ttfamily\scriptsize
+]
+operation In!Node incomingEdges() : Collection {
+    return In!Graph.all.first().edges
+        .select(edge | self.ports.includes(edge.target));
+}
+
+operation In!Node outgoingEdges() : Collection {
+    return In!Graph.all.first().edges
+        .select(edge | self.ports.includes(edge.source));
+}
+
+operation In!Node isEntry() : Boolean {
+    return self.incomingEdges().isEmpty();
+}
+
+operation In!Node isExit() : Boolean {
+    return self.outgoingEdges().isEmpty();
+}
+
+operation In!Edge sourceNode() : In!Node {
+    return In!Graph.all.first().nodes
+        .selectOne(node | node.ports.includes(self.source));
+}
+
+operation In!Edge targetNode() : In!Node {
+    return In!Graph.all.first().nodes
+        .selectOne(node | node.ports.includes(self.target));
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-etl-operations} memperlihatkan bahwa operation ETL secara semantik identik dengan helper ATL, tetapi menggunakan sintaks yang lebih mirip bahasa pemrograman imperatif. Perbedaan utama: ETL menggunakan \texttt{.select()} (tanpa panah), \texttt{.all} (tanpa \texttt{allInstances()}), dan \texttt{.selectOne()} (setara \texttt{->any()}).
+
+\subsubsection{Aturan Transformasi ETL}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Aturan transformasi ETL untuk Resource, Scaler, Transcoder, dan Edge},
+  label={lst:ch11-etl-rules},
+  basicstyle=\ttfamily\scriptsize
+]
+rule EntryResource2Initial
+    transform source : In!Resource
+    to target : Out!InitialNode {
+    guard : source.isEntry() and not source.isExit()
+    target.name = source.name;
+}
+
+rule ExitResource2Final
+    transform source : In!Resource
+    to target : Out!ActivityFinalNode {
+    guard : source.isExit()
+    target.name = source.name;
+}
+
+rule InternalResource2Action
+    transform source : In!Resource
+    to target : Out!OpaqueAction {
+    guard : not source.isEntry() and not source.isExit()
+    target.name = source.name;
+    target.body.add(source.uri);
+    target.language.add("resource");
+}
+
+rule Scaler2OpaqueAction
+    transform source : In!Scaler
+    to target : Out!OpaqueAction {
+    target.name = source.name;
+    target.body.add(source.command);
+    target.language.add("shell");
+}
+
+rule Transcoder2OpaqueAction
+    transform source : In!Transcoder
+    to target : Out!OpaqueAction {
+    target.name = source.name;
+    target.body.add(source.command);
+    target.language.add("shell");
+}
+
+rule Edge2ControlFlow
+    transform source : In!Edge
+    to target : Out!ControlFlow {
+    target.name = source.name;
+    target.source ::= source.sourceNode();
+    target.target ::= source.targetNode();
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-etl-rules} menunjukkan dua perbedaan struktural dari ATL. Pertama, ETL menggunakan \textit{assignment} imperatif (\texttt{target.name = source.name}) alih-alih \textit{binding} deklaratif (\texttt{name <- r.name}). Kedua, operator \texttt{::=} pada aturan \texttt{Edge2ControlFlow} adalah operator \textit{equivalent binding} khas ETL: ia secara otomatis menyelesaikan referensi ke elemen target yang \textit{setara} (\textit{equivalent}) dengan elemen sumber. Artinya, fungsi \texttt{source.sourceNode()} mengembalikan node MediaFlow, dan \texttt{::=} secara otomatis memetakan referensi tersebut ke node UML yang dihasilkan oleh aturan transformasi yang sesuai.
+
+\subsubsection{Blok Post: Pembungkusan ke Model dan Activity}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Blok \texttt{post} ETL: pembungkusan elemen target ke dalam Model dan Activity},
+  label={lst:ch11-etl-post},
+  basicstyle=\ttfamily\scriptsize
+]
+post BuildActivityModel {
+    var graph = In!Graph.all.first();
+    var rootModel = new Out!Model;
+    var activity = new Out!Activity;
+
+    rootModel.name = graph.name + "Model";
+    activity.name = graph.name + "Activity";
+    rootModel.packagedElement.add(activity);
+
+    for (node in In!Resource.all.equivalent()) {
+        activity.ownedNode.add(node);
+    }
+    for (node in In!Scaler.all.equivalent()) {
+        activity.ownedNode.add(node);
+    }
+    for (node in In!Transcoder.all.equivalent()) {
+        activity.ownedNode.add(node);
+    }
+    for (edge in In!Edge.all.equivalent()) {
+        activity.edge.add(edge);
+    }
+
+    ('ETL transformation completed: ' + activity.name + ' built with '
+        + activity.ownedNode.size() + ' node(s) and '
+        + activity.edge.size() + ' edge(s).').println();
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-etl-post} memperlihatkan perbedaan arsitektural antara ETL dan ATL yang paling signifikan. Pada ATL, aturan \texttt{Graph2Model} secara deklaratif membuat \texttt{Model} dan \texttt{Activity} sebagai bagian dari transformasi utama. Pada ETL, pembuatan kontainer root (\texttt{Model} dan \texttt{Activity}) dilakukan di blok \texttt{post} --- kode imperatif yang dieksekusi \textit{setelah semua aturan transformasi selesai}. Blok \texttt{post} menggunakan \texttt{.equivalent()} untuk mengambil elemen target yang telah dihasilkan oleh aturan-aturan sebelumnya dan memasukkannya ke dalam Activity. Pendekatan ini memberikan lebih banyak kontrol imperatif atas struktur model output.
+
+\subsection{Runner Java: ATL (EMFTVM)}
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Runner ATL: inisialisasi EMFTVM, registrasi metamodel, dan eksekusi transformasi},
+  label={lst:ch11-atl-runner},
+  basicstyle=\ttfamily\scriptsize
+]
+public class MediaflowToActivityATLRunner {
+    public static void main(String[] args) throws Exception {
+        String inputPath    = args.length > 0 ? args[0] : "input/flow1.xmi";
+        String outputPath   = args.length > 1 ? args[1] : "output/activity1atl.uml";
+        String transformerDir = args.length > 2 ? args[2] : "transformer/";
+        String metamodelPath  = args.length > 3 ? args[3]
+                              : "../mediaflow/metamodels/mediaflow.ecore";
+
+        // Initialise EMF packages and resource factories
+        EcorePackage.eINSTANCE.eClass();
+        UMLPackage.eINSTANCE.eClass();
+        EmftvmPackage.eINSTANCE.eClass();
+        UMLResourcesUtil.initGlobalRegistries();
+
+        Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap()
+                .put("ecore", new EcoreResourceFactoryImpl());
+        Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap()
+                .put("xmi", new XMIResourceFactoryImpl());
+
+        // EMFTVM execution environment
+        ExecEnv env = EmftvmFactory.eINSTANCE.createExecEnv();
+        ResourceSet rs = new ResourceSetImpl();
+
+        // Register Mediaflow metamodel
+        Resource ecoreResource = rs.getResource(
+                URI.createFileURI(
+                    new File(metamodelPath).getAbsolutePath()), true);
+        for (EObject obj : ecoreResource.getContents()) {
+            if (obj instanceof EPackage) {
+                EPackage.Registry.INSTANCE.put(
+                    ((EPackage) obj).getNsURI(), obj);
+            }
+        }
+        Metamodel mediaflowMM = EmftvmFactory.eINSTANCE.createMetamodel();
+        mediaflowMM.setResource(ecoreResource);
+        env.registerMetaModel("Mediaflow", mediaflowMM);
+
+        // Register UML metamodel
+        Metamodel umlMM = EmftvmFactory.eINSTANCE.createMetamodel();
+        umlMM.setResource(UMLPackage.eINSTANCE.eResource());
+        env.registerMetaModel("UML", umlMM);
+
+        // Input/output models
+        Model inModel = EmftvmFactory.eINSTANCE.createModel();
+        inModel.setResource(rs.getResource(
+                URI.createFileURI(
+                    new File(inputPath).getAbsolutePath()), true));
+        env.registerInputModel("IN", inModel);
+
+        Model outModel = EmftvmFactory.eINSTANCE.createModel();
+        outModel.setResource(rs.createResource(
+                URI.createFileURI(
+                    new File(outputPath).getAbsolutePath())));
+        env.registerOutputModel("OUT", outModel);
+
+        // Load and execute transformation
+        ModuleResolver mr = new DefaultModuleResolver(
+            new File(transformerDir).getAbsoluteFile()
+                .toURI().toString(), new ResourceSetImpl());
+        TimingData td = new TimingData();
+        env.loadModule(mr, "mediaflow2activity");
+        td.finishLoading();
+        env.run(td);
+        td.finish();
+
+        outModel.getResource().save(Collections.emptyMap());
+        System.out.println("ATL transformation complete: " + outputPath);
+    }
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-atl-runner} memperlihatkan lima tahap utama runner ATL: (1) inisialisasi paket EMF dan \textit{resource factory}, (2) registrasi metamodel sumber (\texttt{mediaflow.ecore}) dan target (UML2), (3) pemuatan model input dari XMI, (4) eksekusi transformasi melalui \texttt{ExecEnv.run()}, dan (5) penyimpanan model output. \texttt{DefaultModuleResolver} memerlukan path ke direktori yang berisi berkas \texttt{.emftvm} (bytecode ATL terkompilasi).
+
+\subsection{Runner Java: ETL (Epsilon)}
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Runner ETL: konfigurasi model EMF dan eksekusi transformasi Epsilon},
+  label={lst:ch11-etl-runner},
+  basicstyle=\ttfamily\scriptsize
+]
+public class MediaflowToActivityETLRunner {
+    public static void main(String[] args) throws Exception {
+        String inputPath = args.length > 0 ? args[0] : "input/flow2.xmi";
+        String outputPath = args.length > 1 ? args[1]
+                          : "output/activity2etl.uml";
+        String transformationPath = args.length > 2 ? args[2]
+                          : "transformer/mediaflow2activity.etl";
+        String metamodelPath = args.length > 3 ? args[3]
+                          : "../mediaflow/metamodels/mediaflow.ecore";
+
+        UMLPackage.eINSTANCE.eClass();
+        UMLResourcesUtil.initGlobalRegistries();
+
+        EmfModel inputModel = new EmfModel();
+        inputModel.setName("In");
+        inputModel.setMetamodelFile(
+            new File(metamodelPath).getAbsolutePath());
+        inputModel.setModelFile(
+            new File(inputPath).getAbsolutePath());
+        inputModel.setReadOnLoad(true);
+        inputModel.setStoredOnDisposal(false);
+        inputModel.load();
+
+        EmfModel outputModel = new EmfModel();
+        outputModel.setName("Out");
+        outputModel.setMetamodelUri(UMLPackage.eNS_URI);
+        outputModel.setModelFile(
+            new File(outputPath).getAbsolutePath());
+        outputModel.setReadOnLoad(false);
+        outputModel.setStoredOnDisposal(true);
+        outputModel.load();
+
+        EtlModule module = new EtlModule();
+        try {
+            module.parse(new File(transformationPath));
+            if (!module.getParseProblems().isEmpty()) {
+                throw new IllegalStateException("ETL parse failed");
+            }
+            module.getContext().getModelRepository()
+                .addModel(inputModel);
+            module.getContext().getModelRepository()
+                .addModel(outputModel);
+            module.execute();
+            outputModel.store();
+        } finally {
+            module.getContext().getModelRepository().dispose();
+            module.getContext().dispose();
+        }
+    }
+}
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-etl-runner} memperlihatkan bahwa runner ETL lebih ringkas dibandingkan runner ATL karena Epsilon menyediakan API tingkat tinggi (\texttt{EmfModel}) yang mengenkapsulasi registrasi metamodel dan manajemen \textit{resource}. Model input dikonfigurasi dengan \texttt{setReadOnLoad(true)} dan \texttt{setStoredOnDisposal(false)} (hanya dibaca), sedangkan model output dikonfigurasi sebaliknya (dibuat kosong, disimpan setelah transformasi). \texttt{EtlModule} mem-parse berkas \texttt{.etl} secara langsung (\textit{interpreted}), berbeda dari ATL yang memerlukan langkah kompilasi ke bytecode \texttt{.emftvm}.
+
+\subsection{Model Output: UML Activity Diagram}
+
+Transformasi menghasilkan model UML Activity Diagram dalam format XMI. Berikut contoh output dari \texttt{flow1} melalui ATL:
+
+\begin{lstlisting}[
+  language=xml,
+  caption={Output UML Activity Diagram dari flow1 (3 node activity: InitialNode, OpaqueAction, ActivityFinalNode)},
+  label={lst:ch11-output-flow1},
+  basicstyle=\ttfamily\scriptsize
+]
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001"
+    xmlns:xmi="http://www.omg.org/spec/XMI/20131001"
+    xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML"
+    name="demoModel">
+  <packagedElement xmi:type="uml:Activity" name="demoActivity"
+      node="_initialNode _finalNode _opaqueAction">
+    <edge xmi:type="uml:ControlFlow" name="e1"
+        target="_opaqueAction" source="_initialNode"/>
+    <edge xmi:type="uml:ControlFlow" name="e2"
+        target="_finalNode" source="_opaqueAction"/>
+    <node xmi:type="uml:InitialNode" name="inputVideo"
+        outgoing="... e1"/>
+    <node xmi:type="uml:ActivityFinalNode" name="outputVideo"
+        incoming="... e2"/>
+    <node xmi:type="uml:OpaqueAction" name="resize720"
+        incoming="... e1" outgoing="... e2">
+      <language>shell</language>
+      <body>ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4</body>
+    </node>
+  </packagedElement>
+</uml:Model>
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-output-flow1} menunjukkan bahwa model output mengikuti struktur UML2 yang valid: \texttt{Model} membungkus \texttt{Activity}, yang memuat tiga \texttt{ActivityNode} (satu \texttt{InitialNode}, satu \texttt{OpaqueAction}, satu \texttt{ActivityFinalNode}) dan dua \texttt{ControlFlow}. Informasi domain (perintah shell \texttt{ffmpeg}) dipertahankan dalam atribut \texttt{body} pada \texttt{OpaqueAction}.
+
+Untuk model \texttt{flow2} yang lebih kompleks (topologi bercabang), output mengandung 6 node (1 \texttt{InitialNode}, 2 \texttt{ActivityFinalNode}, 3 \texttt{OpaqueAction}) dan 5 \texttt{ControlFlow}, merepresentasikan pipeline bercabang dari satu sumber ke dua format output melalui dua transcoder. Gambar~\ref{fig:ch11-activity-diagram} memvisualisasikan diagram Activity yang dihasilkan dari transformasi \texttt{flow2}.
+
+\begin{figure}[htbp]
+\centering
+\scalebox{.96}{
+\begin{tikzpicture}[>=Latex, node distance=10mm,
+  mfnode/.style={draw, rounded corners=3pt, minimum width=2.4cm, minimum height=0.7cm, align=center, font=\scriptsize},
+  port/.style={draw, fill=white, minimum size=4mm, inner sep=0pt, font=\tiny},
+  action/.style={draw, rounded corners=6pt, minimum width=2.2cm, minimum height=0.7cm, align=center, font=\scriptsize, fill=yellow!10},
+  flow/.style={->, thick}]
+
+  % =============================================
+  % LEFT: MediaFlow Instance (flow2) with Ports
+  % =============================================
+  \node[font=\small\bfseries] (mftitle) at (0, 0.8) {MediaFlow Instance};
+
+  % Resource: inputVideo
+  \node[mfnode, fill=blue!12] (mf-in) at (0, 0) {inputVideo};
+  \node[port, fill=blue!30, below=0mm of mf-in, label={[font=\tiny]right:OUT}] (p-in-out) {p1};
+
+  % Scaler: resize720
+  \node[mfnode, fill=green!12, below=14mm of mf-in] (mf-sc) {resize720};
+  \node[port, fill=green!30, above=0mm of mf-sc, label={[font=\tiny]right:IN}] (p-sc-in) {p2};
+  \node[port, fill=green!30, below=0mm of mf-sc, label={[font=\tiny]right:OUT}] (p-sc-out) {p3};
+
+  % Transcoder: encodeH264
+  \node[mfnode, fill=orange!12, below left=18mm and -5mm of mf-sc] (mf-h264) {encodeH264};
+  \node[port, fill=orange!30, above=0mm of mf-h264, label={[font=\tiny]left:IN}] (p-h264-in) {p4};
+  \node[port, fill=orange!30, below=0mm of mf-h264, label={[font=\tiny]left:OUT}] (p-h264-out) {p5};
+
+  % Transcoder: encodeVp9
+  \node[mfnode, fill=orange!12, below right=18mm and -5mm of mf-sc] (mf-vp9) {encodeVp9};
+  \node[port, fill=orange!30, above=0mm of mf-vp9, label={[font=\tiny]right:IN}] (p-vp9-in) {p6};
+  \node[port, fill=orange!30, below=0mm of mf-vp9, label={[font=\tiny]right:OUT}] (p-vp9-out) {p7};
+
+  % Resource: outputVideo1
+  \node[mfnode, fill=blue!12, below=18mm of mf-h264] (mf-out1) {outputVideo1};
+  \node[port, fill=blue!30, above=0mm of mf-out1, label={[font=\tiny]left:IN}] (p-out1-in) {p8};
+
+  % Resource: outputVideo2
+  \node[mfnode, fill=blue!12, below=18mm of mf-vp9] (mf-out2) {outputVideo2};
+  \node[port, fill=blue!30, above=0mm of mf-out2, label={[font=\tiny]right:IN}] (p-out2-in) {p9};
+
+  % MediaFlow Edges (port-to-port)
+  \draw[flow] (p-in-out) -- (p-sc-in) node[midway, right, font=\tiny]{e1};
+  \draw[flow] (p-sc-out) -- (p-h264-in) node[midway, left, font=\tiny]{e2};
+  \draw[flow] (p-sc-out) -- (p-vp9-in) node[midway, right, font=\tiny]{e3};
+  \draw[flow] (p-h264-out) -- (p-out1-in) node[midway, left, font=\tiny]{e4};
+  \draw[flow] (p-vp9-out) -- (p-out2-in) node[midway, right, font=\tiny]{e5};
+
+  % =============================================
+  % RIGHT: UML Activity Diagram
+  % =============================================
+  \node[font=\small\bfseries] (umltitle) at (8, 0.8) {UML Activity Diagram};
+
+  % InitialNode: filled black circle
+  \node[circle, fill=black, minimum size=7mm, inner sep=0pt] (start) at (7, 0) {};
+  \node[font=\tiny, right=3mm of start] {inputVideo};
+
+  % OpaqueAction: resize720
+  \node[action, below=14mm of start] (resize-uml) {resize720};
+
+  % OpaqueAction: encodeH264
+  \node[action, below left=10mm and -5mm of resize-uml] (h264-uml) {encodeH264};
+
+  % OpaqueAction: encodeVp9
+  \node[action, below right=10mm and -5mm of resize-uml] (vp9-uml) {encodeVp9};
+
+  % ActivityFinalNode 1: bullseye
+  \node[circle, draw, thick, minimum size=9mm, inner sep=0pt, below=20mm of h264-uml] (end1o) {};
+  \node[circle, fill=black, minimum size=5.5mm, inner sep=0pt] at (end1o.center) (end1) {};
+  \node[font=\tiny, below=1mm of end1o] {outputVideo1};
+
+  % ActivityFinalNode 2: bullseye
+  \node[circle, draw, thick, minimum size=9mm, inner sep=0pt, below=20mm of vp9-uml] (end2o) {};
+  \node[circle, fill=black, minimum size=5.5mm, inner sep=0pt] at (end2o.center) (end2) {};
+  \node[font=\tiny, below=1mm of end2o] {outputVideo2};
+
+  % ControlFlows (straight lines, no elbows)
+  \draw[flow] (start) -- (resize-uml) node[midway, right, font=\tiny]{e1};
+  \draw[flow] (resize-uml) -- (h264-uml) node[midway, left, font=\tiny]{e2};
+  \draw[flow] (resize-uml) -- (vp9-uml) node[midway, right, font=\tiny]{e3};
+  \draw[flow] (h264-uml) -- (end1o) node[midway, left, font=\tiny]{e4};
+  \draw[flow] (vp9-uml) -- (end2o) node[midway, right, font=\tiny]{e5};
+
+\end{tikzpicture}
+}
+\caption{Perbandingan instans model \texttt{flow2}: MediaFlow (kiri) dengan port sebagai titik koneksi, dan UML Activity Diagram (kanan) hasil transformasi dengan koneksi langsung node-ke-node. Panah besar menunjukkan arah transformasi M2M.}
+\label{fig:ch11-activity-diagram}
+\end{figure}
+
+\subsection{Dependensi Proyek}
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Dependensi OSGi pada \texttt{META-INF/MANIFEST.MF}},
+  label={lst:ch11-manifest},
+  basicstyle=\ttfamily\scriptsize
+]
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: m2m
+Bundle-SymbolicName: m2m
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: org.eclipse.epsilon.common;bundle-version="2.9.0",
+ org.eclipse.epsilon.etl.engine;bundle-version="2.9.0",
+ org.eclipse.epsilon.emc.emf;bundle-version="2.9.0",
+ org.eclipse.uml2.uml;bundle-version="5.6.0",
+ org.eclipse.uml2.uml.resources;bundle-version="5.6.0",
+ org.eclipse.emf.ecore;bundle-version="2.0.0",
+ org.eclipse.emf.ecore.xmi;bundle-version="2.0.0",
+ org.eclipse.m2m.atl.emftvm;bundle-version="3.0.0",
+ org.eclipse.m2m.atl.common;bundle-version="3.0.0",
+ com.google.guava,
+ org.apache.commons.collections,
+ mediaflow;bundle-version="1.0.0"
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch11-manifest} menunjukkan bahwa proyek ini bergantung pada tiga keluarga plugin Eclipse: Epsilon 2.9.0 (untuk ETL), ATL/EMFTVM 3.0.0 (untuk ATL), dan UML2 5.6.0 (metamodel target). Plugin \texttt{mediaflow} menyediakan kelas EMF yang dihasilkan dari \texttt{mediaflow.ecore}.
+
+\section{Pengujian dan Evaluasi}
+
+\subsection{Tujuan Evaluasi}
+
+Evaluasi transformasi model-ke-model difokuskan pada empat aspek:
+\begin{enumerate}
+  \item \textbf{Kebenaran pemetaan.} Setiap elemen sumber harus dipetakan ke elemen target yang sesuai dengan tabel pemetaan konseptual (Tabel~\ref{tab:ch11-mapping-konseptual}).
+  \item \textbf{Kelengkapan transformasi.} Jumlah node dan edge pada model output harus konsisten dengan model input: setiap \texttt{Node} MediaFlow menghasilkan satu \texttt{ActivityNode} UML, dan setiap \texttt{Edge} menghasilkan satu \texttt{ControlFlow}.
+  \item \textbf{Kebenaran referensi.} Atribut \texttt{source} dan \texttt{target} pada \texttt{ControlFlow} harus menunjuk ke \texttt{ActivityNode} yang benar --- yaitu node yang dihasilkan dari transformasi node MediaFlow yang memiliki port asal edge.
+  \item \textbf{Ekuivalensi ATL-ETL.} Kedua pendekatan harus menghasilkan model yang ekuivalen secara semantik (nama node, tipe node, konektivitas edge) meskipun berkas XMI-nya tidak identik secara biner.
+\end{enumerate}
+
+\subsection{Strategi Pengujian}
+
+Strategi pengujian yang diterapkan meliputi:
+\begin{enumerate}
+  \item \textbf{Inspeksi output XMI.} Membuka berkas output, seperti \texttt{activity1atl.uml} dan \texttt{activity2etl.uml}, dan memverifikasi struktur XML: jumlah elemen \texttt{node} dan \texttt{edge}, atribut \texttt{xmi:type}, dan referensi \texttt{source}/\texttt{target}.
+  \item \textbf{Visualisasi di Eclipse Papyrus.} Membuka model UML di Papyrus untuk merender Activity Diagram dan memverifikasi bahwa topologi visual sesuai dengan pipeline MediaFlow asli.
+  \item \textbf{Pengujian lintas model.} Menjalankan transformasi pada \texttt{flow1.xmi} (linier) dan \texttt{flow2.xmi} (bercabang) untuk memastikan aturan kondisional berfungsi pada topologi yang berbeda.
+  \item \textbf{Perbandingan output ATL vs ETL.} Membandingkan jumlah node, tipe node, dan konektivitas edge antara output ATL dan ETL pada model input yang sama.
+\end{enumerate}
+
+\subsection{Hasil Evaluasi}
+
+\begin{table}[h]
+\centering
+\caption{Hasil evaluasi transformasi pada dua model input}
+\label{tab:ch11-hasil-evaluasi}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.15\textwidth}|c|c|c|c|}
+\hline
+\textbf{Model Input} & \textbf{Node Input} & \textbf{Edge Input} & \textbf{Node Output} & \textbf{Edge Output} \\
+\hline
+\texttt{flow1.xmi} & 3 & 2 & 3 (1 Initial, 1 Opaque, 1 Final) & 2 ControlFlow \\
+\hline
+\texttt{flow2.xmi} & 6 & 5 & 6 (1 Initial, 3 Opaque, 2 Final) & 5 ControlFlow \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\noindent Tabel~\ref{tab:ch11-hasil-evaluasi} menunjukkan bahwa jumlah node dan edge pada model output konsisten dengan model input untuk kedua transformasi (ATL dan ETL). Kedua pendekatan menghasilkan model yang ekuivalen secara semantik: nama node, tipe node UML, dan konektivitas edge identik.
+
+\section{Perbandingan ATL vs ETL}
+
+\subsection{Perbandingan Aspek Teknis}
+
+Tabel~\ref{tab:ch11-perbandingan-teknis} menunjukkan perbedaan aspek teknis utama antara ATL dan ETL. Secara umum, ATL lebih menekankan gaya deklaratif melalui \textit{matched rule}, sedangkan ETL menggabungkan pendekatan deklaratif dan imperatif. Perbedaan tersebut terlihat pada cara \textit{binding} atribut, resolusi referensi, pembuatan elemen kontainer, hingga mekanisme eksekusi transformasi. Selain itu, sebagaimana dirangkum pada Tabel~\ref{tab:ch11-perbandingan-teknis}, implementasi \textit{runner} ATL cenderung lebih kompleks dibandingkan ETL karena melibatkan konfigurasi lingkungan eksekusi yang lebih rinci.
+
+\begin{table}[h]
+\centering
+\caption{Perbandingan aspek teknis ATL vs ETL}
+\label{tab:ch11-perbandingan-teknis}
+\scriptsize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
+\hline
+\textbf{Aspek} & \textbf{ATL} & \textbf{ETL (Epsilon)} \\
+\hline
+Paradigma & Deklaratif; aturan \textit{matched} dari elemen sumber ke elemen target. & Hibrid imperatif-deklaratif; aturan \texttt{transform ... to ...} dengan blok \texttt{post}. \\
+\hline
+Binding atribut & Deklaratif: \texttt{name <- r.name}. Mesin ATL menentukan urutan evaluasi. & Imperatif: \texttt{target.name = source.name}. Urutan eksekusi ditentukan programmer. \\
+\hline
+Resolusi referensi & Otomatis melalui trace: \texttt{e.sourceNode()} otomatis di-resolve ke elemen target. & Eksplisit melalui operator \texttt{::=} atau \texttt{.equivalent()}. \\
+\hline
+Pembuatan kontainer & Dalam aturan utama (\texttt{Graph2Model}) secara deklaratif. & Dalam blok \texttt{post} secara imperatif setelah semua aturan selesai. \\
+\hline
+Kompilasi & Wajib dikompilasi ke bytecode \texttt{.emftvm} sebelum eksekusi. & Interpreted langsung dari berkas \texttt{.etl} tanpa kompilasi. \\
+\hline
+Ekosistem & Bagian dari Eclipse M2M (ATL Project). & Bagian dari platform Epsilon (bersama EOL, EVL, EGL, dll.). \\
+\hline
+Runner complexity & Lebih kompleks: registrasi metamodel manual, \textit{resource factory}, \texttt{ExecEnv}. & Lebih ringkas: API \texttt{EmfModel} tingkat tinggi, \texttt{EtlModule.parse/execute}. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\subsection{Perbandingan Aspek Produktivitas}
+
+Dari sisi produktivitas, Tabel~\ref{tab:ch11-perbandingan-produktivitas} memperlihatkan bahwa ATL dan ETL menawarkan pengalaman pengembangan yang berbeda. ATL cenderung sesuai untuk transformasi yang pola pemetaannya stabil dan seragam, sedangkan ETL lebih fleksibel untuk skenario yang membutuhkan logika imperatif, iterasi, dan pembuatan elemen secara kondisional. Sebagaimana terlihat pada Tabel~\ref{tab:ch11-perbandingan-produktivitas}, ETL juga relatif lebih mudah ditelusuri saat \textit{debugging}, sementara ATL memerlukan pemahaman yang lebih kuat terhadap mekanisme deklaratif dan resolusi otomatis.
+
+\begin{table}[h]
+\centering
+\caption{Perbandingan produktivitas dan tooling ATL vs ETL}
+\label{tab:ch11-perbandingan-produktivitas}
+\scriptsize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
+\hline
+\textbf{Aspek} & \textbf{ATL} & \textbf{ETL (Epsilon)} \\
+\hline
+Kurva belajar & Sedang; sintaks deklaratif memerlukan pemahaman paradigma \textit{matched rule} dan resolusi otomatis. & Rendah--sedang; sintaks mirip bahasa imperatif sehingga lebih familiar bagi programmer. \\
+\hline
+Debugging & Sulit; binding deklaratif membuat urutan eksekusi kurang transparan. & Lebih mudah; kode imperatif dapat ditelusuri secara sekuensial. \\
+\hline
+Ekspresivitas & Sangat baik untuk pemetaan \textit{one-to-one} dan \textit{one-to-many} yang simetris. & Lebih fleksibel untuk pola yang memerlukan logika imperatif (koleksi, iterasi, conditional creation). \\
+\hline
+Integrasi tooling & Editor ATL di Eclipse dengan syntax highlighting dan compiler bawaan. & Editor EOL/ETL di Eclipse dengan syntax highlighting, debugging, dan profiling. \\
+\hline
+Komposisi transformasi & Superimposition (overlay aturan). & Importasi modul dan pewarisan aturan (\texttt{@greedy}, \texttt{@lazy}). \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\subsection{Panduan Pemilihan Pendekatan}
+
+Panduan pemilihan praktis berdasarkan konteks penggunaan:
+\begin{enumerate}
+  \item \textbf{Pilih ATL} jika transformasi bersifat pemetaan simetris \textit{one-to-one} yang jelas, jika tim sudah familiar dengan paradigma deklaratif, atau jika integrasi dengan ekosistem Eclipse M2M/ATL diperlukan.
+  \item \textbf{Pilih ETL} jika transformasi memerlukan logika imperatif yang signifikan (misalnya pembangunan kontainer pasca-transformasi), jika diperlukan integrasi dengan bahasa Epsilon lainnya (EOL, EVL, EGL), atau jika kemudahan debugging menjadi prioritas.
+  \item \textbf{Pertimbangkan keduanya} dalam konteks pembelajaran atau evaluasi: mengimplementasikan transformasi yang sama dalam kedua bahasa memberikan pemahaman yang lebih dalam tentang \textit{trade-off} antara paradigma deklaratif dan imperatif.
+\end{enumerate}
+
+\section{Risiko dan Pitfall Umum}
+
+Beberapa risiko yang umum muncul saat implementasi transformasi model-ke-model:
+\begin{enumerate}
+  \item \textbf{Ketidaksesuaian versi metamodel.} Jika metamodel sumber (\texttt{mediaflow.ecore}) dimodifikasi tanpa memperbarui aturan transformasi, elemen baru tidak akan tertangani dan elemen yang diubah dapat menyebabkan error saat runtime. Mitigasi: versioning metamodel dan pengujian regresi.
+
+  \item \textbf{Resolusi referensi yang gagal.} Pada ATL, jika helper \texttt{sourceNode()} atau \texttt{targetNode()} mengembalikan \texttt{null} (misalnya karena edge merujuk ke port yang tidak memiliki owner node), aturan \texttt{Edge2ControlFlow} akan menghasilkan \texttt{ControlFlow} tanpa \texttt{source}/\texttt{target}, yang melanggar validasi UML. Mitigasi: penambahan pengecekan null di helper.
+
+  \item \textbf{Konflik aturan pada ATL.} Jika lebih dari satu aturan cocok untuk elemen yang sama (misalnya dua aturan tanpa filter yang memproses \texttt{Resource}), ATL akan gagal karena satu elemen hanya dapat dicocokkan oleh satu aturan. Mitigasi: memastikan filter aturan bersifat \textit{mutually exclusive}.
+
+  \item \textbf{Kompilasi ATL yang terlupa.} ATL memerlukan kompilasi berkas \texttt{.atl} ke \texttt{.emftvm} sebelum eksekusi. Jika berkas \texttt{.atl} diubah tetapi tidak dikompilasi ulang, runner akan mengeksekusi versi lama. Mitigasi: mengaktifkan ATL builder otomatis di Eclipse.
+
+  \item \textbf{Urutan eksekusi blok post ETL.} Blok \texttt{post} dieksekusi setelah semua aturan selesai, tetapi jika transformasi kompleks memerlukan beberapa phase, urutan antar blok \texttt{post} menjadi penting. Mitigasi: hanya menggunakan satu blok \texttt{post} atau memberi nama yang mendeskripsikan urutan eksekusi.
+
+  \item \textbf{Dependensi plugin Eclipse yang kompleks.} Kedua pendekatan bergantung pada plugin Eclipse (ATL EMFTVM, Epsilon, UML2, EMF). Ketidaksesuaian versi antar-plugin dapat menyebabkan error \textit{class loading} yang sulit didiagnosis. Mitigasi: menggunakan target platform Eclipse yang konsisten dan mendokumentasikan versi yang digunakan di \texttt{MANIFEST.MF}.
+\end{enumerate}
+
+\section{Ringkasan}
+
+Bab ini menunjukkan bahwa transformasi model-ke-model (M2M) merupakan mekanisme sentral dalam siklus \textit{Model-Driven Engineering} yang menghubungkan model pada domain yang berbeda secara otomatis dan deterministik. Melalui implementasi transformasi \textit{MediaFlow} $\rightarrow$ UML Activity Diagram, bab ini memperlihatkan bagaimana pemetaan konseptual antar-metamodel diterjemahkan ke dalam aturan transformasi formal menggunakan dua pendekatan: ATL (deklaratif) dan ETL (hibrid imperatif-deklaratif).
+
+Kedua implementasi berbagi pola navigasi yang sama --- enam helper/operation untuk menyelesaikan indirection port-ke-node --- dan menghasilkan model output yang ekuivalen secara semantik. Perbedaan utama terletak pada mekanisme pembangunan model: ATL secara deklaratif membangun kontainer (\texttt{Model} dan \texttt{Activity}) sebagai bagian dari aturan transformasi, sedangkan ETL menggunakan blok \texttt{post} yang imperatif untuk membungkus elemen-elemen yang telah ditransformasi ke dalam kontainer.
+
+Trade-off utama yang perlu dipertimbangkan adalah: ATL unggul pada keterbacaan dan konsistensi deklaratif untuk pemetaan simetris, tetapi kurang fleksibel untuk logika pembangunan model yang kompleks dan memerlukan langkah kompilasi tambahan. ETL unggul pada fleksibilitas imperatif dan kemudahan debugging, tetapi memerlukan lebih banyak kode eksplisit untuk resolusi referensi dan pembangunan kontainer. Pemilihan antara keduanya sebaiknya didasarkan pada kompleksitas pemetaan, kebutuhan debugging, dan ekosistem tooling yang digunakan tim.
