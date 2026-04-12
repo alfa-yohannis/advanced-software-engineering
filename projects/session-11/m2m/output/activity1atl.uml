@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_7u82gDZkEfGtRobTBBqLnA" name="demoModel">
+  <packagedElement xmi:type="uml:Activity" xmi:id="_7vH1oDZkEfGtRobTBBqLnA" name="demoActivity" node="_7vKR4DZkEfGtRobTBBqLnA _7vK48DZkEfGtRobTBBqLnA _7vNVMDZkEfGtRobTBBqLnA">
+    <edge xmi:type="uml:ControlFlow" xmi:id="_7vOjUDZkEfGtRobTBBqLnA" name="e1" target="_7vNVMDZkEfGtRobTBBqLnA" source="_7vKR4DZkEfGtRobTBBqLnA"/>
+    <edge xmi:type="uml:ControlFlow" xmi:id="_7vOjUTZkEfGtRobTBBqLnA" name="e2" target="_7vK48DZkEfGtRobTBBqLnA" source="_7vNVMDZkEfGtRobTBBqLnA"/>
+    <node xmi:type="uml:InitialNode" xmi:id="_7vKR4DZkEfGtRobTBBqLnA" name="inputVideo" outgoing="_7vOjUDZkEfGtRobTBBqLnA"/>
+    <node xmi:type="uml:ActivityFinalNode" xmi:id="_7vK48DZkEfGtRobTBBqLnA" name="outputVideo" incoming="_7vOjUTZkEfGtRobTBBqLnA"/>
+    <node xmi:type="uml:OpaqueAction" xmi:id="_7vNVMDZkEfGtRobTBBqLnA" name="resize720" incoming="_7vOjUDZkEfGtRobTBBqLnA" outgoing="_7vOjUTZkEfGtRobTBBqLnA">
+      <language>shell</language>
+      <body>ffmpeg -i input.mp4 -vf scale=1280:720 
+      scaled.mp4</body>
+    </node>
+  </packagedElement>
+</uml:Model>

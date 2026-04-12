@@ -1,0 +1,117 @@
+-- @atlcompiler emftvm
+-- @path Mediaflow=platform:/resource/m2m/../mediaflow/metamodels/mediaflow.ecore
+-- @path UML=http://www.eclipse.org/uml2/5.0.0/UML
+
+module mediaflow2activity;
+create OUT : UML from IN : Mediaflow;
+
+-- Helper: collect all edges whose target port belongs to this node
+helper context Mediaflow!Node def: incomingEdges() : Collection(Mediaflow!Edge) =
+    Mediaflow!Graph.allInstances()->first().edges
+        ->select(e | self.ports->includes(e.target));
+
+-- Helper: collect all edges whose source port belongs to this node
+helper context Mediaflow!Node def: outgoingEdges() : Collection(Mediaflow!Edge) =
+    Mediaflow!Graph.allInstances()->first().edges
+        ->select(e | self.ports->includes(e.source));
+
+-- Helper: a node is an entry when nothing flows into it
+helper context Mediaflow!Node def: isEntry() : Boolean =
+    self.incomingEdges()->isEmpty();
+
+-- Helper: a node is an exit when nothing flows out of it
+helper context Mediaflow!Node def: isExit() : Boolean =
+    self.outgoingEdges()->isEmpty();
+
+-- Helper: resolve the Node that owns the source Port of this edge
+helper context Mediaflow!Edge def: sourceNode() : Mediaflow!Node =
+    Mediaflow!Graph.allInstances()->first().nodes
+        ->any(n | n.ports->includes(self.source));
+
+-- Helper: resolve the Node that owns the target Port of this edge
+helper context Mediaflow!Edge def: targetNode() : Mediaflow!Node =
+    Mediaflow!Graph.allInstances()->first().nodes
+        ->any(n | n.ports->includes(self.target));
+
+-- Rule: build the root UML Model and wrap everything in an Activity
+rule Graph2Model {
+    from g : Mediaflow!Graph
+    to
+        m : UML!Model (
+            name <- g.name + 'Model',
+            packagedElement <- Sequence{a}
+        ),
+        a : UML!Activity (
+            name <- g.name + 'Activity',
+            ownedNode <-
+                Mediaflow!Resource.allInstances()
+                    ->union(Mediaflow!Scaler.allInstances())
+                    ->union(Mediaflow!Transcoder.allInstances()),
+            edge <- Mediaflow!Edge.allInstances()
+        )
+    do {
+        ('ATL transformation completed: ' + g.name + 'Activity built with '
+            + (Mediaflow!Resource.allInstances()->size()
+                + Mediaflow!Scaler.allInstances()->size()
+                + Mediaflow!Transcoder.allInstances()->size()).toString()
+            + ' node(s) and '
+            + Mediaflow!Edge.allInstances()->size().toString()
+            + ' edge(s).').debug();
+    }
+}
+
+-- Rule: entry resource (external source, no incoming edges) -> InitialNode
+rule EntryResource2Initial {
+    from r : Mediaflow!Resource (r.isEntry() and not r.isExit())
+    to t : UML!InitialNode (
+        name <- r.name
+    )
+}
+
+-- Rule: exit resource (external sink, no outgoing edges) -> ActivityFinalNode
+rule ExitResource2Final {
+    from r : Mediaflow!Resource (r.isExit())
+    to t : UML!ActivityFinalNode (
+        name <- r.name
+    )
+}
+
+-- Rule: internal resource (neither entry nor exit) -> OpaqueAction with URI body
+rule InternalResource2Action {
+    from r : Mediaflow!Resource (not r.isEntry() and not r.isExit())
+    to t : UML!OpaqueAction (
+        name <- r.name,
+        body <- Sequence{r.uri},
+        language <- Sequence{'resource'}
+    )
+}
+
+-- Rule: Scaler node -> OpaqueAction carrying its shell command
+rule Scaler2OpaqueAction {
+    from s : Mediaflow!Scaler
+    to t : UML!OpaqueAction (
+        name <- s.name,
+        body <- Sequence{s.command},
+        language <- Sequence{'shell'}
+    )
+}
+
+-- Rule: Transcoder node -> OpaqueAction carrying its shell command
+rule Transcoder2OpaqueAction {
+    from t : Mediaflow!Transcoder
+    to tt : UML!OpaqueAction (
+        name <- t.name,
+        body <- Sequence{t.command},
+        language <- Sequence{'shell'}
+    )
+}
+
+-- Rule: Edge -> ControlFlow linking the resolved source and target activity nodes
+rule Edge2ControlFlow {
+    from e : Mediaflow!Edge
+    to cf : UML!ControlFlow (
+        name <- e.name,
+        source <- e.sourceNode(),
+        target <- e.targetNode()
+    )
+}

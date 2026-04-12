@@ -34,8 +34,8 @@ public class ExportToXmi {
             .getExtensionToFactoryMap()
             .put("xmi", new XMIResourceFactoryImpl());
 
-        File inputFile = new File("input/test.mediaflow");
-        File outputFile = new File("output/test.xmi");
+        File inputFile = new File("input/flow2.mediaflow");
+        File outputFile = new File("output/flow2.xmi");
         outputFile.getParentFile().mkdirs();
 
         Resource textResource = resourceSet.getResource(

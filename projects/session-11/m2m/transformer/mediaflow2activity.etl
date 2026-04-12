@@ -1,0 +1,109 @@
+operation In!Node incomingEdges() : Collection {
+    return In!Graph.all.first().edges.select(edge | self.ports.includes(edge.target));
+}
+
+operation In!Node outgoingEdges() : Collection {
+    return In!Graph.all.first().edges.select(edge | self.ports.includes(edge.source));
+}
+
+operation In!Node isEntry() : Boolean {
+    return self.incomingEdges().isEmpty();
+}
+
+operation In!Node isExit() : Boolean {
+    return self.outgoingEdges().isEmpty();
+}
+
+operation In!Edge sourceNode() : In!Node {
+    return In!Graph.all.first().nodes.selectOne(node | node.ports.includes(self.source));
+}
+
+operation In!Edge targetNode() : In!Node {
+    return In!Graph.all.first().nodes.selectOne(node | node.ports.includes(self.target));
+}
+
+rule EntryResource2Initial
+    transform source : In!Resource
+    to target : Out!InitialNode {
+
+    guard : source.isEntry() and not source.isExit()
+
+    target.name = source.name;
+}
+
+rule ExitResource2Final
+    transform source : In!Resource
+    to target : Out!ActivityFinalNode {
+
+    guard : source.isExit()
+
+    target.name = source.name;
+}
+
+rule InternalResource2Action
+    transform source : In!Resource
+    to target : Out!OpaqueAction {
+
+    guard : not source.isEntry() and not source.isExit()
+
+    target.name = source.name;
+    target.body.add(source.uri);
+    target.language.add("resource");
+}
+
+rule Scaler2OpaqueAction
+    transform source : In!Scaler
+    to target : Out!OpaqueAction {
+
+    target.name = source.name;
+    target.body.add(source.command);
+    target.language.add("shell");
+}
+
+rule Transcoder2OpaqueAction
+    transform source : In!Transcoder
+    to target : Out!OpaqueAction {
+
+    target.name = source.name;
+    target.body.add(source.command);
+    target.language.add("shell");
+}
+
+rule Edge2ControlFlow
+    transform source : In!Edge
+    to target : Out!ControlFlow {
+
+    target.name = source.name;
+    target.source ::= source.sourceNode();
+    target.target ::= source.targetNode();
+}
+
+post BuildActivityModel {
+    var graph = In!Graph.all.first();
+    var rootModel = new Out!Model;
+    var activity = new Out!Activity;
+
+    rootModel.name = graph.name + "Model";
+    activity.name = graph.name + "Activity";
+    rootModel.packagedElement.add(activity);
+
+    for (node in In!Resource.all.equivalent()) {
+        activity.ownedNode.add(node);
+    }
+
+    for (node in In!Scaler.all.equivalent()) {
+        activity.ownedNode.add(node);
+    }
+
+    for (node in In!Transcoder.all.equivalent()) {
+        activity.ownedNode.add(node);
+    }
+
+    for (edge in In!Edge.all.equivalent()) {
+        activity.edge.add(edge);
+    }
+
+    ('ETL transformation completed: ' + activity.name + ' built with '
+        + activity.ownedNode.size() + ' node(s) and '
+        + activity.edge.size() + ' edge(s).').println();
+}

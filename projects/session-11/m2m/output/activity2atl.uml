@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_pZpTIDZkEfGRxv3od1pGSw" name="demoModel">
+  <packagedElement xmi:type="uml:Activity" xmi:id="_pZwn4DZkEfGRxv3od1pGSw" name="demoActivity" node="_pZx2ADZkEfGRxv3od1pGSw _pZydEDZkEfGRxv3od1pGSw _pZydETZkEfGRxv3od1pGSw _pZzrMDZkEfGRxv3od1pGSw _pZzrMTZkEfGRxv3od1pGSw _pZzrMjZkEfGRxv3od1pGSw">
+    <edge xmi:type="uml:ControlFlow" xmi:id="_pZ05UDZkEfGRxv3od1pGSw" name="e1" target="_pZzrMDZkEfGRxv3od1pGSw" source="_pZx2ADZkEfGRxv3od1pGSw"/>
+    <edge xmi:type="uml:ControlFlow" xmi:id="_pZ05UTZkEfGRxv3od1pGSw" name="e2" target="_pZzrMTZkEfGRxv3od1pGSw" source="_pZzrMDZkEfGRxv3od1pGSw"/>
+    <edge xmi:type="uml:ControlFlow" xmi:id="_pZ05UjZkEfGRxv3od1pGSw" name="e3" target="_pZzrMjZkEfGRxv3od1pGSw" source="_pZzrMDZkEfGRxv3od1pGSw"/>
+    <edge xmi:type="uml:ControlFlow" xmi:id="_pZ05UzZkEfGRxv3od1pGSw" name="e4" target="_pZydEDZkEfGRxv3od1pGSw" source="_pZzrMTZkEfGRxv3od1pGSw"/>
+    <edge xmi:type="uml:ControlFlow" xmi:id="_pZ05VDZkEfGRxv3od1pGSw" name="e5" target="_pZydETZkEfGRxv3od1pGSw" source="_pZzrMjZkEfGRxv3od1pGSw"/>
+    <node xmi:type="uml:InitialNode" xmi:id="_pZx2ADZkEfGRxv3od1pGSw" name="inputVideo" outgoing="_pZ05UDZkEfGRxv3od1pGSw"/>
+    <node xmi:type="uml:ActivityFinalNode" xmi:id="_pZydEDZkEfGRxv3od1pGSw" name="outputVideo1" incoming="_pZ05UzZkEfGRxv3od1pGSw"/>
+    <node xmi:type="uml:ActivityFinalNode" xmi:id="_pZydETZkEfGRxv3od1pGSw" name="outputVideo2" incoming="_pZ05VDZkEfGRxv3od1pGSw"/>
+    <node xmi:type="uml:OpaqueAction" xmi:id="_pZzrMDZkEfGRxv3od1pGSw" name="resize720" incoming="_pZ05UDZkEfGRxv3od1pGSw" outgoing="_pZ05UTZkEfGRxv3od1pGSw _pZ05UjZkEfGRxv3od1pGSw">
+      <language>shell</language>
+      <body>ffmpeg -i input.mp4 -vf scale=1280:720 
+      scaled.mp4</body>
+    </node>
+    <node xmi:type="uml:OpaqueAction" xmi:id="_pZzrMTZkEfGRxv3od1pGSw" name="encodeH264" incoming="_pZ05UTZkEfGRxv3od1pGSw" outgoing="_pZ05UzZkEfGRxv3od1pGSw">
+      <language>shell</language>
+      <body>ffmpeg -i scaled.mp4 -c:v libx264 -c:a aac output-h264.mp4</body>
+    </node>
+    <node xmi:type="uml:OpaqueAction" xmi:id="_pZzrMjZkEfGRxv3od1pGSw" name="encodeVp9" incoming="_pZ05UjZkEfGRxv3od1pGSw" outgoing="_pZ05VDZkEfGRxv3od1pGSw">
+      <language>shell</language>
+      <body>gst-launch-1.0 filesrc location=scaled.mp4 ! decodebin ! vp9enc bitrate=2500 ! webmmux ! filesink location=output-vp9.webm</body>
+    </node>
+  </packagedElement>
+</uml:Model>
