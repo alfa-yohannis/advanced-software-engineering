@@ -1,0 +1,29 @@
+// Two rules per Mediaflow Graph:
+//   1. Graph2ElkJson  -> output/elk/<graph.name>.json
+//   2. Graph2Tables   -> output/tables/<graph.name>.tables.html
+//
+// The viewer (output/index.html) loads these via fetch().
+
+rule Graph2ElkJson
+    transform graph : Mediaflow!Graph {
+
+    parameters : Map {
+        "graph" = graph
+    }
+
+    template : "elk.egl"
+
+    target : "../output/elk/" + graph.name + ".json"
+}
+
+rule Graph2Tables
+    transform graph : Mediaflow!Graph {
+
+    parameters : Map {
+        "graph" = graph
+    }
+
+    template : "tables.egl"
+
+    target : "../output/tables/" + graph.name + ".tables.html"
+}

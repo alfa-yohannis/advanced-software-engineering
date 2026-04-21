@@ -1,0 +1,32 @@
+{
+  "name": "flow1",
+  "elk": {
+    "id": "root",
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "60",
+      "elk.spacing.nodeNode": "30",
+      "elk.padding": "[top=20,left=20,bottom=20,right=20]",
+      "elk.portConstraints": "FIXED_ORDER"
+    },
+    "children": [
+    {"id":"n0","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"inputVideo"}],"ports":[{"id":"n0_p0","width":8,"height":8,"properties":{"port.side":"EAST"},"labels":[{"text":"inputOut"}]}]},
+        {"id":"n1","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"resize720"}],"ports":[{"id":"n1_p0","width":8,"height":8,"properties":{"port.side":"WEST"},"labels":[{"text":"resizeIn"}]}, {"id":"n1_p1","width":8,"height":8,"properties":{"port.side":"EAST"},"labels":[{"text":"resizeOut"}]}]},
+        {"id":"n2","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"outputVideo"}],"ports":[{"id":"n2_p0","width":8,"height":8,"properties":{"port.side":"WEST"},"labels":[{"text":"outputIn"}]}]}
+    ],
+    "edges": [
+    {"id":"e0","sources":["n0_p0"],"targets":["n1_p0"]},
+        {"id":"e1","sources":["n1_p1"],"targets":["n2_p0"]}
+    ]
+  },
+  "nodeMeta": {
+    "n0":{"name":"inputVideo","type":"Resource","uri":"file:///home/alfa/videos/input.mp4","external":true,"mediaType":"VIDEO"},
+        "n1":{"name":"resize720","type":"Scaler","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i input.mp4 -vf scale=1280:720 \n      scaled.mp4","width":1280,"height":720},
+        "n2":{"name":"outputVideo","type":"Resource","uri":"file:///home/alfa/videos/output.mp4","external":true,"mediaType":"VIDEO"}
+  },
+  "edgeMeta": {
+    "e0":{"name":"e1","source":"inputVideo","target":"resize720","sourcePort":"inputOut","targetPort":"resizeIn"},
+        "e1":{"name":"e2","source":"resize720","target":"outputVideo","sourcePort":"resizeOut","targetPort":"outputIn"}
+  }
+}

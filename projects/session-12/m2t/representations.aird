@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<viewpoint:DAnalysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:viewpoint="http://www.eclipse.org/sirius/1.1.0" uid="_a0aoMD1AEfGve_cobLG2Aw" version="15.4.3.202406261640">
+  <semanticResources>build.properties</semanticResources>
+  <semanticResources>input/flow1.xmi</semanticResources>
+  <semanticResources>input/flow2.xmi</semanticResources>
+  <semanticResources>output/css/style.css</semanticResources>
+</viewpoint:DAnalysis>

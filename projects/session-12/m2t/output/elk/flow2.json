@@ -1,0 +1,44 @@
+{
+  "name": "flow2",
+  "elk": {
+    "id": "root",
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "60",
+      "elk.spacing.nodeNode": "30",
+      "elk.padding": "[top=20,left=20,bottom=20,right=20]",
+      "elk.portConstraints": "FIXED_ORDER"
+    },
+    "children": [
+    {"id":"n0","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"inputVideo"}],"ports":[{"id":"n0_p0","width":8,"height":8,"properties":{"port.side":"EAST"},"labels":[{"text":"inputOut"}]}]},
+        {"id":"n1","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"resize720"}],"ports":[{"id":"n1_p0","width":8,"height":8,"properties":{"port.side":"WEST"},"labels":[{"text":"resizeIn"}]}, {"id":"n1_p1","width":8,"height":8,"properties":{"port.side":"EAST"},"labels":[{"text":"resizeOutH264"}]}, {"id":"n1_p2","width":8,"height":8,"properties":{"port.side":"EAST"},"labels":[{"text":"resizeOutVp9"}]}]},
+        {"id":"n2","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"encodeH264"}],"ports":[{"id":"n2_p0","width":8,"height":8,"properties":{"port.side":"WEST"},"labels":[{"text":"encodeH264In"}]}, {"id":"n2_p1","width":8,"height":8,"properties":{"port.side":"EAST"},"labels":[{"text":"encodeH264Out"}]}]},
+        {"id":"n3","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"encodeVp9"}],"ports":[{"id":"n3_p0","width":8,"height":8,"properties":{"port.side":"WEST"},"labels":[{"text":"encodeVp9In"}]}, {"id":"n3_p1","width":8,"height":8,"properties":{"port.side":"EAST"},"labels":[{"text":"encodeVp9Out"}]}]},
+        {"id":"n4","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"outputVideo1"}],"ports":[{"id":"n4_p0","width":8,"height":8,"properties":{"port.side":"WEST"},"labels":[{"text":"outputVideo1In"}]}]},
+        {"id":"n5","width":180,"height":70,"properties":{"portConstraints":"FIXED_ORDER"},"labels":[{"text":"outputVideo2"}],"ports":[{"id":"n5_p0","width":8,"height":8,"properties":{"port.side":"WEST"},"labels":[{"text":"outputVideo2In"}]}]}
+    ],
+    "edges": [
+    {"id":"e0","sources":["n0_p0"],"targets":["n1_p0"]},
+        {"id":"e1","sources":["n1_p1"],"targets":["n2_p0"]},
+        {"id":"e2","sources":["n1_p2"],"targets":["n3_p0"]},
+        {"id":"e3","sources":["n2_p1"],"targets":["n4_p0"]},
+        {"id":"e4","sources":["n3_p1"],"targets":["n5_p0"]}
+    ]
+  },
+  "nodeMeta": {
+    "n0":{"name":"inputVideo","type":"Resource","uri":"file:///home/alfa/videos/input.mp4","external":true,"mediaType":"VIDEO"},
+        "n1":{"name":"resize720","type":"Scaler","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i input.mp4 -vf scale=1280:720 \n      scaled.mp4","width":1280,"height":720},
+        "n2":{"name":"encodeH264","type":"Transcoder","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i scaled.mp4 -c:v libx264 -c:a aac output-h264.mp4","videoCodec":"libx264","audioCodec":"aac","container":"mp4","bitrate":2000},
+        "n3":{"name":"encodeVp9","type":"Transcoder","backend":"GSTREAMER","replicas":1,"command":"gst-launch-1.0 filesrc location=scaled.mp4 ! decodebin ! vp9enc bitrate=2500 ! webmmux ! filesink location=output-vp9.webm","videoCodec":"vp9","audioCodec":"opus","container":"webm","bitrate":2500},
+        "n4":{"name":"outputVideo1","type":"Resource","uri":"file:///home/alfa/videos/output-h264.mp4","external":true,"mediaType":"VIDEO"},
+        "n5":{"name":"outputVideo2","type":"Resource","uri":"file:///home/alfa/videos/output-vp9.webm","external":true,"mediaType":"VIDEO"}
+  },
+  "edgeMeta": {
+    "e0":{"name":"e1","source":"inputVideo","target":"resize720","sourcePort":"inputOut","targetPort":"resizeIn"},
+        "e1":{"name":"e2","source":"resize720","target":"encodeH264","sourcePort":"resizeOutH264","targetPort":"encodeH264In"},
+        "e2":{"name":"e3","source":"resize720","target":"encodeVp9","sourcePort":"resizeOutVp9","targetPort":"encodeVp9In"},
+        "e3":{"name":"e4","source":"encodeH264","target":"outputVideo1","sourcePort":"encodeH264Out","targetPort":"outputVideo1In"},
+        "e4":{"name":"e5","source":"encodeVp9","target":"outputVideo2","sourcePort":"encodeVp9Out","targetPort":"outputVideo2In"}
+  }
+}

@@ -1,0 +1,146 @@
+[%
+import "helpers.eol";
+
+var nodes = graph.nodes;
+var edges = graph.edges;
+
+var nodeIdx = new Map;
+var portIdx = new Map;
+
+var i = 0;
+for (n in nodes) {
+    nodeIdx.put(n, "n" + i);
+    var j = 0;
+    for (p in n.ports) {
+        portIdx.put(p, "n" + i + "_p" + j);
+        j = j + 1;
+    }
+    i = i + 1;
+}
+
+var nodeJson = "";
+var first = true;
+for (n in nodes) {
+    if (not first) { nodeJson = nodeJson + ",\n    "; }
+    first = false;
+    var nid = nodeIdx.get(n);
+    var portJson = "";
+    var firstP = true;
+    for (p in n.ports) {
+        if (not firstP) { portJson = portJson + ", "; }
+        firstP = false;
+        var side = "WEST";
+        if (p.isOut()) { side = "EAST"; }
+        portJson = portJson +
+            "{\"id\":\"" + portIdx.get(p) + "\"," +
+             "\"width\":8,\"height\":8," +
+             "\"properties\":{\"port.side\":\"" + side + "\"}," +
+             "\"labels\":[{\"text\":\"" + p.name.jsonEscape() + "\"}]}";
+    }
+    nodeJson = nodeJson +
+        "{\"id\":\"" + nid + "\"," +
+         "\"width\":180,\"height\":70," +
+         "\"properties\":{\"portConstraints\":\"FIXED_ORDER\"}," +
+         "\"labels\":[{\"text\":\"" + n.name.jsonEscape() + "\"}]," +
+         "\"ports\":[" + portJson + "]}";
+}
+
+var edgeJson = "";
+var firstE = true;
+var k = 0;
+for (e in edges) {
+    if (not firstE) { edgeJson = edgeJson + ",\n    "; }
+    firstE = false;
+    edgeJson = edgeJson +
+        "{\"id\":\"e" + k + "\"," +
+         "\"sources\":[\"" + portIdx.get(e.source) + "\"]," +
+         "\"targets\":[\"" + portIdx.get(e.target) + "\"]}";
+    k = k + 1;
+}
+
+var metaJson = "";
+var firstM = true;
+for (n in nodes) {
+    if (not firstM) { metaJson = metaJson + ",\n    "; }
+    firstM = false;
+
+    var attrs = new Sequence;
+    attrs.add("\"type\":\"" + n.kindLabel() + "\"");
+    if (n.isTypeOf(Mediaflow!Resource)) {
+        attrs.add("\"uri\":" + n.uri.jsonValue());
+        attrs.add("\"external\":" + n.external.jsonValue());
+        if (n.mediaType <> null) {
+            attrs.add("\"mediaType\":\"" + n.mediaType.toString() + "\"");
+        }
+    }
+    if (n.isKindOf(Mediaflow!Transformer)) {
+        attrs.add("\"backend\":\"" + n.backend.toString() + "\"");
+        attrs.add("\"replicas\":" + n.replicas.jsonValue());
+        attrs.add("\"command\":" + n.command.jsonValue());
+    }
+    if (n.isTypeOf(Mediaflow!Scaler)) {
+        attrs.add("\"width\":"  + n.width.jsonValue());
+        attrs.add("\"height\":" + n.height.jsonValue());
+    }
+    if (n.isTypeOf(Mediaflow!Transcoder)) {
+        attrs.add("\"videoCodec\":" + n.videoCodec.jsonValue());
+        attrs.add("\"audioCodec\":" + n.audioCodec.jsonValue());
+        attrs.add("\"container\":"  + n.container.jsonValue());
+        attrs.add("\"bitrate\":"    + n.bitrate.jsonValue());
+    }
+
+    var attrStr = "";
+    var firstA = true;
+    for (a in attrs) {
+        if (not firstA) { attrStr = attrStr + ","; }
+        firstA = false;
+        attrStr = attrStr + a;
+    }
+    metaJson = metaJson +
+        "\"" + nodeIdx.get(n) + "\":{\"name\":\"" + n.name.jsonEscape() + "\"," + attrStr + "}";
+}
+
+var edgeMetaJson = "";
+var firstEM = true;
+var ei = 0;
+for (e in edges) {
+    if (not firstEM) { edgeMetaJson = edgeMetaJson + ",\n    "; }
+    firstEM = false;
+    var sn = e.sourceNode();
+    var tn = e.targetNode();
+    edgeMetaJson = edgeMetaJson +
+        "\"e" + ei + "\":{" +
+          "\"name\":\""       + e.name.jsonEscape()        + "\"," +
+          "\"source\":\""     + sn.name.jsonEscape()       + "\"," +
+          "\"target\":\""     + tn.name.jsonEscape()       + "\"," +
+          "\"sourcePort\":\"" + e.source.name.jsonEscape() + "\"," +
+          "\"targetPort\":\"" + e.target.name.jsonEscape() + "\"}";
+    ei = ei + 1;
+}
+
+%]{
+  "name": "[%=graph.name.jsonEscape()%]",
+  "elk": {
+    "id": "root",
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "60",
+      "elk.spacing.nodeNode": "30",
+      "elk.padding": "[top=20,left=20,bottom=20,right=20]",
+      "elk.portConstraints": "FIXED_ORDER"
+    },
+    "children": [
+    [%=nodeJson%]
+    ],
+    "edges": [
+    [%=edgeJson%]
+    ]
+  },
+  "nodeMeta": {
+    [%=metaJson%]
+  },
+  "edgeMeta": {
+    [%=edgeMetaJson%]
+  }
+}

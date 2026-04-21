@@ -1,0 +1,62 @@
+<section class="fragment" data-flow="flow2">
+  <header class="frag-head">
+    <h2>flow2</h2>
+  </header>
+
+  <div class="stats">
+    <div class="stat-group">
+      <h3>Overview</h3>
+      <table>
+        <tr><td>Nodes</td><td class="v">6</td></tr>
+        <tr><td>Edges</td><td class="v">5</td></tr>
+        <tr><td>Ports</td><td class="v">10</td></tr>
+        <tr><td>&nbsp;&nbsp;IN</td><td class="v">5</td></tr>
+        <tr><td>&nbsp;&nbsp;OUT</td><td class="v">5</td></tr>
+      </table>
+    </div>
+    <div class="stat-group">
+      <h3>Node Types</h3>
+      <table>
+        <tr><td>Resource</td><td class="v">3</td></tr>
+        <tr><td>&nbsp;&nbsp;external</td><td class="v">3</td></tr>
+        <tr><td>Scaler</td><td class="v">1</td></tr>
+        <tr><td>Transcoder</td><td class="v">2</td></tr>
+      </table>
+    </div>
+    <div class="stat-group">
+      <h3>Topology</h3>
+      <table>
+        <tr><td>Entry</td><td class="v">1</td></tr>
+        <tr><td>Exit</td><td class="v">2</td></tr>
+        <tr><td>Avg degree</td><td class="v">1.6666666</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>Nodes</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Ports</th></tr></thead>
+    <tbody>
+    <tr><td>n0</td><td>inputVideo</td><td>Resource</td><td>1</td></tr>
+            <tr><td>n1</td><td>resize720</td><td>Scaler</td><td>3</td></tr>
+            <tr><td>n2</td><td>encodeH264</td><td>Transcoder</td><td>2</td></tr>
+            <tr><td>n3</td><td>encodeVp9</td><td>Transcoder</td><td>2</td></tr>
+            <tr><td>n4</td><td>outputVideo1</td><td>Resource</td><td>1</td></tr>
+            <tr><td>n5</td><td>outputVideo2</td><td>Resource</td><td>1</td></tr>
+            
+    </tbody>
+  </table>
+
+  <h3>Edges</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Source</th><th>Target</th></tr></thead>
+    <tbody>
+    <tr><td>e0</td><td>e1</td><td>inputVideo:inputOut</td><td>resize720:resizeIn</td></tr>
+            <tr><td>e1</td><td>e2</td><td>resize720:resizeOutH264</td><td>encodeH264:encodeH264In</td></tr>
+            <tr><td>e2</td><td>e3</td><td>resize720:resizeOutVp9</td><td>encodeVp9:encodeVp9In</td></tr>
+            <tr><td>e3</td><td>e4</td><td>encodeH264:encodeH264Out</td><td>outputVideo1:outputVideo1In</td></tr>
+            <tr><td>e4</td><td>e5</td><td>encodeVp9:encodeVp9Out</td><td>outputVideo2:outputVideo2In</td></tr>
+            
+    </tbody>
+  </table>
+</section>

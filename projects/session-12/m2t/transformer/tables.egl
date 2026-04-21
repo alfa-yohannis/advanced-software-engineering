@@ -1,0 +1,108 @@
+[%
+import "helpers.eol";
+
+var nodes = graph.nodes;
+var edges = graph.edges;
+
+var nodeIdx = new Map;
+var i = 0;
+for (n in nodes) {
+    nodeIdx.put(n, "n" + i);
+    i = i + 1;
+}
+
+var nodeCount = nodes.size();
+var edgeCount = edges.size();
+var resourceCount   = nodes.select(n | n.isTypeOf(Mediaflow!Resource)).size();
+var scalerCount     = nodes.select(n | n.isTypeOf(Mediaflow!Scaler)).size();
+var transcoderCount = nodes.select(n | n.isTypeOf(Mediaflow!Transcoder)).size();
+var externalCount   = nodes.select(n | n.isTypeOf(Mediaflow!Resource) and n.external).size();
+
+var entryNodes = nodes.select(n | edges.select(e | n.ports.includes(e.target)).isEmpty());
+var exitNodes  = nodes.select(n | edges.select(e | n.ports.includes(e.source)).isEmpty());
+
+var portCount = 0;
+var inPortCount = 0;
+var outPortCount = 0;
+for (n in nodes) {
+    portCount = portCount + n.ports.size();
+    for (p in n.ports) {
+        if (p.isOut()) { outPortCount = outPortCount + 1; }
+        else           { inPortCount  = inPortCount  + 1; }
+    }
+}
+
+var avgDegree = 0.0;
+if (nodeCount > 0) { avgDegree = (2.0 * edgeCount) / nodeCount; }
+
+var nodeRows = "";
+for (n in nodes) {
+    nodeRows = nodeRows +
+      "<tr><td>" + nodeIdx.get(n) + "</td>" +
+      "<td>" + n.name + "</td>" +
+      "<td>" + n.kindLabel() + "</td>" +
+      "<td>" + n.ports.size() + "</td></tr>\n        ";
+}
+
+var edgeRows = "";
+var ex = 0;
+for (e in edges) {
+    edgeRows = edgeRows +
+      "<tr><td>e" + ex + "</td>" +
+      "<td>" + e.name + "</td>" +
+      "<td>" + e.sourceNode().name + ":" + e.source.name + "</td>" +
+      "<td>" + e.targetNode().name + ":" + e.target.name + "</td></tr>\n        ";
+    ex = ex + 1;
+}
+
+%]<section class="fragment" data-flow="[%=graph.name%]">
+  <header class="frag-head">
+    <h2>[%=graph.name%]</h2>
+  </header>
+
+  <div class="stats">
+    <div class="stat-group">
+      <h3>Overview</h3>
+      <table>
+        <tr><td>Nodes</td><td class="v">[%=nodeCount%]</td></tr>
+        <tr><td>Edges</td><td class="v">[%=edgeCount%]</td></tr>
+        <tr><td>Ports</td><td class="v">[%=portCount%]</td></tr>
+        <tr><td>&nbsp;&nbsp;IN</td><td class="v">[%=inPortCount%]</td></tr>
+        <tr><td>&nbsp;&nbsp;OUT</td><td class="v">[%=outPortCount%]</td></tr>
+      </table>
+    </div>
+    <div class="stat-group">
+      <h3>Node Types</h3>
+      <table>
+        <tr><td>Resource</td><td class="v">[%=resourceCount%]</td></tr>
+        <tr><td>&nbsp;&nbsp;external</td><td class="v">[%=externalCount%]</td></tr>
+        <tr><td>Scaler</td><td class="v">[%=scalerCount%]</td></tr>
+        <tr><td>Transcoder</td><td class="v">[%=transcoderCount%]</td></tr>
+      </table>
+    </div>
+    <div class="stat-group">
+      <h3>Topology</h3>
+      <table>
+        <tr><td>Entry</td><td class="v">[%=entryNodes.size()%]</td></tr>
+        <tr><td>Exit</td><td class="v">[%=exitNodes.size()%]</td></tr>
+        <tr><td>Avg degree</td><td class="v">[%=avgDegree%]</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>Nodes</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Ports</th></tr></thead>
+    <tbody>
+    [%=nodeRows%]
+    </tbody>
+  </table>
+
+  <h3>Edges</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Source</th><th>Target</th></tr></thead>
+    <tbody>
+    [%=edgeRows%]
+    </tbody>
+  </table>
+</section>

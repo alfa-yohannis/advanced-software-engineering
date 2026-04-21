@@ -1,0 +1,56 @@
+<section class="fragment" data-flow="flow1">
+  <header class="frag-head">
+    <h2>flow1</h2>
+  </header>
+
+  <div class="stats">
+    <div class="stat-group">
+      <h3>Overview</h3>
+      <table>
+        <tr><td>Nodes</td><td class="v">3</td></tr>
+        <tr><td>Edges</td><td class="v">2</td></tr>
+        <tr><td>Ports</td><td class="v">4</td></tr>
+        <tr><td>&nbsp;&nbsp;IN</td><td class="v">2</td></tr>
+        <tr><td>&nbsp;&nbsp;OUT</td><td class="v">2</td></tr>
+      </table>
+    </div>
+    <div class="stat-group">
+      <h3>Node Types</h3>
+      <table>
+        <tr><td>Resource</td><td class="v">2</td></tr>
+        <tr><td>&nbsp;&nbsp;external</td><td class="v">2</td></tr>
+        <tr><td>Scaler</td><td class="v">1</td></tr>
+        <tr><td>Transcoder</td><td class="v">0</td></tr>
+      </table>
+    </div>
+    <div class="stat-group">
+      <h3>Topology</h3>
+      <table>
+        <tr><td>Entry</td><td class="v">1</td></tr>
+        <tr><td>Exit</td><td class="v">1</td></tr>
+        <tr><td>Avg degree</td><td class="v">1.3333334</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>Nodes</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Ports</th></tr></thead>
+    <tbody>
+    <tr><td>n0</td><td>inputVideo</td><td>Resource</td><td>1</td></tr>
+            <tr><td>n1</td><td>resize720</td><td>Scaler</td><td>2</td></tr>
+            <tr><td>n2</td><td>outputVideo</td><td>Resource</td><td>1</td></tr>
+            
+    </tbody>
+  </table>
+
+  <h3>Edges</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Source</th><th>Target</th></tr></thead>
+    <tbody>
+    <tr><td>e0</td><td>e1</td><td>inputVideo:inputOut</td><td>resize720:resizeIn</td></tr>
+            <tr><td>e1</td><td>e2</td><td>resize720:resizeOut</td><td>outputVideo:outputIn</td></tr>
+            
+    </tbody>
+  </table>
+</section>

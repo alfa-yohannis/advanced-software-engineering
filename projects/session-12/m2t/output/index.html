@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mediaflow Viewer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Mediaflow Viewer</h1>
+    <label for="flow" class="muted">flow:</label>
+    <select id="flow"></select>
+    <span class="muted">rendered with elk.js</span>
+  </header>
+
+  <main>
+    <section id="graph-view">
+      <svg id="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="tooltip"></div>
+    </section>
+    <aside id="fragment"></aside>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/elkjs@0.9.3/lib/elk.bundled.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

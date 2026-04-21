@@ -1,0 +1,47 @@
+// Shared helper operations for the m2t transformations.
+// Imported by elk.egl and tables.egl.
+
+operation Any jsonEscape() : String {
+    if (self == null) { return ""; }
+    var s : String = self.asString();
+    var out : String = "";
+    var i : Integer = 0;
+    var n : Integer = s.length();
+    while (i < n) {
+        var c : String = s.substring(i, i + 1);
+        if      (c == "\\") { out = out + "\\\\"; }
+        else if (c == "\"") { out = out + "\\\""; }
+        else if (c == "\n") { out = out + "\\n"; }
+        else if (c == "\r") { out = out + "\\r"; }
+        else if (c == "\t") { out = out + "\\t"; }
+        else                { out = out + c; }
+        i = i + 1;
+    }
+    return out;
+}
+
+operation Any jsonValue() : String {
+    if (self == null) { return "null"; }
+    if (self.isKindOf(Boolean)) { return self.asString(); }
+    if (self.isKindOf(Integer) or self.isKindOf(Real)) { return self.asString(); }
+    return "\"" + self.jsonEscape() + "\"";
+}
+
+operation Mediaflow!Node kindLabel() : String {
+    if (self.isTypeOf(Mediaflow!Resource))   { return "Resource"; }
+    if (self.isTypeOf(Mediaflow!Scaler))     { return "Scaler"; }
+    if (self.isTypeOf(Mediaflow!Transcoder)) { return "Transcoder"; }
+    return self.eClass().name;
+}
+
+operation Mediaflow!Port isOut() : Boolean {
+    return self.direction.toString() == "OUT";
+}
+
+operation Mediaflow!Edge sourceNode() : Mediaflow!Node {
+    return Mediaflow!Node.all.selectOne(n | n.ports.includes(self.source));
+}
+
+operation Mediaflow!Edge targetNode() : Mediaflow!Node {
+    return Mediaflow!Node.all.selectOne(n | n.ports.includes(self.target));
+}

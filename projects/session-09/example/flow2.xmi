@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ASCII"?>
+<mediaflow:Graph xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mediaflow="mediaflow" name="demo">
+  <nodes xsi:type="mediaflow:Resource" name="inputVideo" uri="file:///home/alfa/videos/input.mp4" external="true">
+    <ports name="inputOut" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Scaler" name="resize720" command="ffmpeg -i input.mp4 -vf scale=1280:720 &#xA;      scaled.mp4" replicas="1" width="1280" height="720">
+    <ports name="resizeIn"/>
+    <ports name="resizeOutH264" direction="OUT"/>
+    <ports name="resizeOutVp9" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Transcoder" name="encodeH264" command="ffmpeg -i scaled.mp4 -c:v libx264 -c:a aac output-h264.mp4" replicas="1" videoCodec="libx264" audioCodec="aac" container="mp4" bitrate="2000">
+    <ports name="encodeH264In"/>
+    <ports name="encodeH264Out" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Transcoder" name="encodeVp9" backend="GSTREAMER" command="gst-launch-1.0 filesrc location=scaled.mp4 ! decodebin ! vp9enc bitrate=2500 ! webmmux ! filesink location=output-vp9.webm" replicas="1" videoCodec="vp9" audioCodec="opus" container="webm" bitrate="2500">
+    <ports name="encodeVp9In"/>
+    <ports name="encodeVp9Out" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource" name="outputVideo1" uri="file:///home/alfa/videos/output-h264.mp4" external="true">
+    <ports name="outputVideo1In"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Resource" name="outputVideo2" uri="file:///home/alfa/videos/output-vp9.webm" external="true">
+    <ports name="outputVideo2In"/>
+  </nodes>
+  <edges name="e1" source="//@nodes.0/@ports.0" target="//@nodes.1/@ports.0"/>
+  <edges name="e2" source="//@nodes.1/@ports.1" target="//@nodes.2/@ports.0"/>
+  <edges name="e3" source="//@nodes.1/@ports.2" target="//@nodes.3/@ports.0"/>
+  <edges name="e4" source="//@nodes.2/@ports.1" target="//@nodes.4/@ports.0"/>
+  <edges name="e5" source="//@nodes.3/@ports.1" target="//@nodes.5/@ports.0"/>
+</mediaflow:Graph>
