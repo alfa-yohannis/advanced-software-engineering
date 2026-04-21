@@ -14,14 +14,7 @@
     <booleanAttribute key="clearwslog" value="false"/>
     <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/Run MediaFlow"/>
     <booleanAttribute key="default" value="false"/>
-    <setAttribute key="deselected_workspace_bundles">
-        <setEntry value="SmallGraph"/>
-        <setEntry value="mediaflow.edit"/>
-        <setEntry value="mediaflow.editor"/>
-        <setEntry value="mediaflow.tests"/>
-        <setEntry value="mediaflow.xtext.tests"/>
-        <setEntry value="mediaflow.xtext.ui.tests"/>
-    </setAttribute>
+    <setAttribute key="deselected_workspace_bundles"/>
     <stringAttribute key="featureDefaultLocation" value="workspace"/>
     <stringAttribute key="featurePluginResolution" value="workspace"/>
     <booleanAttribute key="includeOptional" value="true"/>
@@ -92,10 +85,7 @@
         <setEntry value="jakarta.inject.jakarta.inject-api@default:default"/>
         <setEntry value="javax.annotation@default:default"/>
         <setEntry value="javax.inject@default:default"/>
-        <setEntry value="junit-platform-commons*6.0.1@default:default"/>
-        <setEntry value="junit-platform-engine*6.0.1@default:default"/>
-        <setEntry value="junit-platform-launcher*6.0.1@default:default"/>
-        <setEntry value="org.antlr.runtime*3.2.0.v20230929-1400@default:default"/>
+        <setEntry value="org.antlr.runtime@default:default"/>
         <setEntry value="org.aopalliance@default:default"/>
         <setEntry value="org.apache.ant@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@default:default"/>
@@ -280,12 +270,11 @@
         <setEntry value="org.eclipse.xtext@default:default"/>
         <setEntry value="org.hamcrest@default:default"/>
         <setEntry value="org.junit@default:default"/>
-        <setEntry value="org.objectweb.asm*9.8.0@default:default"/>
-        <setEntry value="org.objectweb.asm*9.9.1@default:default"/>
         <setEntry value="org.objectweb.asm.commons@default:default"/>
         <setEntry value="org.objectweb.asm.tree.analysis@default:default"/>
         <setEntry value="org.objectweb.asm.tree@default:default"/>
         <setEntry value="org.objectweb.asm.util@default:default"/>
+        <setEntry value="org.objectweb.asm@default:default"/>
         <setEntry value="org.opentest4j@default:default"/>
         <setEntry value="org.osgi.service.cm@default:default"/>
         <setEntry value="org.osgi.service.component@default:default"/>
@@ -301,8 +290,6 @@
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="mediaflow.ecore.generator@default:default"/>
-        <setEntry value="mediaflow.xtext.ide@default:default"/>
-        <setEntry value="mediaflow.xtext.ui@default:default"/>
         <setEntry value="mediaflow.xtext@default:default"/>
         <setEntry value="mediaflow@default:default"/>
     </setAttribute>

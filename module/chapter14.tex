@@ -5,8 +5,7 @@
 \begin{enumerate}
   \item Menjelaskan arsitektur sistem multi-agen (MAS) berbasis Model Context Protocol (MCP) untuk orkestrasi tugas otomatis pada sistem web perusahaan.
   \item Menerapkan pola \textit{Orchestrator-Worker} dalam pendistribusian tugas dari pemrosesan data jadwal (CSV/Excel) ke otomasi browser (Playwright), termasuk merancang \textit{task queue} berbasis berkas JSON sebagai mekanisme komunikasi antar-agen.
-  \item Mengimplementasikan server MCP modular untuk domain spesifik --- pembaca data jadwal, otomasi browser, dan \textit{shared state} --- menggunakan Python dan library \texttt{FastMCP}.
-  \item Menganalisis \textit{trade-off} antara pendekatan agen tunggal dan multi-agen dalam hal skalabilitas, keandalan (\textit{reliability}), efisiensi konteks, dan kemampuan penalaran visual.
+  \item Mengimplementasikan server MCP modular untuk pembaca data jadwal, otomasi browser, dan \textit{shared state}, sekaligus menganalisis \textit{trade-off} pendekatan agen tunggal dan multi-agen dari sisi skalabilitas, keandalan, efisiensi konteks, dan penalaran visual.
 \end{enumerate}
 
 \section{Pendahuluan}
@@ -965,4 +964,3 @@ Bab ini menunjukkan bahwa pendekatan Multi-Agent System (MAS) berbasis Model Con
 Implementasi terdiri dari tiga server MCP modular --- \texttt{siakad-csv-reader} (4 tools), \texttt{siakad-browser} (15 tools), dan \texttt{shared-state} (6 tools) --- yang berkomunikasi melalui transport \texttt{stdio}. Task queue berbasis berkas JSON di direktori \texttt{tasks/} menyediakan mekanisme sinkronisasi yang sederhana, persisten, dan mudah di-debug. Agent prompt engineering mengatur perilaku setiap agen melalui instruksi terstruktur dalam berkas Markdown.
 
 Trade-off utama adalah peningkatan kompleksitas infrastruktur (skrip peluncuran, registrasi MCP, sinkronisasi startup) yang diperlukan untuk mendukung arsitektur multi-agen. Namun, keuntungan dalam hal keandalan (\textit{retry} otomatis), efisiensi konteks (setiap agen hanya menerima konteks relevan), dan kemampuan debugging (\textit{screenshot} per langkah, berkas JSON tugas yang dapat di-\textit{inspect}) menjadikan pendekatan ini layak untuk skenario otomasi yang melibatkan antarmuka web dinamis dan data input yang besar.
-

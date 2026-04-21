@@ -303,7 +303,128 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	showstringspaces=false
 }
 
-\usepackage{plantuml}
+\lstdefinelanguage{atl}{
+	keywords={module, create, from, to, rule, helper, context, def, do, uses, unique, lazy, called, abstract, extends, library, query, endpoint, entrypoint, if, then, else, endif, let, in, not, and, or, implies, true, false, null, thisModule},
+	ndkeywords={Collection, Sequence, Set, OrderedSet, Bag, Map, String, Integer, Real, Boolean, OclAny, Mediaflow, UML, Graph, Node, Port, Edge, Resource, Scaler, Transcoder, Model, Activity, InitialNode, ActivityFinalNode, OpaqueAction, ControlFlow},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{--},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
+\lstdefinelanguage{etl}{
+	keywords={rule, transform, to, guard, pre, post, operation, return, var, new, for, in, if, else, while, not, and, or, true, false, null, self, import, delete},
+	ndkeywords={Any, Collection, Sequence, Set, Map, String, Integer, Real, Boolean, In, Out, Graph, Node, Port, Edge, Resource, Scaler, Transcoder, Model, Activity, InitialNode, ActivityFinalNode, OpaqueAction, ControlFlow},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
+\lstdefinelanguage{egx}{
+	keywords={rule, transform, parameters, template, target, pre, post, guard, var, new, for, in, if, else, return, import},
+	ndkeywords={Map, Sequence, String, Integer, Real, Boolean, Any, Mediaflow, Graph, Node, Port, Edge, Resource, Scaler, Transcoder, Transformer},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
+\lstdefinelanguage{eol}{
+	keywords={operation, return, if, else, var, while, for, in, not, and, or, new, self, true, false, null, import},
+	ndkeywords={Any, String, Integer, Real, Boolean, Sequence, Map, Mediaflow, Graph, Node, Port, Edge, Resource, Scaler, Transcoder, Transformer},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
+\lstdefinelanguage{egl}{
+	keywords={import, var, for, in, if, else, not, and, or, return, operation, while, new, true, false, null, self},
+	ndkeywords={Any, String, Integer, Real, Boolean, Sequence, Map, Mediaflow, Graph, Node, Port, Edge, Resource, Scaler, Transcoder, Transformer},
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{purple}\bfseries,
+	sensitive=true,
+	commentstyle=\color{gray},
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	breaklines=true,
+	frame=lines,
+	backgroundcolor=\color{lightgray!10},
+	tabsize=2,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	string=[s]{'}{'},
+	morestring=[s]{"}{"},
+	moredelim=**[is][\color{red}\bfseries]{[\%}{\%]},
+	commentstyle=\color{gray}\ttfamily,
+	stringstyle=\color{purple}\ttfamily,
+	showstringspaces=false
+}
+
+% \usepackage{plantuml}
 
 
 \newcommand{\authors}[1]{{\chapterauthor{#1}\addtocontents{toc}{#1\par}}}
@@ -327,24 +448,25 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 \begin{document}
       
 
-	 \include{titlepage}
+%	 \include{titlepage}
+%	
+%	 % Contents Page
+%	 \tableofcontents
 	
-	 % Contents Page
-	 \tableofcontents
-	
-	 \include{pendahuluan}
-	 \include{chapter01}
-	 \include{chapter02}
-	 \include{chapter03}
-	 \include{chapter04}
-	 \include{chapter05}
-	 \include{chapter06}
-	 \include{chapter07}
-	 \include{chapter08}
-	\include{chapter09}
-	\include{chapter10}
-	\include{chapter11}
-	\include{chapter14}
+%	\include{pendahuluan}
+%	\include{chapter01}
+%	\include{chapter02}
+%	\include{chapter03}
+%	\include{chapter04}
+%	\include{chapter05}
+%	\include{chapter06}
+%	\include{chapter07}
+%	\include{chapter08}
+%	\include{chapter09}
+%	\include{chapter10}
+%	\include{chapter11}
+	\include{chapter12}
+%	\include{chapter14}
 
 
 	\cite{020practical}

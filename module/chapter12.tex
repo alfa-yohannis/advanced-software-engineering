@@ -1,0 +1,782 @@
+\chapter{Model-to-Text Transformation}
+\label{chap:m2t-transformation}
+
+\section*{Tujuan Pembelajaran}
+\begin{enumerate}
+  \item Menjelaskan peran transformasi model-ke-teks (\textit{model-to-text transformation}, M2T) dalam siklus \textit{Model-Driven Engineering} (MDE), khususnya ketika model perlu diwujudkan menjadi artefak konkret seperti JSON, HTML, konfigurasi, dokumentasi, atau kode sumber.
+  \item Membedakan tanggung jawab Epsilon Generation Language (EGL), Epsilon Generation Execution Language (EGX), dan Epsilon Object Language (EOL) dalam implementasi transformasi M2T.
+  \item Menerapkan transformasi M2T pada model \textit{MediaFlow} untuk menghasilkan berkas JSON ELK dan fragmen HTML, sekaligus menganalisis isu praktis seperti identifier stabil, pelolosan string JSON, resolusi referensi port-ke-node, dan validasi output.
+\end{enumerate}
+
+\section{Pendahuluan}
+
+Bab~\ref{chap:m2m-transformation} membahas transformasi model-ke-model (M2M), yaitu konversi model \textit{MediaFlow} menjadi model UML Activity Diagram. Pada M2M, hasil transformasi masih berupa model: ia tetap berkonformasi terhadap sebuah metamodel target dan masih dimaksudkan untuk dibaca oleh alat pemodelan.
+
+Bab ini melanjutkan alur tersebut ke transformasi model-ke-teks (M2T). Pada M2T, model tidak lagi dikonversi menjadi model lain, melainkan menjadi artefak tekstual yang dapat langsung dikonsumsi oleh teknologi lain. Artefak tersebut dapat berupa kode program, dokumen konfigurasi, halaman HTML, skrip infrastruktur, atau berkas data seperti JSON. Dengan kata lain, M2T adalah titik ketika desain abstrak mulai berubah menjadi produk teknis yang dapat dijalankan, dirender, atau disebarkan.
+
+Studi kasus pada bab ini menggunakan proyek \texttt{m2t} di sesi 12. Proyek tersebut membaca instans XMI dari metamodel \texttt{mediaflow.ecore}, kemudian menghasilkan artefak untuk sebuah \textit{Mediaflow Viewer}. Viewer ini menampilkan pipeline media sebagai graf menggunakan \textit{elk.js} dan menyediakan panel tabel yang merangkum statistik node, port, dan edge. Transformasi ditulis dengan keluarga bahasa Epsilon: EGX untuk orkestrasi, EGL untuk templat teks, dan EOL untuk operasi bantuan yang dipakai bersama.
+
+Perbedaan terpenting dari M2M adalah targetnya. Pada M2M, kesalahan sering muncul sebagai model output yang tidak valid terhadap metamodel. Pada M2T, kesalahan dapat muncul sebagai JSON yang tidak dapat di-\textit{parse}, HTML yang tidak aman atau tidak lengkap, identifier yang tidak konsisten, atau path output yang tidak sesuai dengan struktur aplikasi. Karena itu, transformasi M2T menuntut perhatian ganda: benar secara semantik terhadap model sumber dan benar secara leksikal terhadap format teks target.
+
+\section{Deskripsi Masalah Domain yang Diselesaikan}
+
+\subsection{Konteks Domain}
+
+Domain sumber tetap sama dengan beberapa bab sebelumnya, yaitu pipeline pemrosesan media digital \textit{MediaFlow}. Metamodel \texttt{mediaflow.ecore} mendefinisikan \texttt{Graph} sebagai kontainer utama. Di dalamnya terdapat \texttt{Node} dengan subtipe \texttt{Resource}, \texttt{Scaler}, dan \texttt{Transcoder}. Setiap node memiliki \texttt{Port}, dan setiap \texttt{Edge} menghubungkan sebuah port sumber ke port target.
+
+Pada proyek \texttt{m2t}, dua model input digunakan sebagai korpus:
+\begin{enumerate}
+  \item \texttt{flow1.xmi}: pipeline linier dengan satu \texttt{Resource} input, satu \texttt{Scaler}, dan satu \texttt{Resource} output.
+  \item \texttt{flow2.xmi}: pipeline bercabang dengan satu \texttt{Resource} input, satu \texttt{Scaler}, dua \texttt{Transcoder}, dan dua \texttt{Resource} output.
+\end{enumerate}
+
+Kedua model tersebut cukup kecil untuk dianalisis manual, tetapi sudah memuat pola penting yang dibutuhkan oleh transformasi: node dengan tipe berbeda, port masuk dan keluar, edge antar-port, atribut teknis seperti \texttt{command}, \texttt{backend}, \texttt{width}, \texttt{height}, \texttt{videoCodec}, dan \texttt{bitrate}.
+
+\subsection{Target Transformasi}
+
+Target transformasi bukan satu berkas tunggal, melainkan dua keluarga artefak yang dihasilkan untuk setiap \texttt{Graph}:
+\begin{enumerate}
+  \item \textbf{JSON ELK} di \texttt{output/elk/<graph.name>.json}. Berkas ini berisi struktur graf yang siap diberikan kepada \texttt{ELK.layout()}, termasuk \texttt{children}, \texttt{ports}, \texttt{edges}, \texttt{layoutOptions}, serta metadata node dan edge untuk tooltip.
+  \item \textbf{Fragmen HTML} di \texttt{output/tables/<graph.name>.tables.html}. Berkas ini bukan halaman HTML lengkap, melainkan potongan DOM yang dapat dimuat ke panel samping viewer. Isinya mencakup statistik, tabel node, dan tabel edge.
+\end{enumerate}
+
+Selain output transformasi tersebut, direktori \texttt{output/} juga berisi aset viewer seperti \texttt{index.html}, \texttt{css/style.css}, \texttt{js/app.js}, dan \texttt{manifest.json}. Aset viewer ini mengonsumsi hasil M2T: JavaScript memuat \texttt{manifest.json}, mengambil JSON dari direktori \texttt{elk/}, mengambil fragmen HTML dari direktori \texttt{tables/}, lalu merender graf dan tabel pada browser.
+
+\subsection{Pemetaan Konseptual}
+
+Sebelum menulis templat, target teks perlu dipahami sebagai struktur data. Tabel~\ref{tab:ch12-mapping-konseptual} menunjukkan pemetaan dari konsep \textit{MediaFlow} ke bagian artefak JSON dan HTML.
+
+\begin{table}[h]
+\centering
+\caption{Pemetaan konseptual elemen MediaFlow ke artefak teks}
+\label{tab:ch12-mapping-konseptual}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.24\textwidth}|>{\raggedright\arraybackslash}p{0.31\textwidth}|>{\raggedright\arraybackslash}p{0.31\textwidth}|}
+\hline
+\textbf{Elemen MediaFlow} & \textbf{Output JSON ELK} & \textbf{Output HTML Fragment} \\
+\hline
+\texttt{Graph} & Objek root dengan \texttt{name}, \texttt{elk}, \texttt{nodeMeta}, dan \texttt{edgeMeta}. & Satu \texttt{<section>} beratribut \texttt{data-flow}. \\
+\hline
+\texttt{Node} & Satu elemen \texttt{children} dengan id stabil, label, ukuran, dan daftar port. & Satu baris pada tabel node. \\
+\hline
+\texttt{Port} & Satu objek port dengan id stabil; \texttt{OUT} ditempatkan di sisi \texttt{EAST}, selain itu di sisi \texttt{WEST}. & Dihitung pada statistik jumlah port, port masuk, dan port keluar. \\
+\hline
+\texttt{Edge} & Satu elemen \texttt{edges} yang menghubungkan id port sumber dan target; metadata disimpan pada \texttt{edgeMeta}. & Satu baris pada tabel edge dengan format \texttt{node:port}. \\
+\hline
+\texttt{Resource} & Metadata \texttt{uri}, \texttt{external}, dan \texttt{mediaType}. & Termasuk hitungan \texttt{Resource} dan \texttt{external}. \\
+\hline
+\texttt{Scaler} & Metadata \texttt{backend}, \texttt{command}, \texttt{replicas}, \texttt{width}, dan \texttt{height}. & Termasuk hitungan \texttt{Scaler}. \\
+\hline
+\texttt{Transcoder} & Metadata \texttt{backend}, \texttt{command}, \texttt{videoCodec}, \texttt{audioCodec}, \texttt{container}, dan \texttt{bitrate}. & Termasuk hitungan \texttt{Transcoder}. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+Pemetaan ini memperlihatkan bahwa M2T tidak sekadar mencetak atribut model. Transformasi juga menyusun ulang informasi agar sesuai dengan kontrak teknologi target. Contohnya, \texttt{Edge} pada metamodel mengacu ke \texttt{Port}, sedangkan tooltip viewer perlu mengetahui node pemilik port tersebut. Karena itu, operasi bantuan seperti \texttt{sourceNode()} dan \texttt{targetNode()} menjadi bagian penting dari transformasi.
+
+\begin{figure}[htbp]
+\centering
+\scalebox{.95}{
+\begin{tikzpicture}[>=Latex, node distance=0mm,
+  box/.style={draw, rounded corners=3pt, minimum width=2.7cm, minimum height=0.75cm, align=center, font=\scriptsize},
+  artifact/.style={draw, rounded corners=3pt, minimum width=3.0cm, minimum height=0.75cm, align=center, font=\scriptsize, fill=green!10},
+  engine/.style={draw, rounded corners=3pt, minimum width=2.9cm, minimum height=0.75cm, align=center, font=\scriptsize, fill=yellow!15},
+  viewer/.style={draw, rounded corners=3pt, minimum width=3.2cm, minimum height=0.75cm, align=center, font=\scriptsize, fill=blue!10}]
+
+  \node[box, fill=gray!10] (xmi) {\textbf{MediaFlow XMI}\\\texttt{flow1.xmi}, \texttt{flow2.xmi}};
+
+  \node[engine, right=5mm of xmi] (egx) {\textbf{EGX}\\\texttt{m2t.egx}};
+
+  \node[engine, above right=5mm and 5mm of egx] (egl1) {\textbf{EGL}\\\texttt{elk.egl}};
+
+  \node[engine, below right=5mm and 5mm of egx] (egl2) {\textbf{EGL}\\\texttt{tables.egl}};
+
+  \node[box, right=6mm of egx, fill=orange!12] (eol) {\textbf{EOL helpers}\\\texttt{helpers.eol}};
+
+  \node[artifact, right=5mm of egl1] (json) {\textbf{JSON ELK}\\\texttt{output/elk/*.json}};
+
+  \node[artifact, right=5mm of egl2] (html) {\textbf{HTML fragment}\\\texttt{output/tables/*.html}};
+  
+  \node[viewer, right=5mm of eol] (web) {\textbf{Mediaflow Viewer}\\\texttt{index.html}, JS, CSS};
+
+  \draw[->, thick] (xmi) -- (egx);
+  \draw[->, thick] (egx) -- (egl1);
+  \draw[->, thick] (egx) -- (egl2);
+  \draw[->, thick] (eol) -- (egl1);
+  \draw[->, thick] (eol) -- (egl2);
+  \draw[->, thick] (egl1) -- (json);
+  \draw[->, thick] (egl2) -- (html);
+  \draw[->, thick] (json) -- (web);
+  \draw[->, thick] (html) -- (web);
+\end{tikzpicture}
+}
+\caption{Alur transformasi M2T pada proyek \texttt{m2t}: model XMI diproses oleh EGX, templat EGL menghasilkan JSON dan HTML, sedangkan EOL menyediakan operasi bantuan yang dipakai bersama.}
+\label{fig:ch12-m2t-pipeline}
+\end{figure}
+
+\subsection{Kebutuhan Transformasi}
+
+Berdasarkan target di atas, transformasi M2T pada proyek ini memiliki beberapa kebutuhan teknis:
+\begin{enumerate}
+  \item \textbf{Generasi multi-artefak.} Satu \texttt{Graph} harus menghasilkan dua berkas output berbeda. Karena itu, orkestrasi tidak sebaiknya ditulis sebagai pemanggilan Java manual yang berulang, melainkan sebagai aturan EGX.
+  \item \textbf{Identifier stabil.} Node, port, dan edge perlu diberi id seperti \texttt{n0}, \texttt{n1\_p0}, dan \texttt{e0}. Id ini harus konsisten antara struktur ELK dan metadata.
+  \item \textbf{Resolusi referensi port-ke-node.} Edge hanya menyimpan referensi ke port. Untuk menulis metadata edge dan tabel HTML, transformasi harus mencari node pemilik port tersebut.
+  \item \textbf{Format teks valid.} Nilai model dapat mengandung karakter khusus seperti tanda kutip, \textit{backslash}, atau baris baru pada atribut \texttt{command}. Nilai tersebut harus diloloskan agar JSON tetap valid.
+  \item \textbf{Output yang mudah dikonsumsi viewer.} Struktur output harus mengikuti ekspektasi \texttt{js/app.js}: JSON berada di \texttt{elk/}, fragmen HTML berada di \texttt{tables/}, dan nama berkas mengikuti \texttt{graph.name}.
+\end{enumerate}
+
+\section{Metodologi Transformasi Model-ke-Teks}
+
+Metodologi M2T pada proyek ini dapat dibaca sebagai urutan kerja dari desain target hingga validasi output.
+
+\subsection{Langkah 1: Menganalisis Kontrak Teks Target}
+
+Pada M2T, kontrak target sering kali berasal dari teknologi luar. Dalam proyek ini, kontrak JSON berasal dari \textit{elk.js}: graf memiliki \texttt{children}, setiap child dapat memiliki \texttt{ports}, dan edge mengacu ke id port melalui \texttt{sources} dan \texttt{targets}. Kontrak HTML berasal dari viewer: panel samping mengharapkan sebuah fragmen \texttt{<section>} yang dapat dimasukkan ke dalam elemen \texttt{<aside id="fragment">}.
+
+\textbf{Input tahap ini:} format yang dibutuhkan oleh \textit{elk.js} dan struktur DOM viewer.
+
+\textbf{Output tahap ini:} skema konseptual JSON dan HTML yang akan dihasilkan.
+
+\subsection{Langkah 2: Menentukan Unit Transformasi}
+
+Unit transformasi adalah elemen model yang menjadi basis aturan. Pada proyek ini, unitnya adalah \texttt{Mediaflow!Graph}. Setiap graf menghasilkan satu JSON dan satu fragmen HTML. Node, port, dan edge tidak menjadi target file masing-masing, tetapi diproses di dalam templat untuk membangun isi file graf.
+
+\textbf{Input tahap ini:} metamodel sumber dan kebutuhan output per model.
+
+\textbf{Output tahap ini:} keputusan bahwa satu \texttt{Graph} menghasilkan dua artefak.
+
+\subsection{Langkah 3: Memisahkan Orkestrasi, Templat, dan Helper}
+
+Proyek ini memisahkan tiga tanggung jawab:
+\begin{itemize}
+  \item \textbf{EGX} menentukan aturan: untuk setiap \texttt{Graph}, templat mana dijalankan dan file target mana ditulis.
+  \item \textbf{EGL} menyusun teks: bagian atas templat menghitung string dinamis, bagian bawah templat menjadi kerangka output.
+  \item \textbf{EOL} menyediakan operasi bantuan: pelolosan JSON, label tipe node, pengecekan arah port, dan resolusi node pemilik port.
+\end{itemize}
+
+Pemisahan ini membuat transformasi lebih mudah dirawat. Jika format JSON berubah, perubahan dilakukan di \texttt{elk.egl}. Jika statistik HTML bertambah, perubahan dilakukan di \texttt{tables.egl}. Jika cara mencari node sumber edge berubah, perubahan cukup dilakukan di \texttt{helpers.eol}.
+
+\subsection{Langkah 4: Membangun Identifier dan Metadata}
+
+Identifier internal dibangun secara deterministik berdasarkan urutan koleksi model. Node diberi id \texttt{n0}, \texttt{n1}, dan seterusnya. Port diberi id gabungan seperti \texttt{n1\_p0}. Edge diberi id \texttt{e0}, \texttt{e1}, dan seterusnya.
+
+Strategi ini sederhana, tetapi efektif selama urutan node, port, dan edge pada XMI stabil. Id yang sama kemudian dipakai di tiga tempat: struktur \texttt{elk.children}, struktur \texttt{elk.edges}, dan metadata \texttt{nodeMeta}/\texttt{edgeMeta}. Konsistensi antarbagian ini lebih penting daripada bentuk id itu sendiri.
+
+\subsection{Langkah 5: Memvalidasi Artefak Teks}
+
+Validasi M2T dilakukan pada dua lapisan. Pertama, lapisan sintaks: JSON harus valid dan HTML harus dapat dimuat sebagai fragmen DOM. Kedua, lapisan semantik: jumlah node dan edge pada output harus sama dengan model input, edge harus menghubungkan port yang benar, dan metadata harus sesuai dengan tipe node asal.
+
+\section{Implementasi Detail}
+
+\subsection{Arsitektur Implementasi}
+
+Struktur proyek \texttt{m2t} memperlihatkan pemisahan yang jelas antara model input, logika transformasi, runner, dan artefak viewer.
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Struktur direktori utama proyek \texttt{m2t}},
+  label={lst:ch12-project-structure},
+  basicstyle=\ttfamily\scriptsize
+]
+m2t/
+|-- src/m2t/
+|   +-- MediaflowToHtmlEGXRunner.java
+|-- transformer/
+|   |-- m2t.egx
+|   |-- elk.egl
+|   |-- tables.egl
+|   +-- helpers.eol
+|-- input/
+|   |-- flow1.xmi
+|   |-- flow2.xmi
+|   |-- flow1.mediaflow
+|   +-- flow2.mediaflow
+|-- output/
+|   |-- manifest.json
+|   |-- index.html
+|   |-- css/style.css
+|   |-- js/app.js
+|   |-- elk/
+|   |   |-- flow1.json
+|   |   +-- flow2.json
+|   +-- tables/
+|       |-- flow1.tables.html
+|       +-- flow2.tables.html
+\end{lstlisting}
+
+Berkas \texttt{flow1.mediaflow} dan \texttt{flow2.mediaflow} berperan sebagai representasi tekstual yang nyaman dibaca manusia, sedangkan transformasi pada bab ini membaca \texttt{flow1.xmi} dan \texttt{flow2.xmi}. Metamodel sumber tidak disalin ke proyek \texttt{m2t}; runner menunjuk ke \texttt{../mediaflow/metamodels/mediaflow.ecore} agar semua sesi tetap memakai definisi domain yang sama.
+
+\subsection{Koordinator Transformasi: EGX}
+
+Berkas \texttt{m2t.egx} berisi dua aturan. Keduanya menargetkan tipe sumber yang sama, yaitu \texttt{Mediaflow!Graph}, tetapi menjalankan templat dan target file yang berbeda.
+
+\begin{lstlisting}[
+  language=egx,
+  caption={Aturan EGX untuk menghasilkan JSON ELK dan fragmen HTML},
+  label={lst:ch12-egx-rules},
+  basicstyle=\ttfamily\scriptsize
+]
+rule Graph2ElkJson
+    transform graph : Mediaflow!Graph {
+
+    parameters : Map {
+        "graph" = graph
+    }
+
+    template : "elk.egl"
+
+    target : "../output/elk/" + graph.name + ".json"
+}
+
+rule Graph2Tables
+    transform graph : Mediaflow!Graph {
+
+    parameters : Map {
+        "graph" = graph
+    }
+
+    template : "tables.egl"
+
+    target : "../output/tables/" + graph.name + ".tables.html"
+}
+\end{lstlisting}
+
+Klausa \texttt{parameters} meneruskan objek \texttt{graph} ke templat. Dengan demikian, \texttt{elk.egl} dan \texttt{tables.egl} dapat mengakses \texttt{graph.nodes}, \texttt{graph.edges}, dan atribut lain tanpa perlu memuat model sendiri.
+
+Path target menggunakan \texttt{../output/...} karena \texttt{EglFileGeneratingTemplateFactory} pada runner disetel dengan root di direktori \texttt{transformer/}. Dengan root tersebut, \texttt{../output/elk/flow1.json} akan diselesaikan sebagai \texttt{m2t/output/elk/flow1.json}.
+
+\subsection{Operasi Bantuan EOL}
+
+Kedua templat mengimpor \texttt{helpers.eol}. Keputusan ini penting karena operasi yang dipakai bersama tidak bercampur dengan struktur teks target. Listing~\ref{lst:ch12-helpers-eol} memperlihatkan operasi inti yang dipakai proyek.
+
+\begin{lstlisting}[
+  language=eol,
+  caption={Operasi bantuan pada \texttt{helpers.eol}},
+  label={lst:ch12-helpers-eol},
+  basicstyle=\ttfamily\scriptsize
+]
+operation Any jsonEscape() : String {
+    if (self == null) { return ""; }
+    var s : String = self.asString();
+    var out : String = "";
+    var i : Integer = 0;
+    var n : Integer = s.length();
+    while (i < n) {
+        var c : String = s.substring(i, i + 1);
+        if      (c == "\\") { out = out + "\\\\"; }
+        else if (c == "\"") { out = out + "\\\""; }
+        else if (c == "\n") { out = out + "\\n"; }
+        else if (c == "\r") { out = out + "\\r"; }
+        else if (c == "\t") { out = out + "\\t"; }
+        else                { out = out + c; }
+        i = i + 1;
+    }
+    return out;
+}
+
+operation Any jsonValue() : String {
+    if (self == null) { return "null"; }
+    if (self.isKindOf(Boolean)) { return self.asString(); }
+    if (self.isKindOf(Integer) or self.isKindOf(Real)) { return self.asString(); }
+    return "\"" + self.jsonEscape() + "\"";
+}
+
+operation Mediaflow!Node kindLabel() : String {
+    if (self.isTypeOf(Mediaflow!Resource))   { return "Resource"; }
+    if (self.isTypeOf(Mediaflow!Scaler))     { return "Scaler"; }
+    if (self.isTypeOf(Mediaflow!Transcoder)) { return "Transcoder"; }
+    return self.eClass().name;
+}
+
+operation Mediaflow!Port isOut() : Boolean {
+    return self.direction.toString() == "OUT";
+}
+
+operation Mediaflow!Edge sourceNode() : Mediaflow!Node {
+    return Mediaflow!Node.all.selectOne(n | n.ports.includes(self.source));
+}
+
+operation Mediaflow!Edge targetNode() : Mediaflow!Node {
+    return Mediaflow!Node.all.selectOne(n | n.ports.includes(self.target));
+}
+\end{lstlisting}
+
+Operasi \texttt{jsonEscape()} ditulis manual dengan perulangan karakter. Hal ini menghindari masalah praktis pada \texttt{String.replace(a, b)} Epsilon yang dapat melewati mekanisme \textit{regular expression} Java. Untuk JSON, kesalahan kecil pada tanda kutip atau \textit{backslash} cukup untuk membuat seluruh output gagal dibaca browser.
+
+Operasi \texttt{sourceNode()} dan \texttt{targetNode()} menunjukkan pola navigasi model yang juga muncul pada bab M2M. Karena \texttt{Edge} mengarah ke \texttt{Port}, transformasi perlu mencari \texttt{Node} yang memiliki port tersebut melalui containment \texttt{n.ports.includes(...)}.
+
+\subsection{Templat JSON ELK}
+
+Templat \texttt{elk.egl} membangun struktur JSON dalam beberapa tahap. Pertama, ia menyiapkan peta id untuk node dan port.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Pembuatan id node dan port pada \texttt{elk.egl}},
+  label={lst:ch12-elk-id-map},
+  basicstyle=\ttfamily\scriptsize
+]
+[%
+import "helpers.eol";
+
+var nodes = graph.nodes;
+var edges = graph.edges;
+
+var nodeIdx = new Map;
+var portIdx = new Map;
+
+var i = 0;
+for (n in nodes) {
+    nodeIdx.put(n, "n" + i);
+    var j = 0;
+    for (p in n.ports) {
+        portIdx.put(p, "n" + i + "_p" + j);
+        j = j + 1;
+    }
+    i = i + 1;
+}
+%]
+\end{lstlisting}
+
+Tahap berikutnya adalah membentuk objek JSON untuk node dan port. Port keluar ditempatkan di sisi kanan (\texttt{EAST}), sedangkan port lainnya ditempatkan di sisi kiri (\texttt{WEST}). Ini merupakan keputusan presentasi yang tidak ada secara eksplisit dalam metamodel, tetapi dibutuhkan agar graf lebih mudah dibaca dari kiri ke kanan.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Pembentukan JSON node dan port pada \texttt{elk.egl}},
+  label={lst:ch12-elk-node-json},
+  basicstyle=\ttfamily\scriptsize
+]
+var nodeJson = "";
+var first = true;
+for (n in nodes) {
+    if (not first) { nodeJson = nodeJson + ",\n    "; }
+    first = false;
+    var nid = nodeIdx.get(n);
+    var portJson = "";
+    var firstP = true;
+    for (p in n.ports) {
+        if (not firstP) { portJson = portJson + ", "; }
+        firstP = false;
+        var side = "WEST";
+        if (p.isOut()) { side = "EAST"; }
+        portJson = portJson +
+            "{\"id\":\"" + portIdx.get(p) + "\"," +
+             "\"width\":8,\"height\":8," +
+             "\"properties\":{\"port.side\":\"" + side + "\"}," +
+             "\"labels\":[{\"text\":\"" + p.name.jsonEscape() + "\"}]}";
+    }
+    nodeJson = nodeJson +
+        "{\"id\":\"" + nid + "\"," +
+         "\"width\":180,\"height\":70," +
+         "\"properties\":{\"portConstraints\":\"FIXED_ORDER\"}," +
+         "\"labels\":[{\"text\":\"" + n.name.jsonEscape() + "\"}]," +
+         "\"ports\":[" + portJson + "]}";
+}
+\end{lstlisting}
+
+Edge dibentuk dengan mengacu langsung ke id port sumber dan target. Dengan cara ini, ELK dapat menghitung jalur edge dari titik koneksi yang tepat, bukan hanya dari kotak node secara umum.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Pembentukan JSON edge pada \texttt{elk.egl}},
+  label={lst:ch12-elk-edge-json},
+  basicstyle=\ttfamily\scriptsize
+]
+var edgeJson = "";
+var firstE = true;
+var k = 0;
+for (e in edges) {
+    if (not firstE) { edgeJson = edgeJson + ",\n    "; }
+    firstE = false;
+    edgeJson = edgeJson +
+        "{\"id\":\"e" + k + "\"," +
+         "\"sources\":[\"" + portIdx.get(e.source) + "\"]," +
+         "\"targets\":[\"" + portIdx.get(e.target) + "\"]}";
+    k = k + 1;
+}
+\end{lstlisting}
+
+Metadata node disimpan terpisah dari struktur \texttt{elk}. Pemisahan ini membuat data untuk layout tetap bersih, sementara viewer tetap dapat menampilkan tooltip yang kaya.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Metadata node berdasarkan tipe pada \texttt{elk.egl}},
+  label={lst:ch12-elk-metadata},
+  basicstyle=\ttfamily\scriptsize
+]
+var attrs = new Sequence;
+attrs.add("\"type\":\"" + n.kindLabel() + "\"");
+if (n.isTypeOf(Mediaflow!Resource)) {
+    attrs.add("\"uri\":" + n.uri.jsonValue());
+    attrs.add("\"external\":" + n.external.jsonValue());
+    if (n.mediaType <> null) {
+        attrs.add("\"mediaType\":\"" + n.mediaType.toString() + "\"");
+    }
+}
+if (n.isKindOf(Mediaflow!Transformer)) {
+    attrs.add("\"backend\":\"" + n.backend.toString() + "\"");
+    attrs.add("\"replicas\":" + n.replicas.jsonValue());
+    attrs.add("\"command\":" + n.command.jsonValue());
+}
+if (n.isTypeOf(Mediaflow!Scaler)) {
+    attrs.add("\"width\":"  + n.width.jsonValue());
+    attrs.add("\"height\":" + n.height.jsonValue());
+}
+if (n.isTypeOf(Mediaflow!Transcoder)) {
+    attrs.add("\"videoCodec\":" + n.videoCodec.jsonValue());
+    attrs.add("\"audioCodec\":" + n.audioCodec.jsonValue());
+    attrs.add("\"container\":"  + n.container.jsonValue());
+    attrs.add("\"bitrate\":"    + n.bitrate.jsonValue());
+}
+\end{lstlisting}
+
+Bagian akhir templat adalah kerangka JSON statis yang menerima hasil komputasi melalui ekspresi \texttt{[\%= ... \%]}. Pola ini adalah ciri utama EGL: logika dihitung di blok awal, lalu disisipkan pada teks target.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Kerangka output JSON pada akhir \texttt{elk.egl}},
+  label={lst:ch12-elk-output-skeleton},
+  basicstyle=\ttfamily\scriptsize
+]
+{
+  "name": "[%=graph.name.jsonEscape()%]",
+  "elk": {
+    "id": "root",
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "60",
+      "elk.spacing.nodeNode": "30",
+      "elk.padding": "[top=20,left=20,bottom=20,right=20]",
+      "elk.portConstraints": "FIXED_ORDER"
+    },
+    "children": [
+    [%=nodeJson%]
+    ],
+    "edges": [
+    [%=edgeJson%]
+    ]
+  },
+  "nodeMeta": {
+    [%=metaJson%]
+  },
+  "edgeMeta": {
+    [%=edgeMetaJson%]
+  }
+}
+\end{lstlisting}
+
+\subsection{Templat Fragmen HTML}
+
+Templat \texttt{tables.egl} menghasilkan panel data yang dapat langsung dimasukkan ke viewer. Bagian awal menghitung statistik ringkas seperti jumlah node, jumlah edge, jumlah port, jumlah tipe node, node masuk, node keluar, dan rata-rata derajat graf.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Perhitungan statistik pada \texttt{tables.egl}},
+  label={lst:ch12-tables-statistics},
+  basicstyle=\ttfamily\scriptsize
+]
+var nodeCount = nodes.size();
+var edgeCount = edges.size();
+var resourceCount   = nodes.select(n | n.isTypeOf(Mediaflow!Resource)).size();
+var scalerCount     = nodes.select(n | n.isTypeOf(Mediaflow!Scaler)).size();
+var transcoderCount = nodes.select(n | n.isTypeOf(Mediaflow!Transcoder)).size();
+var externalCount   = nodes.select(n | n.isTypeOf(Mediaflow!Resource) and n.external).size();
+
+var entryNodes = nodes.select(n | edges.select(e | n.ports.includes(e.target)).isEmpty());
+var exitNodes  = nodes.select(n | edges.select(e | n.ports.includes(e.source)).isEmpty());
+
+var portCount = 0;
+var inPortCount = 0;
+var outPortCount = 0;
+for (n in nodes) {
+    portCount = portCount + n.ports.size();
+    for (p in n.ports) {
+        if (p.isOut()) { outPortCount = outPortCount + 1; }
+        else           { inPortCount  = inPortCount  + 1; }
+    }
+}
+\end{lstlisting}
+
+Baris tabel dibentuk sebagai string karena jumlah node dan edge bergantung pada isi model.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Pembentukan baris tabel node dan edge pada \texttt{tables.egl}},
+  label={lst:ch12-tables-rows},
+  basicstyle=\ttfamily\scriptsize
+]
+var nodeRows = "";
+for (n in nodes) {
+    nodeRows = nodeRows +
+      "<tr><td>" + nodeIdx.get(n) + "</td>" +
+      "<td>" + n.name + "</td>" +
+      "<td>" + n.kindLabel() + "</td>" +
+      "<td>" + n.ports.size() + "</td></tr>\n        ";
+}
+
+var edgeRows = "";
+var ex = 0;
+for (e in edges) {
+    edgeRows = edgeRows +
+      "<tr><td>e" + ex + "</td>" +
+      "<td>" + e.name + "</td>" +
+      "<td>" + e.sourceNode().name + ":" + e.source.name + "</td>" +
+      "<td>" + e.targetNode().name + ":" + e.target.name + "</td></tr>\n        ";
+    ex = ex + 1;
+}
+\end{lstlisting}
+
+Bagian output HTML kemudian menyisipkan statistik dan baris tabel tersebut ke dalam fragmen.
+
+\begin{lstlisting}[
+  language=egl,
+  caption={Kerangka fragmen HTML yang dihasilkan \texttt{tables.egl}},
+  label={lst:ch12-tables-html},
+  basicstyle=\ttfamily\scriptsize
+]
+<section class="fragment" data-flow="[%=graph.name%]">
+  <header class="frag-head">
+    <h2>[%=graph.name%]</h2>
+  </header>
+
+  <div class="stats">
+    <div class="stat-group">
+      <h3>Overview</h3>
+      <table>
+        <tr><td>Nodes</td><td class="v">[%=nodeCount%]</td></tr>
+        <tr><td>Edges</td><td class="v">[%=edgeCount%]</td></tr>
+        <tr><td>Ports</td><td class="v">[%=portCount%]</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>Nodes</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Ports</th></tr></thead>
+    <tbody>
+    [%=nodeRows%]
+    </tbody>
+  </table>
+
+  <h3>Edges</h3>
+  <table class="grid">
+    <thead><tr><th>#</th><th>Name</th><th>Source</th><th>Target</th></tr></thead>
+    <tbody>
+    [%=edgeRows%]
+    </tbody>
+  </table>
+</section>
+\end{lstlisting}
+
+Untuk proyek pembelajaran ini, nama node dan edge berasal dari model yang dikendalikan. Dalam aplikasi produksi, templat HTML sebaiknya menambahkan operasi \texttt{htmlEscape()} agar nilai model tidak dapat menyisipkan markup yang tidak diinginkan.
+
+\subsection{Runner Java}
+
+Runner \texttt{MediaflowToHtmlEGXRunner.java} menjalankan transformasi dari lingkungan Java/Eclipse. Ia mendaftarkan \textit{resource factory}, membaca semua \texttt{*.xmi} dari direktori input secara terurut, memuat setiap model sebagai \texttt{EmfModel}, lalu mengeksekusi EGX.
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Alur utama runner Java untuk memproses semua input XMI},
+  label={lst:ch12-java-main},
+  basicstyle=\ttfamily\scriptsize
+]
+String inputDir      = args.length > 0 ? args[0] : "input";
+String outputDir     = args.length > 1 ? args[1] : "output";
+String egxPath       = args.length > 2 ? args[2] : "transformer/m2t.egx";
+String metamodelPath = args.length > 3 ? args[3] : "../mediaflow/metamodels/mediaflow.ecore";
+
+Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap()
+        .put("ecore", new EcoreResourceFactoryImpl());
+Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap()
+        .put("xmi", new XMIResourceFactoryImpl());
+
+Files.createDirectories(Paths.get(outputDir));
+
+List<Path> inputs = new ArrayList<>();
+try (DirectoryStream<Path> stream =
+         Files.newDirectoryStream(Paths.get(inputDir), "*.xmi")) {
+    for (Path p : stream) inputs.add(p);
+}
+Collections.sort(inputs);
+
+for (Path input : inputs) {
+    runOne(input, outputDir, egxPath, metamodelPath);
+}
+\end{lstlisting}
+
+Pada setiap input, runner memuat model, mengambil nama graf untuk pesan log, menyiapkan \texttt{EglFileGeneratingTemplateFactory}, lalu menjalankan \texttt{EgxModule}.
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Eksekusi satu model dengan \texttt{EgxModule}},
+  label={lst:ch12-java-run-one},
+  basicstyle=\ttfamily\scriptsize
+]
+EmfModel model = new EmfModel();
+model.setName("Mediaflow");
+model.setMetamodelFile(new File(metamodelPath).getAbsolutePath());
+model.setModelFile(input.toAbsolutePath().toString());
+model.setReadOnLoad(true);
+model.setStoredOnDisposal(false);
+model.load();
+
+EglFileGeneratingTemplateFactory factory = new EglFileGeneratingTemplateFactory();
+factory.setOutputRoot(new File(egxPath).getAbsoluteFile().getParent());
+
+EgxModule module = new EgxModule(factory);
+try {
+    module.parse(new File(egxPath));
+    module.getContext().getModelRepository().addModel(model);
+    module.execute();
+} finally {
+    module.getContext().getModelRepository().dispose();
+    module.getContext().dispose();
+}
+\end{lstlisting}
+
+Perhatikan bahwa \texttt{model.setStoredOnDisposal(false)} digunakan karena transformasi ini hanya membaca model input. Tidak ada perubahan pada XMI sumber yang perlu disimpan kembali.
+
+\subsection{Viewer Web sebagai Konsumen Artefak}
+
+Transformasi M2T pada proyek ini berhenti pada JSON dan HTML fragment. Viewer web di \texttt{output/} menjadi konsumen hasil transformasi. Potongan JavaScript pada Listing~\ref{lst:ch12-viewer-loader} memperlihatkan kontrak path yang harus dipenuhi oleh output EGX.
+
+\begin{lstlisting}[
+  style=JavaScript,
+  caption={Viewer memuat hasil M2T melalui \texttt{fetch()}},
+  label={lst:ch12-viewer-loader},
+  basicstyle=\ttfamily\scriptsize
+]
+async function loadData(name) {
+  if (dataCache[name]) return dataCache[name];
+  const resp = await fetch("elk/" + name + ".json");
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  dataCache[name] = data;
+  return data;
+}
+
+async function loadTables(name) {
+  if (tableCache[name]) return tableCache[name];
+  const resp = await fetch("tables/" + name + ".tables.html");
+  if (!resp.ok) return "";
+  const html = await resp.text();
+  tableCache[name] = html;
+  return html;
+}
+\end{lstlisting}
+
+Karena viewer menggunakan \texttt{fetch()}, pengujian melalui browser paling aman dilakukan dengan server HTTP lokal dari direktori \texttt{output/}. Jika halaman dibuka langsung sebagai \texttt{file://}, sebagian browser dapat memblokir pengambilan \texttt{manifest.json}, JSON, atau fragmen HTML.
+
+\section{Pengujian dan Evaluasi}
+
+\subsection{Tujuan Evaluasi}
+
+Evaluasi transformasi M2T difokuskan pada empat aspek:
+\begin{enumerate}
+  \item \textbf{Kelengkapan output.} Setiap input \texttt{*.xmi} menghasilkan satu JSON ELK dan satu fragmen HTML.
+  \item \textbf{Konsistensi struktur graf.} Jumlah node, port, dan edge pada output sesuai dengan model input.
+  \item \textbf{Kebenaran referensi.} Edge pada JSON mengacu ke id port yang benar, dan metadata edge menampilkan node serta port sumber dan target yang tepat.
+  \item \textbf{Validitas format.} JSON dapat di-\textit{parse}, fragmen HTML dapat dimuat oleh viewer, dan nilai atribut yang mengandung karakter khusus tidak merusak output.
+\end{enumerate}
+
+\subsection{Hasil Evaluasi pada Model Input}
+
+\begin{table}[h]
+\centering
+\caption{Hasil transformasi M2T pada dua model input}
+\label{tab:ch12-hasil-evaluasi}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|c|c|c|>{\raggedright\arraybackslash}p{0.28\textwidth}|}
+\hline
+\textbf{Model Input} & \textbf{Node} & \textbf{Edge} & \textbf{Port} & \textbf{Artefak Output} \\
+\hline
+\texttt{flow1.xmi} & 3 & 2 & 4 & \texttt{flow1.json}, \texttt{flow1.tables.html} \\
+\hline
+\texttt{flow2.xmi} & 6 & 5 & 10 & \texttt{flow2.json}, \texttt{flow2.tables.html} \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+Tabel~\ref{tab:ch12-hasil-evaluasi} menunjukkan bahwa transformasi mempertahankan ukuran topologi model. \texttt{flow1.xmi} menghasilkan graf linier dengan 3 node, 4 port, dan 2 edge. \texttt{flow2.xmi} menghasilkan graf bercabang dengan 6 node, 10 port, dan 5 edge.
+
+\subsection{Contoh Output JSON}
+
+Listing~\ref{lst:ch12-output-json-example} memperlihatkan potongan output \texttt{flow1.json}. Struktur ini menunjukkan bagaimana satu edge mengacu ke id port, bukan langsung ke id node.
+
+\begin{lstlisting}[
+  language=json,
+  caption={Potongan output \texttt{output/elk/flow1.json}},
+  label={lst:ch12-output-json-example},
+  basicstyle=\ttfamily\scriptsize
+]
+{
+  "name": "flow1",
+  "elk": {
+    "id": "root",
+    "children": [
+      {
+        "id": "n0",
+        "labels": [{"text": "inputVideo"}],
+        "ports": [{"id": "n0_p0", "properties": {"port.side": "EAST"}}]
+      }
+    ],
+    "edges": [
+      {"id": "e0", "sources": ["n0_p0"], "targets": ["n1_p0"]}
+    ]
+  },
+  "nodeMeta": {
+    "n0": {"name": "inputVideo", "type": "Resource"}
+  },
+  "edgeMeta": {
+    "e0": {
+      "name": "e1",
+      "source": "inputVideo",
+      "target": "resize720",
+      "sourcePort": "inputOut",
+      "targetPort": "resizeIn"
+    }
+  }
+}
+\end{lstlisting}
+
+Potongan tersebut memperlihatkan tiga kontrak penting. Pertama, \texttt{children} dan \texttt{edges} adalah bagian yang dipakai ELK untuk layout. Kedua, \texttt{nodeMeta} dipakai viewer untuk tooltip node. Ketiga, \texttt{edgeMeta} dipakai viewer untuk tooltip edge dan inspeksi koneksi.
+
+\subsection{Strategi Pengujian Praktis}
+
+Strategi pengujian yang sesuai untuk proyek ini adalah:
+\begin{enumerate}
+  \item \textbf{Menjalankan runner pada dua input.} Pastikan direktori \texttt{output/elk/} dan \texttt{output/tables/} berisi berkas untuk \texttt{flow1} dan \texttt{flow2}.
+  \item \textbf{Memvalidasi JSON.} Buka atau parse \texttt{output/elk/flow1.json} dan \texttt{output/elk/flow2.json}. Kegagalan parse biasanya menunjukkan masalah pelolosan string atau koma berlebih.
+  \item \textbf{Memeriksa jumlah elemen.} Bandingkan jumlah \texttt{children}, \texttt{ports}, dan \texttt{edges} terhadap XMI input.
+  \item \textbf{Merender viewer.} Jalankan server statis pada direktori \texttt{output/}, buka \texttt{index.html}, lalu pilih \texttt{flow1} dan \texttt{flow2} dari dropdown.
+  \item \textbf{Menginspeksi tooltip dan tabel.} Pastikan tooltip node menampilkan metadata sesuai tipe dan tabel edge menampilkan pasangan \texttt{source:port} ke \texttt{target:port} yang benar.
+\end{enumerate}
+
+\section{Risiko dan Pitfall Umum}
+
+Beberapa risiko yang muncul pada transformasi M2T proyek ini adalah:
+\begin{enumerate}
+  \item \textbf{Output JSON rusak karena escaping.} Atribut \texttt{command} pada \texttt{flow1.xmi} mengandung baris baru. Tanpa \texttt{jsonEscape()} dan \texttt{jsonValue()}, nilai ini dapat membuat JSON tidak valid.
+
+  \item \textbf{Operasi bantuan diletakkan langsung di EGL.} Pada praktiknya, operasi yang dideklarasikan langsung di dalam blok EGL dapat menimbulkan perilaku sulit dilacak. Memindahkannya ke \texttt{helpers.eol} membuat templat lebih stabil dan lebih mudah dibaca.
+
+  \item \textbf{Path target tidak sesuai root EGX.} Target \texttt{../output/elk/...} bergantung pada konfigurasi \texttt{factory.setOutputRoot(...)}. Jika output root diganti, path EGX juga perlu ditinjau ulang.
+
+  \item \textbf{Nama graf tidak unik.} Nama berkas output berasal dari \texttt{graph.name}. Jika dua model input memakai nama graf yang sama, output model pertama akan tertimpa oleh model kedua.
+
+  \item \textbf{HTML tidak di-escape.} \texttt{tables.egl} menyisipkan nama node dan edge langsung ke HTML. Pada model yang berasal dari pengguna eksternal, perlu ditambahkan operasi \texttt{htmlEscape()}.
+
+  \item \textbf{Viewer diuji melalui \texttt{file://}.} Karena viewer saat ini menggunakan \texttt{fetch()}, pengujian langsung dari sistem berkas dapat gagal. Gunakan server HTTP lokal untuk pengujian browser.
+
+  \item \textbf{Ketergantungan plugin Eclipse.} Runner memakai EMF dan Epsilon. Saat dijalankan di luar Eclipse PDE, classpath harus menyertakan plugin Epsilon, EMF, ANTLR, Guava, dan Apache Commons Collections yang sesuai.
+\end{enumerate}
+
+\section{Ringkasan}
+
+Bab ini menunjukkan bagaimana transformasi model-ke-teks mengubah model \textit{MediaFlow} menjadi artefak yang langsung dikonsumsi oleh aplikasi web. Berbeda dari M2M yang menghasilkan model target, M2T menghasilkan teks dengan kontrak format yang ketat. Karena itu, implementasi M2T harus memperhatikan struktur data target, validitas leksikal, path output, dan kebutuhan konsumen artefak.
+
+Pada proyek \texttt{m2t}, EGX digunakan untuk mengorkestrasi dua output per \texttt{Graph}: JSON ELK dan fragmen HTML. EGL digunakan untuk menyusun teks target, sedangkan EOL menyediakan operasi bantuan seperti pelolosan JSON, klasifikasi tipe node, dan resolusi node pemilik port. Runner Java menghubungkan transformasi dengan EMF dan Epsilon, memuat setiap XMI input, lalu menjalankan aturan EGX.
+
+Studi kasus ini memperlihatkan nilai praktis MDE: satu model domain dapat menjadi sumber kebenaran untuk beberapa artefak teknis sekaligus. Ketika model berubah, output JSON dan HTML dapat diregenerasi secara deterministik, sehingga visualisasi dan dokumentasi teknis tetap selaras dengan struktur pipeline yang dimodelkan.

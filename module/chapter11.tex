@@ -320,7 +320,7 @@ ATL (\textit{ATLAS Transformation Language}) adalah bahasa transformasi deklarat
 \subsubsection{Header dan Deklarasi Modul}
 
 \begin{lstlisting}[
-  language=bash,
+  language=atl,
   caption={Header modul ATL: deklarasi metamodel dan arah transformasi},
   label={lst:ch11-atl-header},
   basicstyle=\ttfamily\scriptsize
@@ -340,7 +340,7 @@ create OUT : UML from IN : Mediaflow;
 Helper ATL mendefinisikan operasi yang dapat dipanggil dari dalam aturan transformasi. Enam helper utama diperlukan untuk navigasi graf:
 
 \begin{lstlisting}[
-  language=bash,
+  language=atl,
   caption={Helper ATL untuk navigasi graf: edge masuk/keluar, entry/exit, resolusi node},
   label={lst:ch11-atl-helpers},
   basicstyle=\ttfamily\scriptsize
@@ -381,7 +381,7 @@ helper context Mediaflow!Edge def: targetNode() : Mediaflow!Node =
 \subsubsection{Aturan Transformasi: Graph ke Model dan Activity}
 
 \begin{lstlisting}[
-  language=bash,
+  language=atl,
   caption={Aturan ATL \texttt{Graph2Model}: membangun root Model dan Activity UML},
   label={lst:ch11-atl-graph-rule},
   basicstyle=\ttfamily\scriptsize
@@ -418,7 +418,7 @@ rule Graph2Model {
 \subsubsection{Aturan Transformasi: Resource Kondisional}
 
 \begin{lstlisting}[
-  language=bash,
+  language=atl,
   caption={Tiga aturan ATL untuk transformasi kondisional Resource},
   label={lst:ch11-atl-resource-rules},
   basicstyle=\ttfamily\scriptsize
@@ -455,7 +455,7 @@ rule InternalResource2Action {
 \subsubsection{Aturan Transformasi: Node Pemrosesan dan Edge}
 
 \begin{lstlisting}[
-  language=bash,
+  language=atl,
   caption={Aturan ATL untuk Scaler, Transcoder, dan Edge},
   label={lst:ch11-atl-processing-rules},
   basicstyle=\ttfamily\scriptsize
@@ -500,7 +500,7 @@ ETL (\textit{Epsilon Transformation Language}) adalah bahasa transformasi hibrid
 \subsubsection{Operation untuk Navigasi Model}
 
 \begin{lstlisting}[
-  language=bash,
+  language=etl,
   caption={Operation ETL untuk navigasi graf (setara dengan helper ATL)},
   label={lst:ch11-etl-operations},
   basicstyle=\ttfamily\scriptsize
@@ -539,7 +539,7 @@ operation In!Edge targetNode() : In!Node {
 \subsubsection{Aturan Transformasi ETL}
 
 \begin{lstlisting}[
-  language=bash,
+  language=etl,
   caption={Aturan transformasi ETL untuk Resource, Scaler, Transcoder, dan Edge},
   label={lst:ch11-etl-rules},
   basicstyle=\ttfamily\scriptsize
@@ -597,7 +597,7 @@ rule Edge2ControlFlow
 \subsubsection{Blok Post: Pembungkusan ke Model dan Activity}
 
 \begin{lstlisting}[
-  language=bash,
+  language=etl,
   caption={Blok \texttt{post} ETL: pembungkusan elemen target ke dalam Model dan Activity},
   label={lst:ch11-etl-post},
   basicstyle=\ttfamily\scriptsize
