@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ASCII"?>
+<mediaflow:Graph xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mediaflow="mediaflow" name="duplicateAndIsolated">
+  <nodes xsi:type="mediaflow:Resource" name="inputVideo" uri="ftp://legacy.example/input.mp4" external="true">
+    <ports name="stream" direction="OUT"/>
+    <ports name="stream" direction="OUT"/>
+  </nodes>
+  <nodes xsi:type="mediaflow:Transcoder" name="inputVideo" command="ffmpeg -i input.mp4 out.mp4" replicas="8" videoCodec="libx264" audioCodec="opus" container="webm" bitrate="64">
+    <ports name="encodeIn" direction="IN"/>
+    <ports name="encodeOut" direction="OUT"/>
+  </nodes>
+  <edges name="duplicate" source="//@nodes.0/@ports.0" target="//@nodes.1/@ports.0"/>
+  <edges name="duplicate" source="//@nodes.1/@ports.1" target="//@nodes.1/@ports.0"/>
+</mediaflow:Graph>

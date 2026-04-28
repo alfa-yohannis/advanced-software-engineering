@@ -327,6 +327,25 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	showstringspaces=false
 }
 
+\lstdefinestyle{ocl}{
+  	keywords={package, endpackage, context, inv, def, pre, post, derive, init, body, let, in, if, then, else, endif, and, or, xor, not, implies, true, false, null, invalid, self},
+	morekeywords=[2]{Collection, Sequence, Set, OrderedSet, Bag, Map, String, Integer, Real, Boolean, UnlimitedNatural, OclAny, OclVoid, OclInvalid, IN, OUT, VIDEO, AUDIO, IMAGE, FFMPEG, GSTREAMER},
+  keywordstyle=\color{blue}\bfseries,
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray}\ttfamily\itshape,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]",
+  basicstyle=\ttfamily\scriptsize,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  breaklines=true,
+  frame=lines,
+  backgroundcolor=\color{lightgray!10},
+  showstringspaces=false
+}
+
 \lstdefinelanguage{etl}{
 	keywords={rule, transform, to, guard, pre, post, operation, return, var, new, for, in, if, else, while, not, and, or, true, false, null, self, import, delete},
 	ndkeywords={Any, Collection, Sequence, Set, Map, String, Integer, Real, Boolean, In, Out, Graph, Node, Port, Edge, Resource, Scaler, Transcoder, Model, Activity, InitialNode, ActivityFinalNode, OpaqueAction, ControlFlow},
@@ -448,25 +467,26 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 \begin{document}
       
 
-%	 \include{titlepage}
-%	
-%	 % Contents Page
-%	 \tableofcontents
+	 \include{titlepage}
 	
-%	\include{pendahuluan}
-%	\include{chapter01}
-%	\include{chapter02}
-%	\include{chapter03}
-%	\include{chapter04}
-%	\include{chapter05}
-%	\include{chapter06}
-%	\include{chapter07}
-%	\include{chapter08}
-%	\include{chapter09}
-%	\include{chapter10}
-%	\include{chapter11}
+	 % Contents Page
+	 \tableofcontents
+	
+	\include{pendahuluan}
+	\include{chapter01}
+	\include{chapter02}
+	\include{chapter03}
+	\include{chapter04}
+	\include{chapter05}
+	\include{chapter06}
+	\include{chapter07}
+	\include{chapter08}
+	\include{chapter09}
+	\include{chapter10}
+	\include{chapter11}
 	\include{chapter12}
-%	\include{chapter14}
+	\include{chapter13}
+	\include{chapter14}
 
 
 	\cite{020practical}

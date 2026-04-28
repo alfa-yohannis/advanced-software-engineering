@@ -1,0 +1,41 @@
+graph adaptiveDelivery {
+  resource inputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/input.mp4"
+    external=true {
+    port inputOut OUT
+  }
+
+  scaler resize720 backend=FFMPEG command="ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4"
+    replicas=1 width=1280 height=720 {
+    port resizeIn IN
+    port resizeOutH264 OUT
+    port resizeOutVp9 OUT
+  }
+
+  transcoder encodeH264 backend=FFMPEG command="ffmpeg -i scaled.mp4 -c:v libx264 -c:a aac output-h264.mp4"
+    replicas=1 videoCodec="libx264" audioCodec="aac" container="mp4" bitrate=2000 {
+    port encodeH264In IN
+    port encodeH264Out OUT
+  }
+
+  transcoder encodeVp9 backend=GSTREAMER command="gst-launch-1.0 filesrc location=scaled.mp4 ! decodebin ! vp9enc bitrate=2500 ! webmmux ! filesink location=output-vp9.webm"
+    replicas=1 videoCodec="vp9" audioCodec="opus" container="webm" bitrate=2500 {
+    port encodeVp9In IN
+    port encodeVp9Out OUT
+  }
+
+  resource outputH264 [mediaType=VIDEO] uri="file:///home/alfa/videos/output-h264.mp4"
+    external=true {
+    port outputH264In IN
+  }
+
+  resource outputVp9 [mediaType=VIDEO] uri="file:///home/alfa/videos/output-vp9.webm"
+    external=true {
+    port outputVp9In IN
+  }
+
+  edge e1 from inputOut to resizeIn
+  edge e2 from resizeOutH264 to encodeH264In
+  edge e3 from resizeOutVp9 to encodeVp9In
+  edge e4 from encodeH264Out to outputH264In
+  edge e5 from encodeVp9Out to outputVp9In
+}

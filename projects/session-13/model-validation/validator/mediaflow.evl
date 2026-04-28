@@ -1,0 +1,290 @@
+// MediaFlow validation rules for Session 13.
+//
+// These constraints intentionally follow the assumptions made in:
+// - session-11/m2m: a MediaFlow graph is an executable activity graph
+// - session-12/m2t: node, edge and graph names drive generated artefacts
+
+pre {
+    ("Running EVL validation over " + Mediaflow!Graph.all.size() + " graph(s)").println();
+}
+
+operation Any hasText() : Boolean {
+    return self.isDefined() and self.asString().trim().length() > 0;
+}
+
+operation Mediaflow!NamedElement label() : String {
+    if (self.name.hasText()) {
+        return self.name;
+    }
+    return "<unnamed " + self.eClass().name + ">";
+}
+
+operation Collection haveUniqueNames() : Boolean {
+    for (element in self) {
+        if (element.name.isUndefined()) {
+            return false;
+        }
+        if (self.select(other | other.name == element.name).size() > 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+operation Mediaflow!Port isIn() : Boolean {
+    return self.direction.toString() == "IN";
+}
+
+operation Mediaflow!Port isOut() : Boolean {
+    return self.direction.toString() == "OUT";
+}
+
+operation Mediaflow!Port ownerNode() : Any {
+    return Mediaflow!Node.all.selectOne(node | node.ports.includes(self));
+}
+
+operation Mediaflow!Port incidentEdges() : Collection {
+    return Mediaflow!Edge.all.select(edge |
+        (edge.source.isDefined() and edge.source == self) or
+        (edge.target.isDefined() and edge.target == self));
+}
+
+operation Mediaflow!Node incomingEdges() : Collection {
+    return Mediaflow!Edge.all.select(edge |
+        edge.target.isDefined() and self.ports.includes(edge.target));
+}
+
+operation Mediaflow!Node outgoingEdges() : Collection {
+    return Mediaflow!Edge.all.select(edge |
+        edge.source.isDefined() and self.ports.includes(edge.source));
+}
+
+operation Mediaflow!Edge sourceNode() : Any {
+    if (self.source.isUndefined()) {
+        return null;
+    }
+    return self.source.ownerNode();
+}
+
+operation Mediaflow!Edge targetNode() : Any {
+    if (self.target.isUndefined()) {
+        return null;
+    }
+    return self.target.ownerNode();
+}
+
+operation Mediaflow!Graph entryResources() : Collection {
+    return self.nodes.select(node |
+        node.isTypeOf(Mediaflow!Resource) and
+        node.external and
+        node.incomingEdges().isEmpty() and
+        not node.outgoingEdges().isEmpty());
+}
+
+operation Mediaflow!Graph exitResources() : Collection {
+    return self.nodes.select(node |
+        node.isTypeOf(Mediaflow!Resource) and
+        node.external and
+        not node.incomingEdges().isEmpty() and
+        node.outgoingEdges().isEmpty());
+}
+
+operation Mediaflow!Resource uriUsesKnownScheme() : Boolean {
+    if (not self.uri.hasText()) {
+        return false;
+    }
+    return self.uri.startsWith("file://") or
+        self.uri.startsWith("s3://") or
+        self.uri.startsWith("http://") or
+        self.uri.startsWith("https://");
+}
+
+operation Mediaflow!Transcoder containerCodecCombinationIsPlausible() : Boolean {
+    if (not self.container.hasText() or
+        not self.videoCodec.hasText() or
+        not self.audioCodec.hasText()) {
+        return true;
+    }
+
+    var container = self.container.toLowerCase();
+    var video = self.videoCodec.toLowerCase();
+    var audio = self.audioCodec.toLowerCase();
+
+    if (container == "webm") {
+        return (video == "vp9" or video == "vp8" or video == "av1") and
+            (audio == "opus" or audio == "vorbis");
+    }
+
+    if (container == "mp4" or container == "m4v") {
+        return (video == "libx264" or video == "h264" or video == "hevc" or
+            video == "h265" or video == "av1") and
+            (audio == "aac" or audio == "mp3" or audio == "alac");
+    }
+
+    return true;
+}
+
+context Mediaflow!Graph {
+
+    constraint HasName {
+        check : self.name.hasText()
+        message : "Graph must have a non-empty name because generated artefacts are named after it."
+    }
+
+    constraint HasNodesAndEdges {
+        check : not self.nodes.isEmpty() and not self.edges.isEmpty()
+        message : "Graph '" + self.label() + "' must contain at least one node and one edge."
+    }
+
+    constraint UniqueNodeNames {
+        check : self.nodes.haveUniqueNames()
+        message : "Graph '" + self.label() + "' has duplicate or missing node names."
+    }
+
+    constraint UniqueEdgeNames {
+        check : self.edges.haveUniqueNames()
+        message : "Graph '" + self.label() + "' has duplicate or missing edge names."
+    }
+
+    constraint HasExternalEntryAndExit {
+        check : not self.entryResources().isEmpty() and not self.exitResources().isEmpty()
+        message : "Graph '" + self.label() + "' must have at least one external entry resource and one external exit resource."
+    }
+
+    constraint NoIsolatedNodes {
+        check : self.nodes.select(node |
+            node.incomingEdges().isEmpty() and node.outgoingEdges().isEmpty()).isEmpty()
+        message : "Graph '" + self.label() + "' contains isolated nodes that cannot participate in the workflow."
+    }
+}
+
+context Mediaflow!Node {
+
+    constraint NodeHasName {
+        check : self.name.hasText()
+        message : "Every node must have a non-empty name."
+    }
+
+    constraint HasPorts {
+        check : not self.ports.isEmpty()
+        message : "Node '" + self.label() + "' must declare at least one port."
+    }
+
+    constraint UniquePortNamesPerNode {
+        check : self.ports.haveUniqueNames()
+        message : "Node '" + self.label() + "' has duplicate or missing port names."
+    }
+}
+
+context Mediaflow!Port {
+
+    constraint PortHasName {
+        check : self.name.hasText()
+        message : "Every port must have a non-empty name."
+    }
+
+    constraint PortParticipatesInAnEdge {
+        check : not self.incidentEdges().isEmpty()
+        message : "Port '" + self.label() + "' is not used by any edge."
+    }
+}
+
+context Mediaflow!Edge {
+
+    constraint EdgeHasName {
+        check : self.name.hasText()
+        message : "Every edge must have a non-empty name."
+    }
+
+    constraint EndpointsAreDeclared {
+        check : self.source.isDefined() and self.target.isDefined()
+        message : "Edge '" + self.label() + "' must declare both source and target ports."
+    }
+
+    constraint ConnectsOutputToInput {
+        guard : self.source.isDefined() and self.target.isDefined()
+        check : self.source.isOut() and self.target.isIn()
+        message : "Edge '" + self.label() + "' must connect an OUT port to an IN port."
+    }
+
+    constraint ConnectsDifferentNodes {
+        guard : self.source.isDefined() and self.target.isDefined()
+        check : not (self.sourceNode() == self.targetNode())
+        message : "Edge '" + self.label() + "' connects two ports on the same node."
+    }
+}
+
+context Mediaflow!Resource {
+
+    constraint UriIsDeclared {
+        check : self.uri.hasText()
+        message : "Resource '" + self.label() + "' must declare a URI."
+    }
+
+    constraint UriUsesKnownScheme {
+        check : self.uriUsesKnownScheme()
+        message : "Resource '" + self.label() + "' URI should use file://, s3://, http:// or https://."
+    }
+
+    constraint ExternalResourcesAreDirectionalBoundaries {
+        check : not self.external or
+            self.ports.select(port | port.isIn()).isEmpty() or
+            self.ports.select(port | port.isOut()).isEmpty()
+        message : "External resource '" + self.label() + "' should be an input-only or output-only workflow boundary."
+    }
+}
+
+context Mediaflow!Transformer {
+
+    constraint CommandIsDeclared {
+        check : self.command.hasText()
+        message : "Transformer '" + self.label() + "' must declare the command it will execute."
+    }
+
+    constraint ReplicasArePositive {
+        check : self.replicas >= 1
+        message : "Transformer '" + self.label() + "' must request at least one replica."
+    }
+
+    constraint TransformersHaveInputAndOutputFlow {
+        check : not self.incomingEdges().isEmpty() and not self.outgoingEdges().isEmpty()
+        message : "Transformer '" + self.label() + "' must have incoming and outgoing edges."
+    }
+
+    critique TooManyWorkers {
+        check : self.replicas <= 4
+        message : "Transformer '" + self.label() + "' requests " + self.replicas +
+            " worker replicas. Use 4 or fewer workers for the course examples."
+    }
+}
+
+context Mediaflow!Scaler {
+
+    constraint DimensionsArePositive {
+        check : self.width > 0 and self.height > 0
+        message : "Scaler '" + self.label() + "' must have positive width and height."
+    }
+
+    constraint DimensionsAreWithin8K {
+        check : self.width <= 7680 and self.height <= 4320
+        message : "Scaler '" + self.label() + "' targets a resolution larger than 8K."
+    }
+}
+
+context Mediaflow!Transcoder {
+
+    constraint CodecsAndContainerAreDeclared {
+        check : self.videoCodec.hasText() and self.audioCodec.hasText() and self.container.hasText()
+        message : "Transcoder '" + self.label() + "' must declare video codec, audio codec and container."
+    }
+
+    constraint BitrateIsPlausible {
+        check : self.bitrate >= 128 and self.bitrate <= 50000
+        message : "Transcoder '" + self.label() + "' bitrate must be between 128 and 50000 kbps."
+    }
+
+    constraint ContainerMatchesCodecs {
+        check : self.containerCodecCombinationIsPlausible()
+        message : "Transcoder '" + self.label() + "' uses an implausible container/codec combination."
+    }
+}

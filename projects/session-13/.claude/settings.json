@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pdflatex -interaction=nonstopmode -halt-on-error session13.tex)",
+      "Bash(xelatex -interaction=nonstopmode -halt-on-error session13.tex)",
+      "Bash(xelatex -interaction=nonstopmode -halt-on-error advanced-software-engineering.tex)",
+      "Bash(xelatex -interaction=nonstopmode advanced-software-engineering.tex)",
+      "Bash(xelatex -interaction=nonstopmode session13.tex)"
+    ]
+  }
+}

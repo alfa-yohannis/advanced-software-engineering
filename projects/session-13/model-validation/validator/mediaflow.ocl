@@ -1,0 +1,159 @@
+-- OCL companion specification for the MediaFlow validation case study.
+-- It covers the core invariants from the EVL file so students can compare
+-- EVL's pragmatic validation syntax with declarative OCL over the same
+-- metamodel. EVL adds implementation-oriented checks such as URI schemes,
+-- codec/container compatibility and warning severity.
+
+package mediaflow
+
+context Graph
+inv HasName:
+    self.name <> null and self.name.size() > 0
+
+context Graph
+inv HasNodesAndEdges:
+    not self.nodes->isEmpty() and not self.edges->isEmpty()
+
+context Graph
+inv UniqueNodeNames:
+    self.nodes->isUnique(name)
+
+context Graph
+inv UniqueEdgeNames:
+    self.edges->isUnique(name)
+
+context Graph
+inv HasExternalEntryAndExit:
+    self.nodes->exists(node |
+        node.oclIsTypeOf(Resource) and
+        node.oclAsType(Resource).external and
+        Edge.allInstances()->select(edge |
+            edge.target <> null and node.ports->includes(edge.target))->isEmpty() and
+        not Edge.allInstances()->select(edge |
+            edge.source <> null and node.ports->includes(edge.source))->isEmpty()) and
+    self.nodes->exists(node |
+        node.oclIsTypeOf(Resource) and
+        node.oclAsType(Resource).external and
+        not Edge.allInstances()->select(edge |
+            edge.target <> null and node.ports->includes(edge.target))->isEmpty() and
+        Edge.allInstances()->select(edge |
+            edge.source <> null and node.ports->includes(edge.source))->isEmpty())
+
+context Graph
+inv NoIsolatedNodes:
+    self.nodes->forAll(node |
+        not (
+            Edge.allInstances()->select(edge |
+                edge.target <> null and node.ports->includes(edge.target))->isEmpty() and
+            Edge.allInstances()->select(edge |
+                edge.source <> null and node.ports->includes(edge.source))->isEmpty()))
+
+context Node
+inv NodeHasName:
+    self.name <> null and self.name.size() > 0
+
+context Node
+inv HasPorts:
+    not self.ports->isEmpty()
+
+context Node
+inv UniquePortNamesPerNode:
+    self.ports->isUnique(name)
+
+context Port
+inv PortHasName:
+    self.name <> null and self.name.size() > 0
+
+context Port
+inv PortParticipatesInAnEdge:
+    Edge.allInstances()->exists(edge | edge.source = self or edge.target = self)
+
+context Edge
+inv EdgeHasName:
+    self.name <> null and self.name.size() > 0
+
+context Edge
+inv EndpointsAreDeclared:
+    self.source <> null and self.target <> null
+
+context Edge
+inv ConnectsOutputToInput:
+    self.source <> null and self.target <> null implies
+    (self.source.direction = Direction::OUT and self.target.direction = Direction::IN)
+
+context Edge
+inv ConnectsDifferentNodes:
+    self.source <> null and self.target <> null implies
+    Node.allInstances()->any(node | node.ports->includes(self.source)) <>
+    Node.allInstances()->any(node | node.ports->includes(self.target))
+
+context Resource
+inv UriIsDeclared:
+    self.uri <> null and self.uri.size() > 0
+
+context Resource
+inv UriUsesKnownScheme:
+    self.uri <> null and self.uri.size() > 0 and
+    ((self.uri.size() >= 7 and self.uri.substring(1, 7) = 'file://') or
+     (self.uri.size() >= 5 and self.uri.substring(1, 5) = 's3://') or
+     (self.uri.size() >= 7 and self.uri.substring(1, 7) = 'http://') or
+     (self.uri.size() >= 8 and self.uri.substring(1, 8) = 'https://'))
+
+context Resource
+inv ExternalResourcesAreDirectionalBoundaries:
+    not self.external or
+    self.ports->select(port | port.direction = Direction::IN)->isEmpty() or
+    self.ports->select(port | port.direction = Direction::OUT)->isEmpty()
+
+context Transformer
+inv CommandIsDeclared:
+    self.command <> null and self.command.size() > 0
+
+context Transformer
+inv ReplicasArePositive:
+    self.replicas >= 1
+
+context Transformer
+inv TransformersHaveInputAndOutputFlow:
+    not Edge.allInstances()->select(edge |
+        edge.target <> null and self.ports->includes(edge.target))->isEmpty() and
+    not Edge.allInstances()->select(edge |
+        edge.source <> null and self.ports->includes(edge.source))->isEmpty()
+
+context Transformer
+inv TooManyWorkers:
+    self.replicas <= 4
+
+context Scaler
+inv DimensionsArePositive:
+    self.width > 0 and self.height > 0
+
+context Scaler
+inv DimensionsAreWithin8K:
+    self.width <= 7680 and self.height <= 4320
+
+context Transcoder
+inv CodecsAndContainerAreDeclared:
+    self.videoCodec <> null and self.videoCodec.size() > 0 and
+    self.audioCodec <> null and self.audioCodec.size() > 0 and
+    self.container <> null and self.container.size() > 0
+
+context Transcoder
+inv BitrateIsPlausible:
+    self.bitrate >= 128 and self.bitrate <= 50000
+
+context Transcoder
+inv ContainerMatchesCodecs:
+    self.container = null or self.container.size() = 0 or
+    self.videoCodec = null or self.videoCodec.size() = 0 or
+    self.audioCodec = null or self.audioCodec.size() = 0 or
+    ((self.container = 'webm' implies
+        ((self.videoCodec = 'vp9' or self.videoCodec = 'vp8' or self.videoCodec = 'av1') and
+         (self.audioCodec = 'opus' or self.audioCodec = 'vorbis'))) and
+     ((self.container = 'mp4' or self.container = 'm4v') implies
+        ((self.videoCodec = 'libx264' or self.videoCodec = 'h264' or
+          self.videoCodec = 'hevc' or self.videoCodec = 'h265' or
+          self.videoCodec = 'av1') and
+         (self.audioCodec = 'aac' or self.audioCodec = 'mp3' or self.audioCodec = 'alac'))))
+
+endpackage

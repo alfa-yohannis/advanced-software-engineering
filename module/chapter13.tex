@@ -1,0 +1,865 @@
+\chapter{Model Validation}
+\label{chap:model-validation}
+
+\section*{Tujuan Pembelajaran}
+\begin{enumerate}
+  \item Menjelaskan peran validasi model dalam siklus \textit{Model-Driven Engineering} (MDE), khususnya sebagai gerbang kualitas sebelum model digunakan untuk transformasi model-ke-model (M2M) dan model-ke-teks (M2T).
+  \item Menerapkan validasi model \textit{MediaFlow} menggunakan Epsilon Validation Language (EVL) dan Object Constraint Language (OCL), termasuk penulisan helper, constraint, guard, message, serta warning/critique.
+  \item Menganalisis \textit{trade-off} antara EVL dan OCL dari sisi ekspresivitas, keterbacaan, pelaporan error, tingkat formalitas, dan integrasi Java/Eclipse.
+\end{enumerate}
+
+\section{Pendahuluan}
+
+Bab~\ref{chap:m2m-transformation} memperlihatkan bagaimana model \textit{MediaFlow} ditransformasikan menjadi UML Activity Diagram. Bab~\ref{chap:m2t-transformation} kemudian menunjukkan bagaimana model yang sama digunakan untuk menghasilkan JSON ELK dan fragmen HTML. Kedua proses tersebut bergantung pada asumsi yang sama: model input harus benar, lengkap, dan konsisten.
+
+Metamodel \texttt{mediaflow.ecore} memang sudah membatasi struktur dasar model. Sebagai contoh, \texttt{Graph} memiliki kumpulan \texttt{Node} dan \texttt{Edge}, \texttt{Node} memiliki \texttt{Port}, dan \texttt{Edge} memiliki referensi \texttt{source} dan \texttt{target}. Namun, banyak aturan domain tidak cukup diekspresikan hanya melalui kardinalitas dan tipe Ecore. Metamodel dapat menyatakan bahwa sebuah edge menghubungkan dua port, tetapi tidak otomatis menjamin bahwa edge tersebut mengalir dari port \texttt{OUT} ke port \texttt{IN}. Metamodel juga dapat menyimpan atribut \texttt{name}, tetapi tidak menjamin bahwa nama node unik sehingga aman digunakan sebagai identifier output.
+
+Bab ini membahas proyek \texttt{model-validation} pada sesi 13. Proyek tersebut memvalidasi instans XMI dari metamodel \texttt{mediaflow.ecore} menggunakan dua pendekatan:
+\begin{itemize}
+  \item \textbf{EVL (Epsilon Validation Language)} sebagai bahasa validasi eksekutabel yang mendukung helper, guard, pesan diagnostik, dan \texttt{critique} untuk warning.
+  \item \textbf{OCL (Object Constraint Language)} sebagai spesifikasi deklaratif pendamping yang menuliskan invariant formal atas metamodel yang sama.
+\end{itemize}
+
+Tujuan utamanya bukan sekadar mencari model yang salah, tetapi menjadikan validasi sebagai \textit{quality gate}. Jika model gagal divalidasi, transformasi M2M atau M2T sebaiknya tidak dijalankan karena output yang dihasilkan akan ikut salah, tidak lengkap, atau membingungkan pengguna.
+
+\section{Deskripsi Masalah Domain yang Diselesaikan}
+
+\subsection{Konteks Domain}
+
+Domain sumber tetap sama dengan bab-bab sebelumnya: pipeline pemrosesan media digital \textit{MediaFlow}. Sebuah pipeline direpresentasikan sebagai \texttt{Graph} yang memuat:
+\begin{enumerate}
+  \item \texttt{Resource}, yaitu sumber atau tujuan media, misalnya file input dan file output.
+  \item \texttt{Scaler}, yaitu transformer yang mengubah resolusi video.
+  \item \texttt{Transcoder}, yaitu transformer yang mengubah codec, container, dan bitrate.
+  \item \texttt{Port}, yaitu titik koneksi pada node dengan arah \texttt{IN} atau \texttt{OUT}.
+  \item \texttt{Edge}, yaitu aliran data antar-port.
+\end{enumerate}
+
+Pada sesi 11, model ini diperlakukan sebagai activity graph yang dapat ditransformasikan menjadi UML Activity Diagram. Karena itu, model harus memiliki sumber aliran dan tujuan aliran yang jelas. Pada sesi 12, nama graph, node, edge, dan port digunakan untuk menghasilkan artefak teks. Karena itu, nama harus stabil dan tidak duplikatif.
+
+\subsection{Target Validasi}
+
+Proyek \texttt{model-validation} menggunakan empat model input sebagai korpus validasi. Dua model bersifat valid, sedangkan dua model lain sengaja dibuat salah untuk menguji kemampuan validator.
+
+\begin{table}[h]
+\centering
+\caption{Korpus input pada proyek \texttt{model-validation}}
+\label{tab:ch13-validation-corpus}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.24\textwidth}|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.45\textwidth}|}
+\hline
+\textbf{Model Input} & \textbf{Kategori} & \textbf{Tujuan Pengujian} \\
+\hline
+\texttt{linear-resize.xmi} & Valid & Pipeline linier: resource input, satu scaler, resource output. \\
+\hline
+\texttt{adaptive-delivery.xmi} & Valid & Pipeline bercabang: satu hasil resize dikodekan ke dua format output. \\
+\hline
+\texttt{broken-direction.xmi} & Invalid & Menguji error arah edge, command kosong, replika nol, dimensi tidak valid, dan URI output kosong. \\
+\hline
+\texttt{duplicate-and-isolated.xmi} & Invalid & Menguji duplikasi nama, port tidak terpakai, self-loop, URI scheme tidak didukung, bitrate rendah, kombinasi codec/container tidak masuk akal, dan warning jumlah worker. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\noindent Tabel~\ref{tab:ch13-validation-corpus} menunjukkan bahwa korpus tidak hanya menguji satu jenis kesalahan. Model invalid dirancang untuk memicu error pada beberapa lapisan: struktur graph, kualitas nama, semantik edge, atribut resource, atribut transformer, dan aturan khusus scaler/transcoder.
+
+\subsection{Kategori Aturan Validasi}
+
+Aturan validasi dikelompokkan berdasarkan elemen metamodel. Tabel~\ref{tab:ch13-constraint-categories} merangkum kategori constraint yang diterapkan.
+
+\begin{table}[h]
+\centering
+\caption{Kategori aturan validasi MediaFlow}
+\label{tab:ch13-constraint-categories}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.20\textwidth}|>{\raggedright\arraybackslash}p{0.66\textwidth}|}
+\hline
+\textbf{Konteks} & \textbf{Aturan Utama} \\
+\hline
+\texttt{Graph} & Nama graph wajib ada, graph tidak boleh kosong, nama node dan edge harus unik, graph harus memiliki resource entry dan exit eksternal, serta tidak boleh memiliki node terisolasi. \\
+\hline
+\texttt{Node} & Node wajib bernama, memiliki port, dan nama port unik dalam satu node. \\
+\hline
+\texttt{Port} & Port wajib bernama dan harus berpartisipasi minimal pada satu edge. \\
+\hline
+\texttt{Edge} & Edge wajib bernama, memiliki source dan target, menghubungkan \texttt{OUT -> IN}, dan tidak boleh menghubungkan dua port pada node yang sama. \\
+\hline
+\texttt{Resource} & URI wajib ada, URI harus menggunakan scheme yang dikenal, dan resource eksternal harus menjadi batas input-only atau output-only. \\
+\hline
+\texttt{Transformer} & Command wajib ada, jumlah replika minimal satu, transformer harus memiliki incoming dan outgoing flow, serta jumlah worker terlalu besar dilaporkan sebagai warning. \\
+\hline
+\texttt{Scaler} & Lebar dan tinggi harus positif dan tidak melebihi resolusi 8K. \\
+\hline
+\texttt{Transcoder} & Codec/container wajib ada, bitrate harus masuk akal, dan kombinasi container-codec harus plausibel. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\subsection{Masalah Utama}
+
+Permasalahan yang mendorong penggunaan validasi model pada proyek ini adalah:
+\begin{enumerate}
+  \item \textbf{Metamodel tidak cukup untuk semua aturan domain.} Ecore dapat mendefinisikan tipe dan containment, tetapi aturan seperti ``edge harus mengalir dari \texttt{OUT} ke \texttt{IN}'' atau ``transcoder WebM sebaiknya memakai VP8/VP9/AV1 dengan Opus/Vorbis'' memerlukan bahasa constraint.
+  \item \textbf{Transformasi membutuhkan precondition yang kuat.} M2M membutuhkan graph yang memiliki alur masuk dan keluar. M2T membutuhkan nama yang stabil dan unik agar output file, id JSON, dan tabel HTML tidak ambigu.
+  \item \textbf{Error harus dapat dijelaskan kepada pemodel.} Validator tidak cukup mengembalikan \texttt{false}. Ia harus menjelaskan elemen mana yang salah dan bagaimana konteks kesalahannya.
+  \item \textbf{Tidak semua masalah harus bersifat fatal.} Replika transformer yang terlalu banyak pada contoh perkuliahan adalah risiko operasional, tetapi bukan pelanggaran struktur model. Karena itu, proyek menggunakan warning melalui \texttt{critique}.
+  \item \textbf{Perbandingan bahasa validasi penting untuk pembelajaran.} EVL lebih pragmatis untuk eksekusi dan pelaporan, sedangkan OCL lebih formal sebagai notasi invariant. Keduanya ditulis agar mahasiswa dapat membandingkan pendekatan pada domain yang sama.
+\end{enumerate}
+
+\subsection{Kebutuhan Validasi}
+
+Berdasarkan masalah tersebut, validasi model pada proyek ini membutuhkan:
+\begin{enumerate}
+  \item \textbf{Bahasa constraint} yang dapat mengekspresikan aturan lintas-elemen, termasuk navigasi dari port ke owner node dan dari node ke edge masuk/keluar.
+  \item \textbf{Helper/operation} untuk menghindari duplikasi logika, seperti \texttt{incomingEdges()}, \texttt{outgoingEdges()}, \texttt{sourceNode()}, dan \texttt{targetNode()}.
+  \item \textbf{Pesan diagnostik kontekstual} agar output validasi dapat langsung menunjuk graph, node, port, atau edge yang bermasalah.
+  \item \textbf{Dukungan severity} untuk membedakan error keras dan warning.
+  \item \textbf{Runner Java} yang dapat membaca satu file atau direktori input, menjalankan validasi secara rekursif, dan mengembalikan exit code gagal ketika error ditemukan.
+  \item \textbf{Spesifikasi pembanding} dalam OCL agar aturan validasi dapat dibaca sebagai invariant formal, bukan hanya sebagai skrip eksekusi.
+\end{enumerate}
+
+\section{Metodologi Validasi Model}
+
+Metodologi pengembangan validasi model pada proyek ini dapat dibaca sebagai alur dari analisis domain hingga evaluasi hasil validasi.
+
+\subsection{Langkah 1: Mengidentifikasi Invariant dari Transformasi Sebelumnya}
+
+Validasi tidak ditulis dari ruang kosong. Aturan berasal dari asumsi yang sudah muncul pada sesi M2M dan M2T. Misalnya, transformasi M2M menganggap graph memiliki entry dan exit sehingga dapat diterjemahkan menjadi \texttt{InitialNode} dan \texttt{ActivityFinalNode}. Transformasi M2T menganggap nama graph dapat dipakai sebagai nama file output.
+
+\textbf{Input tahap ini:} metamodel \texttt{mediaflow.ecore}, aturan transformasi M2M, dan kontrak output M2T.
+
+\textbf{Output tahap ini:} daftar invariant domain yang perlu dijaga sebelum model diproses lebih lanjut.
+
+\subsection{Langkah 2: Menyusun Korpus Valid dan Invalid}
+
+Korpus valid digunakan untuk memastikan validator tidak terlalu ketat. Korpus invalid digunakan untuk memastikan setiap aturan benar-benar dapat mendeteksi pelanggaran. Pada proyek ini, \texttt{linear-resize} dan \texttt{adaptive-delivery} menjadi contoh valid, sedangkan \texttt{broken-direction} dan \texttt{duplicate-and-isolated} menjadi contoh invalid.
+
+\textbf{Input tahap ini:} contoh pipeline dari sesi sebelumnya dan daftar skenario kesalahan yang ingin diuji.
+
+\textbf{Output tahap ini:} direktori \texttt{input/valid/} dan \texttt{input/invalid/} yang berisi pasangan \texttt{.mediaflow} dan \texttt{.xmi}.
+
+\subsection{Langkah 3: Mendefinisikan Helper Navigasi}
+
+Aturan validasi banyak membutuhkan navigasi yang sama. Contohnya, untuk mengetahui apakah sebuah node adalah entry, validator harus mencari semua edge yang target port-nya dimiliki node tersebut. Untuk mengetahui apakah edge membentuk self-loop, validator harus menemukan node pemilik port source dan target.
+
+\textbf{Input tahap ini:} struktur containment dan referensi pada metamodel.
+
+\textbf{Output tahap ini:} helper EVL dan ekspresi OCL yang menyelesaikan relasi port-ke-node dan node-ke-edge.
+
+\subsection{Langkah 4: Menulis Constraint EVL}
+
+EVL digunakan sebagai validator utama karena ia mendukung pesan error yang spesifik, guard untuk constraint kondisional, dan \texttt{critique} untuk warning. Setiap constraint ditempatkan pada konteks metamodel yang paling dekat dengan masalahnya: aturan nama graph berada pada \texttt{Graph}, aturan port pada \texttt{Port}, dan aturan codec pada \texttt{Transcoder}.
+
+\textbf{Input tahap ini:} daftar invariant dan helper navigasi.
+
+\textbf{Output tahap ini:} berkas \texttt{validator/mediaflow.evl}.
+
+\subsection{Langkah 5: Menulis Spesifikasi OCL Pendamping}
+
+OCL ditulis sebagai spesifikasi pendamping untuk invariant utama. Tujuannya adalah memberi representasi yang lebih formal dan deklaratif. Karena OCL tidak membawa mekanisme warning seperti \texttt{critique}, runner Java memetakan invariant \texttt{TooManyWorkers} menjadi warning agar ringkasan hasilnya sejajar dengan EVL.
+
+\textbf{Input tahap ini:} constraint EVL yang bersifat hard-error dan warning yang ingin disejajarkan.
+
+\textbf{Output tahap ini:} berkas \texttt{validator/mediaflow.ocl}.
+
+\subsection{Langkah 6: Mengimplementasikan Runner Java}
+
+Runner Java bertugas menghubungkan validasi dengan file system dan EMF. Ia mendaftarkan resource factory, mengumpulkan file \texttt{*.xmi}, memuat model, menjalankan modul validasi, lalu mencetak hasil per model dan ringkasan keseluruhan.
+
+\textbf{Input tahap ini:} file input, path validator, dan path metamodel.
+
+\textbf{Output tahap ini:}\\
+\texttt{MediaflowEvlValidationRunner.java} dan\\
+\texttt{MediaflowOclValidationRunner.java}.
+
+\subsection{Langkah 7: Mengevaluasi Hasil Validasi}
+
+Evaluasi dilakukan dengan menjalankan EVL dan OCL terhadap seluruh korpus input. Hasil yang diharapkan adalah: dua model valid menghasilkan \texttt{OK}, dua model invalid menghasilkan daftar error/warning yang konsisten, dan kedua pendekatan menghasilkan jumlah isu yang sama.
+
+\textbf{Input tahap ini:} seluruh model XMI pada direktori \texttt{input/}.
+
+\textbf{Output tahap ini:} laporan validasi dengan total 17 error dan 1 warning pada korpus sesi 13.
+
+\section{Implementasi Detail}
+
+\subsection{Arsitektur Implementasi}
+
+Proyek \texttt{model-validation} memisahkan model input, spesifikasi validasi, runner Java, dan konfigurasi Eclipse/PDE.
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Struktur direktori utama proyek \texttt{model-validation}},
+  label={lst:ch13-project-structure},
+  basicstyle=\ttfamily\scriptsize
+]
+model-validation/
+|-- src/validation/
+|   |-- MediaflowEvlValidationRunner.java
+|   +-- MediaflowOclValidationRunner.java
+|-- validator/
+|   |-- mediaflow.evl
+|   +-- mediaflow.ocl
+|-- input/
+|   |-- valid/
+|   |   |-- linear-resize.xmi
+|   |   |-- linear-resize.mediaflow
+|   |   |-- adaptive-delivery.xmi
+|   |   +-- adaptive-delivery.mediaflow
+|   +-- invalid/
+|       |-- broken-direction.xmi
+|       |-- broken-direction.mediaflow
+|       |-- duplicate-and-isolated.xmi
+|       +-- duplicate-and-isolated.mediaflow
+|-- run-evl-validation.sh
+|-- run-ocl-validation.sh
+|-- run-validation.sh
+|-- META-INF/MANIFEST.MF
++-- pom.xml
+\end{lstlisting}
+
+\noindent Listing~\ref{lst:ch13-project-structure} memperlihatkan bahwa metamodel tidak disalin ke proyek ini. Runner menunjuk ke \texttt{../mediaflow/metamodels/mediaflow.ecore}, sehingga validasi selalu menggunakan definisi domain yang sama dengan proyek \texttt{mediaflow}, M2M, dan M2T.
+
+\subsection{Model Input Invalid: Broken Direction}
+
+Listing~\ref{lst:ch13-broken-direction} menunjukkan model tekstual \texttt{broken-direction.mediaflow}. Model ini tampak kecil, tetapi sengaja memuat beberapa pelanggaran sekaligus.
+
+\begin{lstlisting}[
+  language=mediaflow,
+  caption={Model invalid \texttt{broken-direction.mediaflow}},
+  label={lst:ch13-broken-direction},
+  basicstyle=\ttfamily\scriptsize
+]
+graph brokenDirection {
+  resource inputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/input.mp4"
+    external=true {
+    port inputOut OUT
+  }
+
+  scaler resize720 backend=FFMPEG command=""
+    replicas=0 width=0 height=720 {
+    port resizeIn IN
+    port resizeOut OUT
+  }
+
+  resource outputVideo [mediaType=VIDEO] uri=""
+    external=true {
+    port outputIn IN
+  }
+
+  edge e1 from inputOut to resizeIn
+  edge e2 from outputIn to resizeOut
+}
+\end{lstlisting}
+
+\noindent Edge \texttt{e2} menghubungkan \texttt{outputIn} ke \texttt{resizeOut}, sehingga arahnya menjadi \texttt{IN -> OUT}. Selain itu, scaler tidak memiliki command, jumlah replika nol, lebar nol, dan resource output tidak memiliki URI. Satu model kecil dapat memicu banyak constraint karena kesalahan topologi sering menimbulkan efek berantai.
+
+Ilustrasi pada Gambar~\ref{fig:ch13-broken-direction-tikz} memperlihatkan struktur model \texttt{broken-direction} secara visual. Edge \texttt{e1} berwarna hijau memenuhi aturan \texttt{OUT -> IN}, sedangkan edge \texttt{e2} berwarna merah putus-putus menghubungkan port \texttt{IN} (\texttt{outputIn}) ke port \texttt{OUT} (\texttt{resizeOut}) sehingga melanggar \texttt{ConnectsOutputToInput}. Akibat lanjutan dari pelanggaran ini adalah \texttt{outputVideo} tidak lagi berfungsi sebagai exit boundary yang sah, sehingga constraint \texttt{HasExternalEntryAndExit} ikut gagal.
+
+\begin{figure}[h]
+\centering
+\scalebox{0.95}{
+\begin{tikzpicture}[>=Latex,
+  mfnode/.style={draw, rounded corners=3pt, minimum width=2.6cm, minimum height=1.4cm, align=center, font=\scriptsize},
+  res/.style={mfnode, fill=blue!10},
+  scl/.style={mfnode, fill=orange!15},
+  mfport/.style={draw, circle, inner sep=0pt, minimum size=4mm, font=\tiny, fill=white},
+  portIn/.style={mfport, fill=green!25},
+  portOut/.style={mfport, fill=red!25},
+  ok/.style={->, thick, green!50!black},
+  bad/.style={->, very thick, red, dashed}]
+
+  \node[res] (in) {\textbf{inputVideo}\\Resource\\external};
+  \node[scl, right=28mm of in] (sc) {\textbf{resize720}\\Scaler\\\textcolor{red}{cmd="" w=0 r=0}};
+  \node[res, right=28mm of sc] (out) {\textbf{outputVideo}\\Resource\\\textcolor{red}{uri=""}};
+
+  \node[portOut] (inOut) at ($(in.east)+(0,0)$) {\tiny O};
+  \node[portIn]  (scIn)  at ($(sc.west)+(0,0)$) {\tiny I};
+  \node[portOut] (scOut) at ($(sc.east)+(0,0)$) {\tiny O};
+  \node[portIn]  (outIn) at ($(out.west)+(0,0)$) {\tiny I};
+
+  \node[font=\tiny, below=0pt of inOut] {inputOut OUT};
+  \node[font=\tiny, below=0pt of scIn]  {resizeIn IN};
+  \node[font=\tiny, below=0pt of scOut] {resizeOut OUT};
+  \node[font=\tiny, below=0pt of outIn] {outputIn IN};
+
+  \draw[ok] (inOut) -- node[above, font=\tiny, green!50!black] {e1: OUT$\rightarrow$IN (OK)} (scIn);
+  \draw[bad] (outIn) to[bend left=30] node[above, font=\tiny, red] {e2: IN$\rightarrow$OUT (X)} (scOut);
+\end{tikzpicture}
+}
+\caption{Visualisasi pelanggaran arah edge pada model \texttt{broken-direction}. Edge \texttt{e1} sah, sedangkan edge \texttt{e2} salah arah dan memicu kegagalan beruntun pada constraint domain.}
+\label{fig:ch13-broken-direction-tikz}
+\end{figure}
+
+\subsection{Helper EVL untuk Navigasi Model}
+
+Berkas \texttt{mediaflow.evl} diawali dengan blok \texttt{pre} dan beberapa operation bantuan. Helper ini membuat constraint berikutnya lebih ringkas dan menghindari duplikasi ekspresi koleksi.
+
+\begin{lstlisting}[
+  language=eol,
+  caption={Helper EVL untuk nama, arah port, dan navigasi edge},
+  label={lst:ch13-evl-helpers},
+  basicstyle=\ttfamily\scriptsize
+]
+pre {
+    ("Running EVL validation over " + Mediaflow!Graph.all.size() +
+        " graph(s)").println();
+}
+
+operation Any hasText() : Boolean {
+    return self.isDefined() and self.asString().trim().length() > 0;
+}
+
+operation Mediaflow!NamedElement label() : String {
+    if (self.name.hasText()) {
+        return self.name;
+    }
+    return "<unnamed " + self.eClass().name + ">";
+}
+
+operation Mediaflow!Port isIn() : Boolean {
+    return self.direction.toString() == "IN";
+}
+
+operation Mediaflow!Port isOut() : Boolean {
+    return self.direction.toString() == "OUT";
+}
+
+operation Mediaflow!Port ownerNode() : Any {
+    return Mediaflow!Node.all.selectOne(node |
+        node.ports.includes(self));
+}
+
+operation Mediaflow!Node incomingEdges() : Collection {
+    return Mediaflow!Edge.all.select(edge |
+        edge.target.isDefined() and self.ports.includes(edge.target));
+}
+
+operation Mediaflow!Node outgoingEdges() : Collection {
+    return Mediaflow!Edge.all.select(edge |
+        edge.source.isDefined() and self.ports.includes(edge.source));
+}
+\end{lstlisting}
+
+\noindent Operation \texttt{ownerNode()}, \texttt{incomingEdges()}, dan \texttt{outgoingEdges()} menyelesaikan masalah navigasi yang sama dengan bab M2M dan M2T: edge mengarah ke port, sedangkan banyak aturan domain harus berbicara tentang node.
+
+\subsection{Constraint Graph, Node, dan Port}
+
+Constraint pertama ditempatkan pada konteks \texttt{Graph}, \texttt{Node}, dan \texttt{Port}. Fokusnya adalah kesehatan struktur dasar model.
+
+\begin{lstlisting}[
+  language=eol,
+  caption={Constraint EVL untuk graph, node, dan port},
+  label={lst:ch13-evl-basic-constraints},
+  basicstyle=\ttfamily\scriptsize
+]
+context Mediaflow!Graph {
+
+    constraint HasName {
+        check : self.name.hasText()
+        message : "Graph must have a non-empty name because generated artefacts are named after it."
+    }
+
+    constraint HasNodesAndEdges {
+        check : not self.nodes.isEmpty() and not self.edges.isEmpty()
+        message : "Graph '" + self.label() + "' must contain at least one node and one edge."
+    }
+
+    constraint UniqueNodeNames {
+        check : self.nodes.haveUniqueNames()
+        message : "Graph '" + self.label() + "' has duplicate or missing node names."
+    }
+
+    constraint HasExternalEntryAndExit {
+        check : not self.entryResources().isEmpty() and
+            not self.exitResources().isEmpty()
+        message : "Graph '" + self.label() +
+            "' must have at least one external entry resource and one external exit resource."
+    }
+}
+
+context Mediaflow!Node {
+
+    constraint HasPorts {
+        check : not self.ports.isEmpty()
+        message : "Node '" + self.label() + "' must declare at least one port."
+    }
+
+    constraint UniquePortNamesPerNode {
+        check : self.ports.haveUniqueNames()
+        message : "Node '" + self.label() + "' has duplicate or missing port names."
+    }
+}
+
+context Mediaflow!Port {
+
+    constraint PortParticipatesInAnEdge {
+        check : not self.incidentEdges().isEmpty()
+        message : "Port '" + self.label() + "' is not used by any edge."
+    }
+}
+\end{lstlisting}
+
+\noindent Constraint \texttt{HasName} secara eksplisit mengaitkan validasi dengan M2T: nama graph dipakai untuk memberi nama artefak hasil generasi. Constraint \texttt{HasExternalEntryAndExit} mengaitkan validasi dengan M2M: Activity Diagram membutuhkan titik awal dan titik akhir yang bermakna.
+
+\subsection{Constraint Edge dan Resource}
+
+Edge adalah elemen yang paling rentan menyebabkan kesalahan semantik. Secara struktur, edge dapat menunjuk ke dua port, tetapi secara domain ia harus menghubungkan port output ke port input pada node yang berbeda.
+
+\begin{lstlisting}[
+  language=eol,
+  caption={Constraint EVL untuk edge dan resource},
+  label={lst:ch13-evl-edge-resource},
+  basicstyle=\ttfamily\scriptsize
+]
+context Mediaflow!Edge {
+
+    constraint EndpointsAreDeclared {
+        check : self.source.isDefined() and self.target.isDefined()
+        message : "Edge '" + self.label() + "' must declare both source and target ports."
+    }
+
+    constraint ConnectsOutputToInput {
+        guard : self.source.isDefined() and self.target.isDefined()
+        check : self.source.isOut() and self.target.isIn()
+        message : "Edge '" + self.label() + "' must connect an OUT port to an IN port."
+    }
+
+    constraint ConnectsDifferentNodes {
+        guard : self.source.isDefined() and self.target.isDefined()
+        check : not (self.sourceNode() == self.targetNode())
+        message : "Edge '" + self.label() + "' connects two ports on the same node."
+    }
+}
+
+context Mediaflow!Resource {
+
+    constraint UriIsDeclared {
+        check : self.uri.hasText()
+        message : "Resource '" + self.label() + "' must declare a URI."
+    }
+
+    constraint UriUsesKnownScheme {
+        check : self.uriUsesKnownScheme()
+        message : "Resource '" + self.label() +
+            "' URI should use file://, s3://, http:// or https://."
+    }
+
+    constraint ExternalResourcesAreDirectionalBoundaries {
+        check : not self.external or
+            self.ports.select(port | port.isIn()).isEmpty() or
+            self.ports.select(port | port.isOut()).isEmpty()
+        message : "External resource '" + self.label() +
+            "' should be an input-only or output-only workflow boundary."
+    }
+}
+\end{lstlisting}
+
+\noindent Penggunaan \texttt{guard} pada \texttt{ConnectsOutputToInput} dan \texttt{ConnectsDifferentNodes} penting agar constraint hanya dievaluasi ketika endpoint tersedia. Tanpa guard, satu kesalahan referensi dapat memicu error tambahan yang kurang informatif.
+
+\subsection{Constraint Transformer, Scaler, dan Transcoder}
+
+Transformer memiliki aturan operasional: command harus ada, replika harus positif, dan transformer harus berada di tengah aliran data. Selain itu, proyek ini memperlakukan jumlah replika yang terlalu besar sebagai warning.
+
+\begin{lstlisting}[
+  language=eol,
+  caption={Constraint EVL untuk transformer, scaler, dan transcoder},
+  label={lst:ch13-evl-transformer},
+  basicstyle=\ttfamily\scriptsize
+]
+context Mediaflow!Transformer {
+
+    constraint CommandIsDeclared {
+        check : self.command.hasText()
+        message : "Transformer '" + self.label() +
+            "' must declare the command it will execute."
+    }
+
+    constraint ReplicasArePositive {
+        check : self.replicas >= 1
+        message : "Transformer '" + self.label() +
+            "' must request at least one replica."
+    }
+
+    constraint TransformersHaveInputAndOutputFlow {
+        check : not self.incomingEdges().isEmpty() and
+            not self.outgoingEdges().isEmpty()
+        message : "Transformer '" + self.label() +
+            "' must have incoming and outgoing edges."
+    }
+
+    critique TooManyWorkers {
+        check : self.replicas <= 4
+        message : "Transformer '" + self.label() + "' requests " +
+            self.replicas + " worker replicas. Use 4 or fewer workers for the course examples."
+    }
+}
+
+context Mediaflow!Scaler {
+
+    constraint DimensionsArePositive {
+        check : self.width > 0 and self.height > 0
+        message : "Scaler '" + self.label() + "' must have positive width and height."
+    }
+}
+
+context Mediaflow!Transcoder {
+
+    constraint BitrateIsPlausible {
+        check : self.bitrate >= 128 and self.bitrate <= 50000
+        message : "Transcoder '" + self.label() +
+            "' bitrate must be between 128 and 50000 kbps."
+    }
+
+    constraint ContainerMatchesCodecs {
+        check : self.containerCodecCombinationIsPlausible()
+        message : "Transcoder '" + self.label() +
+            "' uses an implausible container/codec combination."
+    }
+}
+\end{lstlisting}
+
+\noindent \texttt{critique TooManyWorkers} adalah fitur EVL yang tidak tersedia secara langsung pada OCL standar. Ia tetap dievaluasi seperti constraint, tetapi dilaporkan sebagai warning sehingga tidak langsung dikategorikan sebagai error fatal.
+
+\subsection{Spesifikasi OCL Pendamping}
+
+Berkas \texttt{mediaflow.ocl} menulis invariant dengan sintaks Complete OCL. Listing~\ref{lst:ch13-ocl-sample} memperlihatkan beberapa invariant yang setara secara semantik dengan constraint EVL.
+
+\begin{lstlisting}[
+  style=ocl,
+  basicstyle=\ttfamily\scriptsize,
+  caption={Contoh invariant OCL pada \texttt{mediaflow.ocl}},
+  label={lst:ch13-ocl-sample}
+]
+package mediaflow
+
+context Graph
+inv UniqueNodeNames:
+    self.nodes->isUnique(name)
+
+context Edge
+inv ConnectsOutputToInput:
+    self.source <> null and self.target <> null implies
+    (self.source.direction = Direction::OUT and
+     self.target.direction = Direction::IN)
+
+context Transformer
+inv ReplicasArePositive:
+    self.replicas >= 1
+
+context Scaler
+inv DimensionsArePositive:
+    self.width > 0 and self.height > 0
+
+context Transcoder
+inv BitrateIsPlausible:
+    self.bitrate >= 128 and self.bitrate <= 50000
+
+endpackage
+\end{lstlisting}
+
+\noindent OCL lebih ringkas untuk invariant murni, tetapi tidak menyimpan pesan error per constraint di dalam spesifikasi. Karena itu, runner OCL pada proyek ini mencetak nama invariant dan ekspresi yang gagal. Untuk pembelajaran formal, ini berguna; untuk pengalaman pengguna akhir, pesan EVL lebih mudah dipahami.
+
+\subsection{Runner EVL}
+
+Runner EVL membaca argumen CLI, mengumpulkan input \texttt{*.xmi}, memuat model sebagai \texttt{EmfModel}, lalu menjalankan \texttt{EvlModule}. Potongan utama terlihat pada Listing~\ref{lst:ch13-evl-runner}.
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Alur utama runner EVL},
+  label={lst:ch13-evl-runner},
+  basicstyle=\ttfamily\scriptsize
+]
+String inputPath = args.length > 0 ? args[0] : "input";
+String evlPath = args.length > 1 ? args[1] : "validator/mediaflow.evl";
+String metamodelPath = args.length > 2 ? args[2] :
+        "../mediaflow/metamodels/mediaflow.ecore";
+
+registerFactories();
+
+List<Path> inputs = collectInputs(Paths.get(inputPath));
+int errorCount = 0;
+int warningCount = 0;
+
+for (Path input : inputs) {
+    ValidationSummary summary =
+        validate(input, Paths.get(evlPath), Paths.get(metamodelPath));
+    errorCount += summary.errors;
+    warningCount += summary.warnings;
+}
+
+System.out.println("Validation summary: " + errorCount +
+    " error(s), " + warningCount + " warning(s).");
+
+if (errorCount > 0) {
+    System.exit(1);
+}
+\end{lstlisting}
+
+Metode \texttt{collectInputs()} menerima satu file XMI atau direktori. Jika direktori diberikan, runner mencari file \texttt{*.xmi} secara rekursif dan mengurutkannya. Ini membuat perintah \texttt{./run-evl-validation.sh input} dapat memvalidasi seluruh korpus sekaligus.
+
+\subsection{Pelaporan Hasil EVL}
+
+Hasil \texttt{EvlModule.execute()} berupa kumpulan \texttt{UnsatisfiedConstraint}. Runner membedakan error dan warning dengan memeriksa apakah constraint merupakan \texttt{critique}.
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Pelaporan error dan warning dari hasil EVL},
+  label={lst:ch13-evl-reporting},
+  basicstyle=\ttfamily\scriptsize
+]
+for (UnsatisfiedConstraint result : unsatisfied) {
+    boolean warning = result.getConstraint().isCritique();
+    if (warning) {
+        warnings++;
+    } else {
+        errors++;
+    }
+
+    String severity = warning ? "WARN" : "ERROR";
+    String counter = warning ? "W" + warnings : String.valueOf(errors);
+    System.out.println(counter + ". " + severity + " " +
+        result.getConstraint().getName() + " on " +
+        describe(result.getInstance()) + ": " + result.getMessage());
+}
+\end{lstlisting}
+
+\noindent Fungsi \texttt{describe()} membaca fitur \texttt{name} dari \texttt{EObject}. Jika tersedia, output menjadi seperti \texttt{Scaler 'resize720'} atau \texttt{Edge 'e2'}, sehingga pesan lebih mudah ditelusuri ke model sumber.
+
+\subsection{Runner OCL}
+
+Runner OCL memiliki tugas tambahan karena proyek memakai berkas Complete OCL sebagai input. Runner membaca invariant dengan pola teks, mengompilasi setiap invariant terhadap konteks \texttt{EClass}, membangun extent map, lalu memanggil \texttt{ocl.check()} untuk setiap instance.
+
+\begin{lstlisting}[
+  style=JavaStyle,
+  caption={Eksekusi invariant pada runner OCL},
+  label={lst:ch13-ocl-runner},
+  basicstyle=\ttfamily\scriptsize
+]
+List<OclInvariant> invariants = parseInvariants(Paths.get(oclPath));
+
+ResourceSet resourceSet = new ResourceSetImpl();
+Resource metamodel = resourceSet.getResource(
+    URI.createFileURI(metamodelPath.toAbsolutePath().toString()), true);
+EPackage mediaflowPackage = (EPackage) metamodel.getContents().get(0);
+
+Resource model = resourceSet.getResource(
+    URI.createFileURI(input.toAbsolutePath().toString()), true);
+Map<EClass, Set<EObject>> extentMap = buildExtentMap(mediaflowPackage, model);
+
+OCL ocl = OCL.newInstance(
+    new EcoreEnvironmentFactory(resourceSet.getPackageRegistry()));
+ocl.setExtentMap(extentMap);
+
+for (OclInvariant invariant : invariants) {
+    EClass context = findContext(mediaflowPackage, invariant.contextName);
+    Constraint constraint = compileInvariant(ocl, context, invariant);
+
+    for (EObject instance : extentMap.getOrDefault(context, Set.of())) {
+        if (!ocl.check(instance, constraint)) {
+            // print ERROR or WARN
+        }
+    }
+}
+\end{lstlisting}
+
+\noindent Extent map penting karena banyak invariant memakai \texttt{allInstances()}. Tanpa extent map, evaluator OCL tidak selalu mengetahui kumpulan objek yang harus dipertimbangkan untuk setiap \texttt{EClass}.
+
+\subsection{Skrip Eksekusi}
+
+Proyek menyediakan skrip shell agar runner dapat dijalankan dari terminal tanpa konfigurasi manual di Eclipse.
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Perintah menjalankan validasi EVL dan OCL},
+  label={lst:ch13-run-commands},
+  basicstyle=\ttfamily\scriptsize
+]
+cd projects/session-13/model-validation
+
+./run-evl-validation.sh input/valid
+./run-evl-validation.sh input/invalid
+
+./run-ocl-validation.sh input/valid
+./run-ocl-validation.sh input/invalid
+\end{lstlisting}
+
+Kedua runner menerima argumen dengan format yang sejajar:
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Argumen CLI runner validasi},
+  label={lst:ch13-cli-args},
+  basicstyle=\ttfamily\scriptsize
+]
+MediaflowEvlValidationRunner [inputFileOrDirectory] [evlPath] [metamodelPath]
+MediaflowOclValidationRunner [inputFileOrDirectory] [oclPath] [metamodelPath]
+\end{lstlisting}
+
+Jika argumen tidak diberikan, default-nya adalah direktori \texttt{input}, validator di \texttt{validator/}, dan metamodel di \texttt{../mediaflow/metamodels/mediaflow.ecore}.
+
+\section{Pengujian dan Evaluasi}
+
+\subsection{Tujuan Evaluasi}
+
+Evaluasi validasi model difokuskan pada empat aspek:
+\begin{enumerate}
+  \item \textbf{Presisi pada model valid.} Model valid tidak boleh menghasilkan false positive.
+  \item \textbf{Cakupan pada model invalid.} Model invalid harus memicu constraint yang sesuai dengan kesalahan yang sengaja ditanamkan.
+  \item \textbf{Konsistensi EVL dan OCL.} Kedua pendekatan harus menghasilkan jumlah error dan warning yang sama untuk korpus yang sama.
+  \item \textbf{Kegunaan diagnostik.} Output harus menunjukkan severity, nama constraint, elemen model yang gagal, dan pesan/ekspresi yang membantu pelacakan.
+\end{enumerate}
+
+\subsection{Hasil Evaluasi}
+
+Menjalankan \texttt{./run-evl-validation.sh input} dan \texttt{./run-ocl-validation.sh input} pada seluruh korpus menghasilkan ringkasan yang sama: 17 error dan 1 warning.
+
+\begin{table}[h]
+\centering
+\caption{Hasil validasi pada seluruh model input}
+\label{tab:ch13-validation-results}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.27\textwidth}|c|c|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
+\hline
+\textbf{Model Input} & \textbf{Error} & \textbf{Warning} & \textbf{Catatan} \\
+\hline
+\texttt{linear-resize.xmi} & 0 & 0 & Valid; pipeline linier memenuhi semua aturan. \\
+\hline
+\texttt{adaptive-delivery.xmi} & 0 & 0 & Valid; pipeline bercabang tetap memiliki entry, exit, dan flow yang benar. \\
+\hline
+\texttt{broken-direction.xmi} & 8 & 0 & Error arah edge, URI kosong, command kosong, replika/dimensi tidak valid, dan flow transformer terganggu. \\
+\hline
+\texttt{duplicate-and-isolated.xmi} & 9 & 1 & Error duplikasi nama, port tidak terpakai, self-loop, URI scheme, bitrate, codec/container; warning replika terlalu banyak. \\
+\hline
+\textbf{Total} & \textbf{17} & \textbf{1} & Hasil EVL dan OCL sejajar. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\subsection{Contoh Output Validasi}
+
+Listing~\ref{lst:ch13-output-example} memperlihatkan potongan output EVL untuk model \texttt{broken-direction.xmi}.
+
+\begin{lstlisting}[
+  language=bash,
+  caption={Potongan output validasi EVL pada model \texttt{broken-direction.xmi}},
+  label={lst:ch13-output-example},
+  basicstyle=\ttfamily\scriptsize
+]
+== input/invalid/broken-direction.xmi ==
+1. ERROR HasExternalEntryAndExit on Graph 'brokenDirection':
+   Graph 'brokenDirection' must have at least one external entry resource and one external exit resource.
+2. ERROR ConnectsOutputToInput on Edge 'e2':
+   Edge 'e2' must connect an OUT port to an IN port.
+3. ERROR UriIsDeclared on Resource 'outputVideo':
+   Resource 'outputVideo' must declare a URI.
+4. ERROR UriUsesKnownScheme on Resource 'outputVideo':
+   Resource 'outputVideo' URI should use file://, s3://, http:// or https://.
+5. ERROR CommandIsDeclared on Scaler 'resize720':
+   Transformer 'resize720' must declare the command it will execute.
+6. ERROR ReplicasArePositive on Scaler 'resize720':
+   Transformer 'resize720' must request at least one replica.
+7. ERROR TransformersHaveInputAndOutputFlow on Scaler 'resize720':
+   Transformer 'resize720' must have incoming and outgoing edges.
+8. ERROR DimensionsArePositive on Scaler 'resize720':
+   Scaler 'resize720' must have positive width and height.
+Displayed 8 error(s), 0 warning(s), 8 total issue(s).
+\end{lstlisting}
+
+\noindent Output tersebut menunjukkan manfaat pesan EVL: setiap error memiliki constraint name, target instance, dan pesan yang ditulis khusus untuk pemodel. Misalnya, error \texttt{HasExternalEntryAndExit} muncul karena edge salah arah membuat resource output tidak lagi menjadi exit boundary yang sah.
+
+\subsection{Perbandingan Hasil EVL dan OCL}
+
+Secara kuantitatif, EVL dan OCL menghasilkan hasil yang sama pada korpus sesi 13. Perbedaannya terletak pada bentuk diagnostik. EVL mencetak pesan yang dibuat oleh constraint, sedangkan OCL runner mencetak ekspresi invariant yang gagal.
+
+\begin{table}[h]
+\centering
+\caption{Perbandingan hasil validasi EVL dan OCL}
+\label{tab:ch13-evl-ocl-results}
+\footnotesize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.24\textwidth}|c|c|c|c|}
+\hline
+\textbf{Pendekatan} & \textbf{Model OK} & \textbf{Model Invalid} & \textbf{Error} & \textbf{Warning} \\
+\hline
+EVL & 2 & 2 & 17 & 1 \\
+\hline
+OCL & 2 & 2 & 17 & 1 \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+Kesetaraan jumlah pada Tabel~\ref{tab:ch13-evl-ocl-results} tidak berarti kedua pendekatan identik. EVL tetap menjadi validator utama yang lebih nyaman untuk pengguna, sementara OCL berperan sebagai spesifikasi formal pendamping.
+
+\section{Perbandingan EVL vs OCL}
+
+\subsection{Perbandingan Aspek Teknis}
+
+Tabel~\ref{tab:ch13-evl-ocl-technical} merangkum perbedaan teknis utama EVL dan OCL pada proyek ini.
+
+\begin{table}[h]
+\centering
+\caption{Perbandingan teknis EVL dan OCL}
+\label{tab:ch13-evl-ocl-technical}
+\scriptsize
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.18\textwidth}|>{\raggedright\arraybackslash}p{0.34\textwidth}|>{\raggedright\arraybackslash}p{0.34\textwidth}|}
+\hline
+\textbf{Aspek} & \textbf{EVL} & \textbf{OCL} \\
+\hline
+Tujuan utama & Validasi eksekutabel dengan pesan diagnostik yang ramah pengguna. & Spesifikasi invariant formal atas metamodel. \\
+\hline
+Struktur aturan & \texttt{context}, \texttt{constraint}, \texttt{check}, \texttt{message}, \texttt{guard}, dan \texttt{critique}. & \texttt{context}, \texttt{inv}, dan ekspresi Boolean deklaratif. \\
+\hline
+Pesan error & Ditulis langsung di constraint melalui \texttt{message}. & Tidak melekat sebagai pesan; runner perlu menentukan cara pelaporan. \\
+\hline
+Warning & Didukung melalui \texttt{critique}. & Tidak tersedia langsung; proyek memetakannya di Java melalui daftar invariant warning. \\
+\hline
+Helper & Operation EOL dapat dipakai langsung dan nyaman untuk logika pragmatis. & Ekspresi navigasi ditulis sebagai OCL; reusable helper lebih terbatas pada setup ini. \\
+\hline
+Integrasi Java & \texttt{EvlModule} mengeksekusi file EVL dan mengembalikan \texttt{UnsatisfiedConstraint}. & Runner perlu membaca invariant, mengompilasi constraint, dan mengecek setiap instance. \\
+\hline
+Kegunaan pembelajaran & Baik untuk praktik validasi end-to-end dan pelaporan hasil. & Baik untuk memahami invariant formal dan kontrak metamodel. \\
+\hline
+\end{tabular}
+\normalsize
+\end{table}
+
+\subsection{Panduan Pemilihan Pendekatan}
+
+Panduan praktis dari proyek ini adalah:
+\begin{enumerate}
+  \item \textbf{Pilih EVL} ketika validator akan dipakai langsung oleh pemodel atau pipeline otomatis. EVL lebih kuat untuk pesan diagnostik, severity, guard, dan helper eksekutabel.
+  \item \textbf{Pilih OCL} ketika aturan perlu didokumentasikan sebagai invariant formal yang ringkas dan dekat dengan standar pemodelan.
+  \item \textbf{Gunakan keduanya} dalam konteks pembelajaran atau verifikasi silang. EVL dapat menjadi alat eksekusi utama, sementara OCL menjaga aturan tetap terlihat sebagai kontrak deklaratif.
+\end{enumerate}
+
+\section{Risiko dan Pitfall Umum}
+
+Beberapa risiko yang umum muncul saat mengembangkan validasi model adalah:
+\begin{enumerate}
+  \item \textbf{Mengandalkan metamodel saja.} Banyak aturan domain tidak dapat diekspresikan cukup kuat dengan Ecore. Validasi tambahan tetap diperlukan untuk precondition transformasi.
+
+  \item \textbf{Constraint menghasilkan error berantai.} Satu edge salah arah dapat membuat node kehilangan incoming/outgoing flow, lalu memicu constraint lain. Pesan harus cukup jelas agar pengguna memahami akar masalahnya.
+
+  \item \textbf{Lupa memakai guard.} Constraint yang mengakses \texttt{source.direction} atau \texttt{target.direction} perlu memastikan endpoint terdefinisi. Tanpa guard, validator dapat menghasilkan error teknis yang kurang membantu.
+
+  \item \textbf{Duplikasi nama dianggap sepele.} Pada M2T, nama graph dan elemen sering menjadi dasar nama file, id, atau label. Duplikasi dapat menimpa output atau membuat visualisasi ambigu.
+
+  \item \textbf{Port tidak terpakai tidak terdeteksi.} Model dengan port yatim dapat terlihat valid secara struktur, tetapi membingungkan transformasi dan viewer. Constraint \texttt{PortParticipatesInAnEdge} menutup celah ini.
+
+  \item \textbf{OCL \texttt{allInstances()} tanpa extent map.} Pada eksekusi programatik, evaluator OCL perlu mengetahui extent model. Runner membangun \texttt{extentMap} agar invariant lintas-instance bekerja.
+
+  \item \textbf{Warning diperlakukan seperti error.} Tidak semua pelanggaran kualitas perlu menggagalkan pipeline. EVL \texttt{critique} berguna untuk memberi sinyal risiko tanpa langsung memblokir model.
+
+  \item \textbf{Classpath Eclipse tidak lengkap.} Runner membutuhkan plugin EMF, Epsilon, OCL, LPG, Guava, dan Apache Commons Collections yang sesuai. Skrip shell membantu menyusun classpath dari direktori plugin Eclipse.
+\end{enumerate}
+
+\section{Ringkasan}
+
+Bab ini menunjukkan bahwa validasi model adalah lapisan penting dalam siklus MDE. Setelah model dapat dibuat, divisualisasikan, ditransformasikan, dan digenerasi menjadi teks, langkah berikutnya adalah memastikan model tersebut layak diproses. Pada studi kasus \textit{MediaFlow}, validasi menjaga precondition untuk M2M dan M2T: graph harus memiliki entry/exit, edge harus menghubungkan \texttt{OUT} ke \texttt{IN}, nama harus unik, resource harus memiliki URI, transformer harus dapat dieksekusi, dan parameter media harus masuk akal.
+
+Proyek \texttt{model-validation} menerapkan dua bahasa validasi atas metamodel yang sama. EVL digunakan sebagai validator eksekutabel dengan pesan diagnostik, guard, helper, dan warning melalui \texttt{critique}. OCL digunakan sebagai spesifikasi pendamping yang menuliskan invariant secara lebih formal. Kedua runner Java menghasilkan evaluasi yang konsisten pada korpus sesi 13: dua model valid lolos, dua model invalid menghasilkan total 17 error dan 1 warning.
+
+Nilai praktisnya adalah validasi dapat ditempatkan sebelum transformasi. Dengan demikian, pipeline MDE tidak hanya otomatis, tetapi juga lebih aman: model yang salah berhenti lebih awal dengan penjelasan yang konkret, bukan menghasilkan output turunan yang sulit didiagnosis.

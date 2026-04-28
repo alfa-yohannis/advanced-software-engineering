@@ -1,0 +1,16 @@
+graph duplicateAndIsolated {
+  resource inputVideo [mediaType=VIDEO] uri="ftp://legacy.example/input.mp4"
+    external=true {
+    port stream OUT
+    port stream OUT
+  }
+
+  transcoder inputVideo backend=FFMPEG command="ffmpeg -i input.mp4 out.mp4"
+    replicas=8 videoCodec="libx264" audioCodec="opus" container="webm" bitrate=64 {
+    port encodeIn IN
+    port encodeOut OUT
+  }
+
+  edge duplicate from stream to encodeIn
+  edge duplicate from encodeOut to encodeIn
+}
