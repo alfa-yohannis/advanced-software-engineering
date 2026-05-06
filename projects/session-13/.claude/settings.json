@@ -5,7 +5,13 @@
       "Bash(xelatex -interaction=nonstopmode -halt-on-error session13.tex)",
       "Bash(xelatex -interaction=nonstopmode -halt-on-error advanced-software-engineering.tex)",
       "Bash(xelatex -interaction=nonstopmode advanced-software-engineering.tex)",
-      "Bash(xelatex -interaction=nonstopmode session13.tex)"
+      "Bash(xelatex -interaction=nonstopmode session13.tex)",
+      "Bash(mkdir -p theme)",
+      "Bash(cp session11/beamercolorthemePradita.sty session11/beamerinnerthemePradita.sty session11/beamerouterthemePradita.sty session11/beamerthemePradita.sty theme/)",
+      "Bash(cp -r session11/classFiles session11/fonts theme/)"
+    ],
+    "additionalDirectories": [
+      "/data2/projects/advanced-software-engineering/slides/theme"
     ]
   }
 }
