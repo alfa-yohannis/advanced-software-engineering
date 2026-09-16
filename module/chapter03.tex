@@ -374,28 +374,6 @@ Dengan rangkaian eksperimen ini, bukti perubahan perilaku runtime menjadi jelas:
 
 
 
-\section{Sudut Pandang Mahasiswa Non-IT}
-
-\textbf{Apa risiko yang muncul ketika sebuah sistem tidak memiliki kontrol keamanan runtime?}  
-Risiko utamanya adalah data dapat diakses, dibaca, atau disalahgunakan oleh pihak yang tidak berwenang tanpa disadari oleh pengguna maupun pengelola sistem. Sistem dapat tetap berfungsi secara normal dari sudut pandang pengguna, namun informasi yang mengalir di dalamnya berada dalam kondisi rentan. Ketika kontrol keamanan tidak hadir pada saat sistem berjalan, kepercayaan terhadap sistem sebenarnya bertumpu pada asumsi, bukan pada mekanisme perlindungan yang nyata.
-
-\textbf{Bagaimana satu kontrol keamanan sederhana dapat menurunkan risiko tersebut?}  
-Penerapan kontrol seperti enkripsi payload menunjukkan bahwa tidak semua upaya keamanan harus rumit untuk memberikan dampak berarti. Dengan enkripsi, data tetap mengalir dan sistem tetap beroperasi, tetapi makna informasi tidak lagi dapat diakses oleh pihak yang tidak memiliki izin. Kontrol ini secara langsung mengubah perilaku sistem pada runtime, dari sistem yang terbuka menjadi sistem yang membatasi keterbacaan data.
-
-\textbf{Mengapa keamanan berkaitan dengan kepercayaan dan tanggung jawab?}  
-Pengguna mempercayakan data mereka kepada sistem dengan harapan bahwa pengelola bertindak secara bertanggung jawab. Ketika kontrol keamanan diterapkan, pengelola sistem menunjukkan komitmen etis dan profesional dalam melindungi informasi pengguna. Keamanan, dalam konteks ini, bukan sekadar persoalan teknis, melainkan bagian dari hubungan kepercayaan antara sistem, pengelola, dan pengguna.
-
-\section{Sudut Pandang Mahasiswa IT}
-
-\textbf{Di mana posisi payload encryption dalam spektrum DevSecOps?}  
-Enkripsi payload berada pada lapisan keamanan runtime dan eksekusi. Kontrol ini bekerja ketika sistem sedang berjalan dan berinteraksi dengan lingkungan nyata. Dalam spektrum DevSecOps, enkripsi runtime melengkapi kontrol keamanan pada tahap desain, implementasi, build, dan deployment, namun tidak menggantikannya. Memahami posisi ini membantu menghindari anggapan bahwa satu mekanisme keamanan sudah cukup untuk menjamin keseluruhan sistem.
-
-\textbf{Apa keterbatasan kontrol keamanan yang diterapkan pada studi kasus ini?}  
-Enkripsi payload hanya mengendalikan satu dimensi risiko, yaitu kerahasiaan data selama transmisi. Kontrol ini tidak mengatur siapa yang boleh mengakses sistem, tidak mencegah penyalahgunaan layanan, dan tidak melindungi sistem dari kesalahan logika atau konfigurasi. Selain itu, efektivitas enkripsi sangat bergantung pada pengelolaan kunci yang baik. Jika kunci bocor atau disalahkelola, kontrol ini kehilangan maknanya.
-
-\textbf{Kontrol keamanan tambahan apa yang dapat diterapkan di tingkat lain?}  
-Sebagai pengembangan, kontrol tambahan dapat diterapkan pada lapisan lain, seperti autentikasi dan otorisasi untuk mengatur akses, pembatasan hak istimewa pada runtime, atau validasi konfigurasi pada tahap deployment. Usulan ini menegaskan bahwa keamanan sistem yang matang selalu dibangun dari kombinasi kontrol yang saling melengkapi di berbagai tahap.
-
 \section{Diskusi dan Refleksi}
 
 \textbf{Apakah satu kontrol keamanan cukup untuk menyebut suatu sistem aman?}  
@@ -413,5 +391,5 @@ Observabilitas memungkinkan keamanan dievaluasi berdasarkan perilaku sistem yang
 
 Bab ini menegaskan bahwa security dalam DevSecOps bersifat berlapis dan tidak dapat dipusatkan pada satu tahap. Keamanan dipahami sebagai mekanisme kontrol terhadap perilaku sistem, bukan sekadar checklist fitur. Melalui spektrum kontrol dari desain hingga runtime, bab ini membatasi fokus pada keamanan runtime karena pada fase inilah risiko aktual muncul dan dampak kontrol dapat diamati secara langsung. Studi kasus sistem publish--subscribe menunjukkan broker sebagai komponen netral yang tidak berwenang, sehingga risiko kebocoran muncul pada jalur komunikasi dan endpoint. Enkripsi payload dipilih sebagai contoh kontrol runtime karena sifatnya jelas, terlokalisasi, dan mampu menunjukkan perbedaan antara data yang terlihat dan data yang terbaca.
 
-Melalui eksperimen dan validasi observasional, ditunjukkan bahwa penerapan enkripsi payload mengubah perilaku runtime tanpa mengubah arsitektur dasar sistem: produsen mengenkripsi sebelum publish, konsumen mendekripsi setelah subscribe, sementara broker tetap tidak memiliki kunci. Kunci enkripsi diposisikan sebagai kebijakan runtime yang dikelola secara operasional melalui konfigurasi environment, mencerminkan pemisahan kode, konfigurasi, dan rahasia dalam DevSecOps. Refleksi untuk mahasiswa non-IT menekankan hubungan security dengan kepercayaan dan tanggung jawab, sedangkan untuk mahasiswa IT menegaskan keterbatasan satu kontrol dan pentingnya kontrol tambahan lintas tahap. Dengan dukungan observabilitas, efektivitas kontrol keamanan dapat dinilai secara empiris dan ditingkatkan secara berkelanjutan.
+Melalui eksperimen dan validasi observasional, ditunjukkan bahwa penerapan enkripsi payload mengubah perilaku runtime tanpa mengubah arsitektur dasar sistem: produsen mengenkripsi sebelum publish, konsumen mendekripsi setelah subscribe, sementara broker tetap tidak memiliki kunci. Kunci enkripsi diposisikan sebagai kebijakan runtime yang dikelola secara operasional melalui konfigurasi environment, mencerminkan pemisahan kode, konfigurasi, dan rahasia dalam DevSecOps. Dengan dukungan observabilitas, efektivitas kontrol keamanan dapat dinilai secara empiris dan ditingkatkan secara berkelanjutan.
 

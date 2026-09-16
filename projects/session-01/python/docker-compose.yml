@@ -19,7 +19,7 @@ services:
       TOPIC: raw
       VIDEO_PATH: /data/input.mp4
       PUBLISH_EVERY_SEC: "0.1"
-      JPEG_QUALITY: "80"
+      JPEG_QUALITY: "100"
       LOOP: "true"
     volumes:
       - ./input.mp4:/data/input.mp4:ro
@@ -33,7 +33,7 @@ services:
       PUB_PORT: "5555"
       SUB_TOPIC: raw
       PUB_TOPIC: processed
-      JPEG_QUALITY_OUT: "10"
+      JPEG_QUALITY_OUT: "100"
 
   web_server:
     build: ./web_server

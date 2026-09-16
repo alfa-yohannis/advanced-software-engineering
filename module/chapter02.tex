@@ -596,41 +596,6 @@ Hasil ini mengindikasikan bahwa arsitektur pipeline dan mekanisme penyajian MJPE
 
 
 
-\section{Sudut Pandang Mahasiswa Non-IT}
-
-Bagian ini bertujuan melatih kemampuan membaca dan menalar perilaku sistem berdasarkan representasi visual dan konsep model, tanpa harus memahami kode sumber.
-
-\begin{enumerate}
-  \item Amati salah satu dashboard Grafana yang menampilkan metrik sistem.  
-  Jelaskan perilaku sistem yang Anda amati menggunakan bahasa sehari-hari.  
-  
-
-  \item Identifikasi satu metrik yang menurut Anda paling penting bagi pengguna akhir (misalnya latensi atau jumlah data yang diproses).  
-  Jelaskan mengapa metrik tersebut relevan dari sudut pandang pengguna.  
-  
-
-  \item Bandingkan dua kondisi sistem (misalnya jumlah pengguna sedikit dan banyak).  
-  Apa perubahan yang terlihat, dan apa yang tidak berubah?  
-  
-\end{enumerate}
-
-\section{Sudut Pandang Mahasiswa IT}
-
-Bagian ini berfokus pada hubungan antara implementasi teknis, metrik runtime, dan representasi model sistem.
-
-\begin{enumerate}
-  \item Pilih satu metrik Prometheus yang diekspor oleh salah satu node.  
-  Jelaskan bagian kode mana yang bertanggung jawab menghasilkan metrik tersebut.  
-  
-
-  \item Buat sketsa sederhana (diagram atau teks) yang memodelkan alur data dari Capturer hingga Web Server.  
-  Tandai di mana metrik dihasilkan pada setiap komponen.  
-  
-
-  \item Jika Anda diminta menambahkan satu node baru (misalnya \emph{Filter}), metrik apa saja yang perlu ditambahkan agar node tersebut tetap dapat diamati dengan baik?  
-	
-\end{enumerate}
-
 \section{Diskusi dan Refleksi}
 
 Bagian ini mendorong refleksi lintas disiplin dan pengaitan langsung dengan prinsip Model-Driven Engineering.
@@ -653,6 +618,6 @@ Bagian ini mendorong refleksi lintas disiplin dan pengaitan langsung dengan prin
 
 Bab ini memperkenalkan observabilitas sebagai pendekatan untuk memahami sistem terdistribusi melalui data runtime, bukan melalui inspeksi statis terhadap kode atau asumsi desain awal. Peserta mempelajari perbedaan antara monitoring dan observabilitas, serta peran metrik, log, dan trace sebagai sinyal utama untuk menalar perilaku sistem. Melalui pendekatan bottom-up, pemahaman dibangun dari apa yang benar-benar terjadi saat sistem berjalan, termasuk perubahan beban, keterlambatan, penumpukan data, dan dampaknya terhadap pengalaman pengguna.
 
-Studi kasus yang digunakan adalah pipeline terdistribusi berbasis broker dengan komponen Capturer, Broker, Transformer, dan Web Server, yang dilengkapi layanan Prometheus tertanam pada setiap node. Prometheus eksternal mengumpulkan metrik melalui scraping dan Grafana memvisualisasikannya melalui dashboard. Eksperimen menunjukkan bahwa tiap komponen memiliki karakteristik beban kerja berbeda sesuai fungsinya, serta peningkatan jumlah pengguna MJPEG dapat diamati melalui perubahan penggunaan sumber daya tanpa perubahan signifikan pada latensi. Melalui tugas dan refleksi, peserta diajak mengaitkan observabilitas dengan prinsip-prinsip MDE, terutama gagasan bahwa dashboard dan metrik dapat dipandang sebagai model tingkat tinggi yang membantu menjembatani implementasi, eksekusi, dan perbaikan sistem secara iteratif.
+Studi kasus yang digunakan adalah pipeline terdistribusi berbasis broker dengan komponen Capturer, Broker, Transformer, dan Web Server, yang dilengkapi layanan Prometheus tertanam pada setiap node. Prometheus eksternal mengumpulkan metrik melalui scraping dan Grafana memvisualisasikannya melalui dashboard. Eksperimen menunjukkan bahwa tiap komponen memiliki karakteristik beban kerja berbeda sesuai fungsinya, serta peningkatan jumlah pengguna MJPEG dapat diamati melalui perubahan penggunaan sumber daya tanpa perubahan signifikan pada latensi. Melalui diskusi dan refleksi, peserta diajak mengaitkan observabilitas dengan prinsip-prinsip MDE, terutama gagasan bahwa dashboard dan metrik dapat dipandang sebagai model tingkat tinggi yang membantu menjembatani implementasi, eksekusi, dan perbaikan sistem secara iteratif.
 
 
