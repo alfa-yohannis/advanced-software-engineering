@@ -5,4 +5,5 @@ RUN pip install --no-cache-dir pyzmq
 WORKDIR /app
 COPY broker.py .
 
+ENV PYTHONUNBUFFERED=1
 CMD ["python", "broker.py"]

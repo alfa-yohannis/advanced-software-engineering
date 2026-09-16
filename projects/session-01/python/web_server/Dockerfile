@@ -6,4 +6,5 @@ WORKDIR /app
 COPY web_server.py .
 COPY static ./static
 
+ENV PYTHONUNBUFFERED=1
 CMD ["python", "web_server.py"]

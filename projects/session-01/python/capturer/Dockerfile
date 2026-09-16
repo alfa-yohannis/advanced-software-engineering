@@ -9,4 +9,5 @@ RUN pip install --no-cache-dir pyzmq opencv-python-headless
 WORKDIR /app
 COPY capturer.py .
 
+ENV PYTHONUNBUFFERED=1
 CMD ["python", "capturer.py"]

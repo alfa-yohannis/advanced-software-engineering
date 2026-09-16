@@ -56,12 +56,14 @@ pip install \
 1.4 Run Each Node (use 4 terminals)
 ----------------------------------------------------------------------
 
+Run every command from the project root, the folder that contains this README.
+
 Terminal 1 — Broker
 ```bash
 BROKER_BIND_HOST=127.0.0.1 \
 PUB_PORT=5555 \
 SUB_PORT=5556 \
-python broker.py
+python broker/broker.py
 ```
 ----------------------------------------------------------------------
 Terminal 2 — Capturer (Node A)
@@ -73,7 +75,7 @@ VIDEO_PATH=input.mp4 \
 PUBLISH_EVERY_SEC=0.1 \
 JPEG_QUALITY=80 \
 LOOP=true \
-python capturer.py
+python capturer/capturer.py
 ```
 ----------------------------------------------------------------------
 Terminal 3 — Transformer (Node B)
@@ -84,7 +86,7 @@ PUB_PORT=5555 \
 SUB_TOPIC=raw \
 PUB_TOPIC=processed \
 JPEG_QUALITY_OUT=85 \
-python transformer.py
+python transformer/transformer.py
 ```
 ----------------------------------------------------------------------
 Terminal 4 — Web Server (Node C)
@@ -94,7 +96,7 @@ SUB_PORT=5556 \
 SUB_TOPIC=processed \
 HTTP_HOST=0.0.0.0 \
 HTTP_PORT=8000 \
-python web_server.py
+python web_server/web_server.py
 ```
 Open browser:
 
@@ -104,6 +106,8 @@ http://localhost:8000/stream.mjpg
 ----------------------------------------------------------------------
 **2. Run with Docker (Individual Containers)**
 ----------------------------------------------------------------------
+
+Run every command in this section from the project root, the folder that contains this README.
 
 **2.1 Build Images**
 
@@ -115,11 +119,20 @@ sudo docker build -t web_server ./web_server
 ```
 ----------------------------------------------------------------------
 
-**2.2 Run Containers**
+**2.2 Run Containers (use 4 terminals)**
 
+The other containers reach the broker through the host name `broker`. Docker resolves container names only on a user-defined network, so create one first. The first two lines delete the containers and the network left over from an earlier run, if there are any:
+```bash
+sudo docker rm -f broker capturer transformer web_server
+sudo docker network rm -f pipeline
+sudo docker network create pipeline
+```
+----------------------------------------------------------------------
 Broker
 ```bash
 sudo docker run --rm \
+  --name broker \
+  --network pipeline \
   -p 5555:5555 \
   -p 5556:5556 \
   -e BROKER_BIND_HOST=0.0.0.0 \
@@ -131,6 +144,8 @@ sudo docker run --rm \
 Capturer
 ```bash
 sudo docker run --rm \
+  --name capturer \
+  --network pipeline \
   -e BROKER_HOST=broker \
   -e PUB_PORT=5555 \
   -e TOPIC=raw \
@@ -145,6 +160,8 @@ sudo docker run --rm \
 Transformer
 ```bash
 sudo docker run --rm \
+  --name transformer \
+  --network pipeline \
   -e BROKER_HOST=broker \
   -e SUB_PORT=5556 \
   -e PUB_PORT=5555 \
@@ -157,6 +174,8 @@ sudo docker run --rm \
 Web Server
 ```bash
 sudo docker run --rm \
+  --name web_server \
+  --network pipeline \
   -p 8000:8000 \
   -e BROKER_HOST=broker \
   -e SUB_PORT=5556 \
@@ -164,6 +183,11 @@ sudo docker run --rm \
   -e HTTP_HOST=0.0.0.0 \
   -e HTTP_PORT=8000 \
   web_server
+```
+----------------------------------------------------------------------
+To stop, press Ctrl+C in each terminal, then remove the network:
+```bash
+sudo docker network rm pipeline
 ```
 ----------------------------------------------------------------------
 **3. Run with Docker Compose (Recommended)**
