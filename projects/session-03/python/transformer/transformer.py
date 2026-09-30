@@ -24,7 +24,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from shared.crypto import decrypt_bytes, encrypt_bytes  # noqa: E402
 from shared.observability import (  # noqa: E402
     init as obs_init,
-    SERVICE as OBS_SERVICE,
     INSTANCE as OBS_INSTANCE,
     FRAMES_IN,
     FRAMES_OUT,
@@ -67,6 +66,7 @@ PUB_TOPIC = getenv_str("PUB_TOPIC", "processed").encode("utf-8")
 JPEG_QUALITY_OUT = getenv_int("JPEG_QUALITY_OUT", 85)
 
 METRICS_PORT = validate_port(getenv_int("METRICS_PORT", 9103), "METRICS_PORT")
+OBS_SERVICE = getenv_str("SERVICE", "transformer")  # value of the "service" label
 
 SUB_ENDPOINT = f"tcp://{BROKER_HOST}:{SUB_PORT}"
 PUB_ENDPOINT = f"tcp://{BROKER_HOST}:{PUB_PORT}"
@@ -88,7 +88,7 @@ def to_grayscale(img_rgb: Image.Image) -> Image.Image:
 
 def main() -> int:
     # Start Prometheus metrics
-    obs_init(service="transformer", metrics_port=METRICS_PORT)
+    obs_init(service=OBS_SERVICE, metrics_port=METRICS_PORT)
 
     ctx = zmq.Context.instance()
 
@@ -113,102 +113,106 @@ def main() -> int:
 
     try:
         while True:
-            # -------------------------
-            # Receive (encrypted parts)
-            # -------------------------
-            t_recv = time.time()
-            topic, enc_header_b, enc_jpeg_in = sub.recv_multipart()
-            STAGE_SECONDS.labels(
-                OBS_SERVICE, OBS_INSTANCE, "transformer_recv"
-            ).observe(time.time() - t_recv)
+            try:
+                # -------------------------
+                # Receive (encrypted parts)
+                # -------------------------
+                t_recv = time.time()
+                topic, enc_header_b, enc_jpeg_in = sub.recv_multipart()
+                STAGE_SECONDS.labels(
+                    OBS_SERVICE, OBS_INSTANCE, "transformer_recv"
+                ).observe(time.time() - t_recv)
 
-            FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, sub_topic_str).inc()
-            wire_in_bytes = len(enc_header_b) + len(enc_jpeg_in)
-            BYTES_IN.labels(OBS_SERVICE, OBS_INSTANCE, sub_topic_str).inc(wire_in_bytes)
+                FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, sub_topic_str).inc()
+                wire_in_bytes = len(enc_header_b) + len(enc_jpeg_in)
+                BYTES_IN.labels(OBS_SERVICE, OBS_INSTANCE, sub_topic_str).inc(wire_in_bytes)
 
-            # -------------------------
-            # Decrypt header + payload
-            # -------------------------
-            t_decsec = time.time()
-            header_b = decrypt_bytes(enc_header_b)
-            jpeg_in = decrypt_bytes(enc_jpeg_in)
-            STAGE_SECONDS.labels(
-                OBS_SERVICE, OBS_INSTANCE, "transformer_decrypt"
-            ).observe(time.time() - t_decsec)
+                # -------------------------
+                # Decrypt header + payload
+                # -------------------------
+                t_decsec = time.time()
+                header_b = decrypt_bytes(enc_header_b)
+                jpeg_in = decrypt_bytes(enc_jpeg_in)
+                STAGE_SECONDS.labels(
+                    OBS_SERVICE, OBS_INSTANCE, "transformer_decrypt"
+                ).observe(time.time() - t_decsec)
 
-            JPEG_BYTES.labels(OBS_SERVICE, OBS_INSTANCE, "in").observe(len(jpeg_in))
+                JPEG_BYTES.labels(OBS_SERVICE, OBS_INSTANCE, "in").observe(len(jpeg_in))
 
-            # -------------------------
-            # Parse header
-            # -------------------------
-            t_hdr = time.time()
-            header = json.loads(header_b.decode("utf-8"))
-            STAGE_SECONDS.labels(
-                OBS_SERVICE, OBS_INSTANCE, "transformer_parse_header"
-            ).observe(time.time() - t_hdr)
+                # -------------------------
+                # Parse header
+                # -------------------------
+                t_hdr = time.time()
+                header = json.loads(header_b.decode("utf-8"))
+                STAGE_SECONDS.labels(
+                    OBS_SERVICE, OBS_INSTANCE, "transformer_parse_header"
+                ).observe(time.time() - t_hdr)
 
-            # -------------------------
-            # Decode
-            # -------------------------
-            t_dec = time.time()
-            img = jpeg_bytes_to_pil(jpeg_in).convert("RGB")
-            STAGE_SECONDS.labels(
-                OBS_SERVICE, OBS_INSTANCE, "transformer_decode"
-            ).observe(time.time() - t_dec)
+                # -------------------------
+                # Decode
+                # -------------------------
+                t_dec = time.time()
+                img = jpeg_bytes_to_pil(jpeg_in).convert("RGB")
+                STAGE_SECONDS.labels(
+                    OBS_SERVICE, OBS_INSTANCE, "transformer_decode"
+                ).observe(time.time() - t_dec)
 
-            # -------------------------
-            # Transform
-            # -------------------------
-            t_tr = time.time()
-            gray = to_grayscale(img)
-            STAGE_SECONDS.labels(
-                OBS_SERVICE, OBS_INSTANCE, "transformer_grayscale"
-            ).observe(time.time() - t_tr)
+                # -------------------------
+                # Transform
+                # -------------------------
+                t_tr = time.time()
+                gray = to_grayscale(img)
+                STAGE_SECONDS.labels(
+                    OBS_SERVICE, OBS_INSTANCE, "transformer_grayscale"
+                ).observe(time.time() - t_tr)
 
-            # -------------------------
-            # Encode
-            # -------------------------
-            t_enc = time.time()
-            jpeg_out = pil_to_jpeg_bytes(gray, quality=JPEG_QUALITY_OUT)
-            STAGE_SECONDS.labels(
-                OBS_SERVICE, OBS_INSTANCE, "transformer_encode_jpeg"
-            ).observe(time.time() - t_enc)
+                # -------------------------
+                # Encode
+                # -------------------------
+                t_enc = time.time()
+                jpeg_out = pil_to_jpeg_bytes(gray, quality=JPEG_QUALITY_OUT)
+                STAGE_SECONDS.labels(
+                    OBS_SERVICE, OBS_INSTANCE, "transformer_encode_jpeg"
+                ).observe(time.time() - t_enc)
 
-            JPEG_BYTES.labels(OBS_SERVICE, OBS_INSTANCE, "out").observe(len(jpeg_out))
+                JPEG_BYTES.labels(OBS_SERVICE, OBS_INSTANCE, "out").observe(len(jpeg_out))
 
-            # -------------------------
-            # Publish (encrypt header + payload)
-            # -------------------------
-            out_header = {
-                **header,
-                "processed": "grayscale",
-                "mode": gray.mode,  # "L"
-                "w": gray.width,
-                "h": gray.height,
-                "ts_processed": time.time(),
-            }
+                # -------------------------
+                # Publish (encrypt header + payload)
+                # -------------------------
+                out_header = {
+                    **header,
+                    "processed": "grayscale",
+                    "mode": gray.mode,  # "L"
+                    "w": gray.width,
+                    "h": gray.height,
+                    "ts_processed": time.time(),
+                }
 
-            out_header_b = json.dumps(out_header).encode("utf-8")
+                out_header_b = json.dumps(out_header).encode("utf-8")
 
-            t_encsec = time.time()
-            enc_out_header = encrypt_bytes(out_header_b)
-            enc_jpeg_out = encrypt_bytes(jpeg_out)
-            STAGE_SECONDS.labels(
-                OBS_SERVICE, OBS_INSTANCE, "transformer_encrypt"
-            ).observe(time.time() - t_encsec)
+                t_encsec = time.time()
+                enc_out_header = encrypt_bytes(out_header_b)
+                enc_jpeg_out = encrypt_bytes(jpeg_out)
+                STAGE_SECONDS.labels(
+                    OBS_SERVICE, OBS_INSTANCE, "transformer_encrypt"
+                ).observe(time.time() - t_encsec)
 
-            pub.send_multipart([PUB_TOPIC, enc_out_header, enc_jpeg_out])
+                pub.send_multipart([PUB_TOPIC, enc_out_header, enc_jpeg_out])
 
-            FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, pub_topic_str).inc()
-            wire_out_bytes = len(enc_out_header) + len(enc_jpeg_out)
-            BYTES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, pub_topic_str).inc(wire_out_bytes)
+                FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, pub_topic_str).inc()
+                wire_out_bytes = len(enc_out_header) + len(enc_jpeg_out)
+                BYTES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, pub_topic_str).inc(wire_out_bytes)
+
+            except Exception as e:
+                # Anyone who can reach the broker can publish on "raw". Count and drop
+                # a message that fails to decrypt or parse instead of stopping the node.
+                ERRORS.labels(OBS_SERVICE, OBS_INSTANCE, "transformer_main", type(e).__name__).inc()
+                continue
 
     except KeyboardInterrupt:
         print("[transformer] Stopped")
         return 0
-    except Exception as e:
-        ERRORS.labels(OBS_SERVICE, OBS_INSTANCE, "transformer_main", type(e).__name__).inc()
-        raise
     finally:
         try:
             sub.close()

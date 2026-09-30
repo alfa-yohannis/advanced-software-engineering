@@ -20,5 +20,8 @@ COPY broker/ ./broker/
 
 # ---- runtime
 ENV PYTHONUNBUFFERED=1
+# docker stop sends SIGINT, which Python turns into KeyboardInterrupt, so the node
+# exits cleanly. As PID 1 it ignores SIGTERM and Docker would kill it after 10 s.
+STOPSIGNAL SIGINT
 
 CMD ["python", "broker/broker.py"]

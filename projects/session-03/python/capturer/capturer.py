@@ -24,7 +24,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from shared.crypto import encrypt_bytes  # noqa: E402
 from shared.observability import (  # noqa: E402
     init as obs_init,
-    SERVICE as OBS_SERVICE,
     INSTANCE as OBS_INSTANCE,
     FRAMES_OUT,
     BYTES_OUT,
@@ -79,13 +78,14 @@ LOOP = getenv_bool("LOOP", True)
 FALLBACK_FPS = getenv_float("FALLBACK_FPS", 25.0)
 
 METRICS_PORT = validate_port(getenv_int("METRICS_PORT", 9101), "METRICS_PORT")
+OBS_SERVICE = getenv_str("SERVICE", "capturer")  # value of the "service" label
 
 PUB_ENDPOINT = f"tcp://{BROKER_HOST}:{PUB_PORT}"
 
 
 def main() -> int:
     # Start Prometheus metrics
-    obs_init(service="capturer", metrics_port=METRICS_PORT)
+    obs_init(service=OBS_SERVICE, metrics_port=METRICS_PORT)
 
     ctx = zmq.Context.instance()
     pub = ctx.socket(zmq.PUB)

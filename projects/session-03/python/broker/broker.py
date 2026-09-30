@@ -41,7 +41,6 @@ if str(PROJECT_ROOT) not in sys.path:
 # Shared observability module (saved as shared/observability.py)
 from shared.observability import (  # noqa: E402
     init as obs_init,
-    SERVICE as OBS_SERVICE,
     INSTANCE as OBS_INSTANCE,
     FRAMES_IN,
     FRAMES_OUT,
@@ -81,6 +80,7 @@ XPUB_VERBOSE = getenv_int("XPUB_VERBOSE", 0)
 
 # Prometheus metrics
 METRICS_PORT = validate_port(getenv_int("METRICS_PORT", 9102), "METRICS_PORT")
+OBS_SERVICE = getenv_str("SERVICE", "broker")  # value of the "service" label
 
 PUB_BIND = f"tcp://{BROKER_BIND_HOST}:{PUB_PORT}"
 SUB_BIND = f"tcp://{BROKER_BIND_HOST}:{SUB_PORT}"
@@ -88,7 +88,7 @@ SUB_BIND = f"tcp://{BROKER_BIND_HOST}:{SUB_PORT}"
 
 def main() -> int:
     # Start metrics endpoint
-    obs_init(service="broker", metrics_port=METRICS_PORT)
+    obs_init(service=OBS_SERVICE, metrics_port=METRICS_PORT)
 
     ctx = zmq.Context.instance()
 

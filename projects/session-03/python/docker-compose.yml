@@ -1,3 +1,5 @@
+# PAYLOAD_KEY comes from .env in this folder. Git ignores .env, so every copy of
+# the repository creates its own (README, step 2). The broker gets no key.
 services:
 
   broker-session03:
@@ -34,7 +36,7 @@ services:
       LOOP: "true"
       FALLBACK_FPS: 25
       METRICS_PORT: 9101
-      PAYLOAD_KEY: RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
     volumes:
       - ./data:/data:ro
     depends_on:
@@ -57,7 +59,7 @@ services:
       PUB_TOPIC: processed
       JPEG_QUALITY_OUT: 85
       METRICS_PORT: 9103
-      PAYLOAD_KEY: RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
     depends_on:
       - broker-session03
     ports:
@@ -79,7 +81,7 @@ services:
       HTTP_PORT: 8000
       HTTP_THREADS: 8
       METRICS_PORT: 9104
-      PAYLOAD_KEY: RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
     depends_on:
       - broker-session03
       - transformer-session03

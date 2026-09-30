@@ -30,7 +30,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from shared.crypto import decrypt_bytes  # noqa: E402
 from shared.observability import (  # noqa: E402
     init as obs_init,
-    SERVICE as OBS_SERVICE,
     INSTANCE as OBS_INSTANCE,
     BYTES_IN,
     E2E_SECONDS,
@@ -73,6 +72,7 @@ HTTP_THREADS = getenv_int("HTTP_THREADS", 8)
 
 # Prometheus metrics
 METRICS_PORT = validate_port(getenv_int("METRICS_PORT", 9104), "METRICS_PORT")
+OBS_SERVICE = getenv_str("SERVICE", "web_server")  # value of the "service" label
 
 SUB_ENDPOINT = f"tcp://{BROKER_HOST}:{SUB_PORT}"
 SUB_TOPIC_STR = SUB_TOPIC.decode("utf-8", "ignore")
@@ -249,7 +249,7 @@ def zmq_receiver():
 
 
 def main():
-    obs_init(service="web_server", metrics_port=METRICS_PORT)
+    obs_init(service=OBS_SERVICE, metrics_port=METRICS_PORT)
 
     t = threading.Thread(target=zmq_receiver, daemon=True)
     t.start()

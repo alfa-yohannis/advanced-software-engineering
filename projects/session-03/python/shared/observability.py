@@ -1,10 +1,10 @@
-# obs_prom.py
+# shared/observability.py
 """
 Shared Prometheus observability module for your ZMQ video pipeline.
 
 Usage (in each service):
-  import obs_prom as obs
-  obs.init(service="node_a")   # or "broker" / "transformer" / "web_server"
+  from shared import observability as obs
+  obs.init(service="capturer")   # or "broker" / "transformer" / "web_server"
   # then use obs.FRAMES_OUT.labels(...).inc(), etc.
 
 Env vars (optional):

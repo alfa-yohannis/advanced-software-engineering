@@ -4,16 +4,16 @@ global:
 scrape_configs:
   - job_name: "capturer"
     static_configs:
-      - targets: ["capturer:9101"]
+      - targets: ["capturer-session03:9101"]
 
   - job_name: "broker"
     static_configs:
-      - targets: ["broker:9102"]
+      - targets: ["broker-session03:9102"]
 
   - job_name: "transformer"
     static_configs:
-      - targets: ["transformer:9103"]
+      - targets: ["transformer-session03:9103"]
 
   - job_name: "web_server"
     static_configs:
-      - targets: ["web_server:9104"]
+      - targets: ["web_server-session03:9104"]

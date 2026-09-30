@@ -1,10 +1,16 @@
-# Jalankan perintah berikut untuk sniffing:
+#!/usr/bin/env python3
+# Jalankan perintah berikut untuk sniffing dari host (port 5556 broker dibuka ke host):
 #
-# BROKER_HOST=127.0.0.1 SUB_PORT=5556 N=10 python3 sniffer.py
+# BROKER_HOST=127.0.0.1 SUB_PORT=5556 N=10 ../../.venv/bin/python sniffer.py
+#
+# Atau dari dalam jaringan Docker Compose, tanpa Python di host:
+#
+# bash sniffer.sh
 #
 
-#!/usr/bin/env python3
+import json
 import os
+import sys
 import time
 import binascii
 import zmq
@@ -13,11 +19,18 @@ BROKER_HOST = os.getenv("BROKER_HOST", "broker-session03")  # nama service di do
 SUB_PORT = int(os.getenv("SUB_PORT", "5556"))  # port SUB side (xpub bind)
 TOPIC = os.getenv("TOPIC", "")                 # "" = semua topic
 N = int(os.getenv("N", "10"))                  # berapa message
+TIMEOUT_SEC = int(os.getenv("TIMEOUT_SEC", "10"))  # berhenti bila tidak ada message
 
 ENDPOINT = f"tcp://{BROKER_HOST}:{SUB_PORT}"
 
 def is_probably_jpeg(b: bytes) -> bool:
     return len(b) >= 3 and b[0] == 0xFF and b[1] == 0xD8 and b[2] == 0xFF
+
+def is_json_object(b: bytes) -> bool:
+    try:
+        return isinstance(json.loads(b), dict)
+    except ValueError:  # termasuk UnicodeDecodeError dan JSONDecodeError
+        return False
 
 def preview_utf8(b: bytes, limit: int = 120) -> str:
     try:
@@ -30,6 +43,8 @@ def main():
     ctx = zmq.Context.instance()
     s = ctx.socket(zmq.SUB)
     s.setsockopt(zmq.LINGER, 0)
+    # ZMQ tidak melapor bila host salah atau broker mati, recv() hanya menunggu
+    s.setsockopt(zmq.RCVTIMEO, TIMEOUT_SEC * 1000)
 
     s.setsockopt(zmq.SUBSCRIBE, TOPIC.encode("utf-8"))
     s.connect(ENDPOINT)
@@ -39,7 +54,12 @@ def main():
     print("[sniffer] Ctrl+C to stop\n")
 
     for i in range(N):
-        parts = s.recv_multipart()
+        try:
+            parts = s.recv_multipart()
+        except zmq.Again:
+            print(f"[sniffer] no message within {TIMEOUT_SEC}s from {ENDPOINT}.")
+            print("[sniffer] Is the pipeline running? From the host, use BROKER_HOST=127.0.0.1.")
+            return 1
         print(f"--- msg {i} parts={len(parts)} ---")
 
         for idx, p in enumerate(parts):
@@ -50,7 +70,7 @@ def main():
         if len(parts) >= 3:
             header_part = parts[1]
             payload_part = parts[2]
-            looks_json = preview_utf8(header_part).startswith("'{'") or preview_utf8(header_part).startswith('"{')
+            looks_json = is_json_object(header_part)
             looks_jpeg = is_probably_jpeg(payload_part)
 
             if looks_json:
@@ -63,6 +83,7 @@ def main():
 
         time.sleep(0.05)
 
-if __name__ == "__main__":
-    main()
+    return 0
 
+if __name__ == "__main__":
+    sys.exit(main())
