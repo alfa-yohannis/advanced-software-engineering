@@ -42,7 +42,7 @@ class FakeS3:
         self.last_get_object_args = None
 
     def put_mp3(self, bucket: str, key: str, content: bytes):
-        self.objects[(bucket, key)] = {"Body": FakeBody([content])}
+        self.objects[(bucket, key)] = {"Body": FakeBody([content]), "ContentLength": len(content)}
 
     def get_object(self, Bucket: str, Key: str):
         self.last_get_object_args = {"Bucket": Bucket, "Key": Key}
@@ -61,6 +61,23 @@ class FakeS3:
                 operation_name="GetObject",
             )
         return obj
+
+    def head_object(self, Bucket: str, Key: str):
+        if self.raise_client_error_code is not None:
+            code = self.raise_client_error_code
+            raise ClientError(
+                error_response={"Error": {"Code": code, "Message": "boom"}},
+                operation_name="HeadObject",
+            )
+
+        obj = self.objects.get((Bucket, Key))
+        if obj is None:
+            # A HEAD response has no body, so S3 reports a missing key as "404"
+            raise ClientError(
+                error_response={"Error": {"Code": "404", "Message": "Not Found"}},
+                operation_name="HeadObject",
+            )
+        return {"ContentLength": obj["ContentLength"], "ContentType": "audio/mpeg"}
 
 
 @pytest.fixture()
@@ -118,7 +135,7 @@ def test_mp3_404_when_key_missing(client: TestClient, fake_s3: FakeS3):
     assert r.json()["detail"] == "mp3 not found"
 
 
-@pytest.mark.parametrize("code", ["404", "NoSuchKey"])
+@pytest.mark.parametrize("code", ["404", "NoSuchKey", "NoSuchBucket"])
 def test_mp3_404_when_s3_returns_not_found_codes(client: TestClient, fake_s3: FakeS3, code: str):
     fake_s3.raise_client_error_code = code
     r = client.get("/mp3/whatever.mp3")
@@ -132,3 +149,41 @@ def test_mp3_502_on_other_s3_errors(client: TestClient, fake_s3: FakeS3, code: s
     r = client.get("/mp3/whatever.mp3")
     assert r.status_code == 502
     assert r.json()["detail"] == "storage error"
+
+
+def test_mp3_sends_content_length(client: TestClient, fake_s3: FakeS3):
+    payload = b"ID3" + b"\x00" * 50
+    fake_s3.put_mp3("tts-dev", "job123.mp3", payload)
+
+    r = client.get("/mp3/job123.mp3")
+
+    assert r.status_code == 200
+    assert r.headers["content-length"] == str(len(payload))
+    assert r.content == payload
+
+
+# -------------------------
+# HEAD /mp3/{job_id}.mp3 (curl -I)
+# -------------------------
+
+def test_mp3_head_returns_headers_without_body(client: TestClient, fake_s3: FakeS3):
+    payload = b"ID3" + b"\x00" * 50
+    fake_s3.put_mp3("tts-dev", "job123.mp3", payload)
+
+    r = client.head("/mp3/job123.mp3")
+
+    assert r.status_code == 200
+    assert r.headers.get("content-type", "").startswith("audio/mpeg")
+    assert r.headers["content-length"] == str(len(payload))
+    assert r.content == b""
+
+
+def test_mp3_head_404_when_key_missing(client: TestClient, fake_s3: FakeS3):
+    r = client.head("/mp3/missing.mp3")
+    assert r.status_code == 404
+
+
+def test_mp3_head_502_on_other_s3_errors(client: TestClient, fake_s3: FakeS3):
+    fake_s3.raise_client_error_code = "AccessDenied"
+    r = client.head("/mp3/whatever.mp3")
+    assert r.status_code == 502

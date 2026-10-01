@@ -246,3 +246,23 @@ def test_upload_mp3_calls_s3_upload_file(monkeypatch, tmp_path):
     assert Bucket == "bkt"
     assert Key == "k.mp3"
     assert ExtraArgs == {"ContentType": "audio/mpeg"}
+
+
+# -------------------------
+# main() tests
+# -------------------------
+
+def test_main_returns_on_keyboard_interrupt(monkeypatch, capsys):
+    """
+    Ctrl+C and docker stop (SIGINT) reach the loop as KeyboardInterrupt.
+    main() must return instead of ending with a traceback.
+    """
+    class FakeRedis:
+        def blpop(self, key, timeout):
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(worker_mod, "r", FakeRedis(), raising=True)
+
+    worker_mod.main()
+
+    assert "Worker stopped" in capsys.readouterr().out

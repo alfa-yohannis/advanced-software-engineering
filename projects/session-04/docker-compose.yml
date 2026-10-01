@@ -1,17 +1,18 @@
 # docker-compose.yml
 # Minimal local stack for the TTS case study:
+# - gateway (nginx; one address for the page and the API)
 # - api (FastAPI + Redis queue/state)
-# - web (GET-only player + MP3 serving from MinIO)
+# - web (player page + MP3 serving from MinIO)
 # - worker (Piper + ffmpeg synth -> MP3 -> MinIO)
 # - redis (queue/state)
 # - minio (S3-compatible object storage)
 #
 # Assumptions:
-# - services/api has: apiclear.py, requirements.txt, Dockerfile
+# - services/api has: api.py, requirements.txt, Dockerfile
 # - services/web has: web.py, requirements.txt, Dockerfile, static/index.html
 # - services/worker has: worker.py, requirements.txt, Dockerfile
-# - worker image must contain piper binary + a model at /models/en_US.onnx
-#   (either baked into the image or mounted via ./models)
+# - the worker Dockerfile downloads the piper binary and the voice model
+#   /models/en_GB-alan-medium.onnx into the image
 
 services:
   redis:
@@ -19,8 +20,10 @@ services:
     ports:
       - "6379:6379"
 
+  # The official minio/minio image is no longer on Docker Hub. Silo is a community
+  # fork of the MinIO server that keeps its S3 API, MINIO_* settings and start command.
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -43,7 +46,7 @@ services:
     depends_on:
       - redis
     ports:
-      - "8000:8000"   # direct API access (optional; web also routes /api)
+      - "8000:8000"   # direct API access (optional; the gateway routes /api to it)
     # healthcheck (optional)
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
@@ -62,18 +65,16 @@ services:
       S3_SECRET_KEY: minioadmin
       S3_REGION: us-east-1
       MP3_BUCKET: tts-dev
-      # Web JS calls API at /api (we map that using nginx below), but if you
-      # run web directly on :8080 without nginx, you can still call API at :8000 by CORS.
+      # Web JS calls API at /api (we map that using nginx below), so open the
+      # page through the gateway on :8088. On :8080 the web service has no /api.
     depends_on:
       - minio
     ports:
-      - "8080:8000"   # open web UI at http://localhost:8080
+      - "8080:8000"   # direct web access (optional; /healthz and /mp3/* work here)
 
-  # Optional lightweight reverse proxy to keep same-origin:
+  # Lightweight reverse proxy to keep same-origin:
   # - http://localhost:8088/      -> web
   # - http://localhost:8088/api/* -> api
-  #
-  # If you prefer not to use this, just use web on :8080 and API on :8000.
   gateway:
     image: nginx:1.27-alpine
     depends_on:
