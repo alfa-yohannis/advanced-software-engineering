@@ -224,7 +224,7 @@ The integration tests need the running stack from step 2. They do what you did b
 To test the API and the web service on their own ports instead, replace `--base-url ...` with `--api-url http://localhost:8000 --web-url http://localhost:8080`.
 
 ## Step 7. Run the tests on GitHub (CI)
-
+ 
 `.github/workflows/tests.yml` defines the workflow `CI Tests (session-04)`. GitHub runs it on every push and every pull request, on its own runners (`ubuntu-latest`). Every step runs in `projects/session-04`. The workflow has two jobs:
 
 | Job | What it runs |
