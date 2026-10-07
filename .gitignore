@@ -548,7 +548,8 @@ slides/session*/session*.pdf
 projects/session-05/app/models
 *.lock.hcl
 **/*.tfstate
-**/.terraform/modules/modules.json
+**/*.tfstate.*
+**/.terraform/
 
 projects/session-07/outputs*
 projects/session-07/module

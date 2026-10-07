@@ -199,6 +199,10 @@ def main():
                     pass
                 print("[ERROR]", e)
                 print(traceback.format_exc(limit=3))
+        except KeyboardInterrupt:
+            # Ctrl+C, or docker stop (the Dockerfile sets STOPSIGNAL SIGINT)
+            print("Worker stopped")
+            return
         except Exception as outer:
             print("[FATAL LOOP ERROR]", outer)
             time.sleep(1)

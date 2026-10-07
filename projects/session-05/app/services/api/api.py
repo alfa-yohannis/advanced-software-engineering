@@ -59,7 +59,8 @@ def create_job(req: CreateJobReq):
         "mp3_key": f"{job_id}.mp3",
         "error": "",
     }
-    r.hset(job_key(job_id), mapping=state)
+    # Redis cannot store None, so a null voice or speed is saved as an empty string
+    r.hset(job_key(job_id), mapping={k: "" if v is None else v for k, v in state.items()})
 
     # Enqueue work item (simple JSON)
     work = {"job_id": job_id, "text": req.text, "voice": req.voice, "speed": req.speed, "bucket": BUCKET, "mp3_key": state["mp3_key"]}

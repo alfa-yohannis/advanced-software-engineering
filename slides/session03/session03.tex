@@ -6,7 +6,7 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepgfplotslibrary{polar}
-\usetikzlibrary{arrows.meta, positioning, calc}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.markings}
 
 \makeatletter
 \def\input@path{{../theme/}}
@@ -56,6 +56,23 @@
     captionpos=b
 }
 
+% Gaya diagram siklus DevSecOps
+\colorlet{dsoDev}{blue!60!black}
+\colorlet{dsoOps}{green!45!black}
+\colorlet{dsoSec}{red!70!black}
+\tikzset{
+  dso band/.style={line width=6pt, domain=#1, samples=121, variable=\t},
+  dso flow/.style={postaction={decorate, decoration={markings,
+    mark=at position 0.395 with {\arrow[white]{Stealth[length=1.8mm, width=1.9mm]}},
+    mark=at position 0.605 with {\arrow[white]{Stealth[length=1.8mm, width=1.9mm]}}}}},
+  dso station/.style={circle, draw=#1, line width=0.8pt, fill=white, text=#1,
+    font=\tiny\bfseries, inner sep=0pt, minimum size=3.6mm},
+  dso focus/.style={dso station=dsoSec, fill=dsoSec, text=white},
+  dso phase/.style={font=\scriptsize\bfseries, text=black!75, inner sep=1.5pt},
+  dso box/.style={draw=#1, rounded corners=1.5mm, fill=#1!7, align=flush left,
+    text width=30mm, inner sep=1.3mm, font=\scriptsize},
+}
+
 
 \title{\Huge Security in \\
 	Software Systems\vspace{8pt}}
@@ -85,24 +102,64 @@
 	\end{frame}
 	
 
-\section{Pengantar Security}
+\section{Pengantar Security dalam DevSecOps}
 
 	\begin{frame}{\hfill}
 		\centering
-		\Huge{\textbf{Pengantar Security}}
+		\Huge{\textbf{Pengantar Security dalam DevSecOps}}
 	\end{frame}
 
-\begin{frame}{Keamanan Sistem Perangkat Lunak}
+\begin{frame}{Dari DevOps ke DevSecOps}
 	\vspace{10pt}
 	\begin{itemize}
-		\item Pengembangan sistem modern menyatukan aktivitas perancangan, implementasi, dan pengelolaan sistem yang berjalan.
-		\item Pendekatan ini menekankan kolaborasi, automasi, dan umpan balik cepat dari sistem yang sedang beroperasi.
-		\item Dalam banyak praktik awal, \textbf{keamanan} sering diperlakukan sebagai aktivitas terpisah atau tahap tambahan di akhir.
-		\item Pendekatan yang lebih matang menempatkan security sebagai bagian inheren dari seluruh siklus hidup sistem.
+		\item \textbf{DevOps} menyatukan pengembangan (\emph{Dev}) dan pengelolaan sistem yang berjalan (\emph{Ops}) melalui kolaborasi, otomasi, dan umpan balik cepat.
+		\item Dalam banyak praktik awal, keamanan menjadi pemeriksaan terpisah di akhir, tepat sebelum rilis.
+		\item \textbf{DevSecOps} memasukkan security (\emph{Sec}) ke siklus yang sama: setiap tahap, dari desain sampai runtime, membawa kontrol keamanannya sendiri.
+		\item Pemeriksaan yang bisa diotomasi berjalan di pipeline CI/CD pada setiap perubahan kode.
+		\item Keamanan menjadi tanggung jawab bersama pengembang dan operator.
 	\end{itemize}
-	
+
 	\vspace{6pt}
-	{\footnotesize Fokus bergeser: dari keamanan sebagai aktivitas terpisah menjadi keamanan sebagai properti sistem}
+	{\footnotesize Pertanyaannya bergeser dari ``apakah sistem sudah diuji keamanannya?'' menjadi ``kontrol apa yang aktif di setiap tahap?''}
+\end{frame}
+
+
+\begin{frame}{Siklus DevSecOps}
+	\centering
+	\begin{tikzpicture}
+
+	% Loop Dev (kiri) dan Ops (kanan): x = 2.6 cos t, y = -1.4 sin 2t
+	\draw[dso band=90:270, dsoDev, dso flow] plot ({2.6*cos(\t)}, {-1.4*sin(2*\t)});
+	\draw[dso band=-90:90, dsoOps, dso flow] plot ({2.6*cos(\t)}, {-1.4*sin(2*\t)});
+	\node[font=\large\bfseries, text=dsoDev] at (-1.35, 0) {Dev};
+	\node[font=\large\bfseries, text=dsoOps] at (1.35, 0) {Ops};
+
+	% Fase siklus; nomor di lingkaran = tahap kontrol keamanan
+	\foreach \t/\n/\name/\ang in {135/1/Plan/90, 180/2/Code/150, 225/3/Build/270, 250/3/Test/330}
+	  \node[dso station=dsoDev, label={[dso phase]\ang:\name}] at ({2.6*cos(\t)}, {-1.4*sin(2*\t)}) {\n};
+	\foreach \t/\n/\name/\ang in {290/4/Release/150, 315/4/Deploy/90}
+	  \node[dso station=dsoOps, label={[dso phase]\ang:\name}] at ({2.6*cos(\t)}, {-1.4*sin(2*\t)}) {\n};
+	\foreach \t/\name/\ang in {0/Operate/0, 45/Monitor/270}
+	  \node[dso focus, label={[dso phase]\ang:\name}] at ({2.6*cos(\t)}, {-1.4*sin(2*\t)}) {5};
+
+	% Kontrol keamanan per tahap
+	\node[dso box=dsoDev, anchor=east] (b1) at (-3.62, 1.5)
+	  {{\scriptsize\textbf{\textcolor{dsoDev}{1}\enspace Desain}}\\ threat modeling, trust boundary};
+	\node[dso box=dsoDev, anchor=east] (b2) at (-3.62, 0)
+	  {{\scriptsize\textbf{\textcolor{dsoDev}{2}\enspace Implementasi}}\\ validasi input, library teruji};
+	\node[dso box=dsoDev, anchor=east] (b3) at (-3.62, -1.5)
+	  {{\scriptsize\textbf{\textcolor{dsoDev}{3}\enspace Build \& Artifact}}\\ audit dependensi, image hardening};
+	\node[dso box=dsoOps, anchor=west] (b4) at (3.7, 1.1)
+	  {{\scriptsize\textbf{\textcolor{dsoOps}{4}\enspace Deployment \& Environment}}\\ least privilege, secret manager};
+	\node[dso box=dsoSec, anchor=west, line width=0.9pt] (b5) at (3.7, -1.3)
+	  {{\scriptsize\textbf{\textcolor{dsoSec}{5}\enspace Runtime \& Eksekusi}}\\ enkripsi payload, observabilitas\\ \textcolor{dsoSec}{\textbf{Fokus sesi ini}}};
+
+	\node[font=\scriptsize, text=dsoSec, anchor=south] at (b1.north) {\textbf{Sec} di sisi Dev};
+	\node[font=\scriptsize, text=dsoSec, anchor=south] at (b4.north) {\textbf{Sec} di sisi Ops};
+	\end{tikzpicture}
+
+	\vspace{2pt}
+	{\footnotesize Nomor di lingkaran menunjuk tahap kontrol keamanan; sesi ini berfokus pada tahap 5}
 \end{frame}
 
 
@@ -111,7 +168,7 @@
 	\begin{itemize}
 		\item Sistem modern bersifat kompleks, terdistribusi, dan terus berubah, sehingga keamanan tidak dapat dipusatkan di satu tahap.
 		\item Kesalahan desain, implementasi, dan operasi masing-masing menciptakan risiko keamanan yang berbeda.
-		\item Security dipahami sebagai \textbf{kontrol terhadap perilaku sistem}, bukan sekadar keberadaan fitur atau mekanisme.
+		\item Dalam DevSecOps, security dipahami sebagai \textbf{kontrol terhadap perilaku sistem}, bukan sekadar keberadaan fitur atau mekanisme.
 		\item Keamanan sistem bersifat \emph{akumulatif}: setiap kontrol hanya mengurangi sebagian risiko.
 	\end{itemize}
 	
@@ -120,11 +177,11 @@
 \end{frame}
 
 
-\section{Tingkatan Security dalam Pengembangan Sistem}
+\section{Tingkatan Security dalam DevSecOps}
 
 	\begin{frame}{\hfill}
 		\centering
-		\Huge{\textbf{Tingkatan Security dalam Pengembangan Sistem}}
+		\Huge{\textbf{Tingkatan Security dalam DevSecOps}}
 	\end{frame}
 
 \begin{frame}{Tingkatan Security dalam Siklus Sistem}
@@ -207,19 +264,49 @@
 	{\footnotesize Pertemuan kali ini menekankan \textbf{runtime control}: bagaimana kontrol mengubah perilaku sistem yang sedang berjalan}
 \end{frame}
 
+
+\begin{frame}{Otomasi Kontrol Keamanan}
+	\vspace{4pt}
+	\centering
+	\scriptsize
+	\arrayrulecolor{black}\setlength{\arrayrulewidth}{0.4pt}
+	\begin{tabular}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.33\textwidth}|>{\raggedright\arraybackslash}p{0.15\textwidth}|>{\raggedright\arraybackslash}p{0.19\textwidth}|}
+	\hline
+	\rowcolor{blue!12}
+	\textbf{Tahap} & \textbf{Pemeriksaan} & \textbf{Contoh alat} & \textbf{Kapan dijalankan} \\
+	\hline
+	1 Desain & Threat model ditinjau bersama tim & (manual) & Saat arsitektur berubah \\
+	\hline
+	\rowcolor{black!4}
+	2 Implementasi & SAST: pola kode berisiko, mis. \texttt{shell=True} atau \texttt{eval} & Bandit, Semgrep & Setiap commit atau pull request \\
+	\hline
+	3 Build \& Artifact & Dependensi dan image yang membawa kerentanan yang sudah diketahui (CVE) & pip-audit, Trivy & Setiap build \\
+	\hline
+	\rowcolor{black!4}
+	4 Deployment \& Environment & Rahasia yang ikut ter-commit; container yang berjalan sebagai root & gitleaks, \texttt{trivy config} & Setiap commit dan sebelum deploy \\
+	\hline
+	5 Runtime \& Eksekusi & Metrik dan alert untuk perilaku yang menyimpang & Prometheus, Grafana & Terus-menerus selama sistem berjalan \\
+	\hline
+	\end{tabular}
+	\arrayrulecolor{white}% kembali ke warna garis bawaan tema
+
+	\vspace{8pt}
+	{\footnotesize Pemeriksaan tahap 2 sampai 4 berjalan sebagai job di pipeline CI/CD. Jika satu pemeriksaan gagal, pipeline berhenti dan perubahan tidak dirilis.}
+\end{frame}
+
 \section{Penekanan Keamanan pada Pertemuan Kali Ini}
 	\begin{frame}{\hfill}
 		\centering
 		\Huge{\textbf{Penekanan Keamanan pada Pertemuan Kali Ini}}
 	\end{frame}
 
-\begin{frame}{Posisi Sesi Ini dalam Lapisan Keamanan}
+\begin{frame}{Posisi Sesi Ini dalam DevSecOps}
 	\vspace{10pt}
 	\begin{itemize}
-		\item Pertemuan kali ini \textbf{tidak} membahas seluruh spektrum keamanan,
+		\item Pertemuan kali ini \textbf{tidak} membahas seluruh spektrum DevSecOps secara mendalam,
 		      seperti analisis kerentanan statis, pengujian penetrasi,
 		      manajemen identitas dan akses, maupun keamanan jaringan tingkat rendah.
-		\item Fokus pertemuan kali ini adalah \textbf{keamanan runtime}:
+		\item Fokus pertemuan kali ini adalah \textbf{keamanan runtime} (tahap 5 pada siklus DevSecOps):
 		      kontrol yang aktif saat sistem berjalan dan berinteraksi dengan lingkungan operasional nyata.
 		\item Contoh yang digunakan, yaitu enkripsi payload,
 		      menunjukkan bagaimana satu kontrol runtime mengubah perilaku sistem,
@@ -654,8 +741,8 @@ decrypt failed without key
 		\item Bagaimana satu kontrol sederhana, seperti enkripsi payload,
 		      dapat mengubah perilaku sistem tanpa mengubah arsitekturnya?
 		\item Mengapa satu kontrol keamanan tidak cukup untuk menyebut suatu sistem aman?
-		\item Kontrol keamanan tambahan apa yang perlu dipertimbangkan
-		      pada tahap lain selain runtime?
+		\item Kontrol keamanan apa yang perlu ditambahkan pada tahap lain dalam siklus DevSecOps,
+		      dan mana yang dapat diotomasi di pipeline?
 		\item Apakah kontribusi observabilitas terhadap keamanan sistem?
 	\end{enumerate}
 	
@@ -674,7 +761,8 @@ decrypt failed without key
 \begin{frame}{Rangkuman}
 	\vspace{10pt}
 	\begin{itemize}
-		\item Keamanan sistem bersifat berlapis dan tidak dapat dipusatkan pada satu mekanisme.
+		\item Dalam DevSecOps, keamanan berlapis dan tidak bertumpu pada satu mekanisme.
+		\item Sebagian kontrol berjalan otomatis di pipeline CI/CD.
 		\item Keamanan dipahami sebagai kontrol terhadap perilaku sistem yang sedang berjalan.
 		\item Studi kasus menunjukkan bahwa enkripsi payload membatasi keterbacaan data
 		      tanpa mengubah alur atau arsitektur sistem.

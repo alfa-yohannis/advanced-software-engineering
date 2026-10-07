@@ -65,7 +65,7 @@ The two workflows are in `.github/workflows/` at the root of the repository, bec
   ```
 
   On Ubuntu, if `python3 -m venv` fails, run `sudo apt install python3-venv` first.
-- For steps 7 and 8: a GitHub repository that you can push to, such as your own fork of this one, and the GitHub CLI (`gh`) logged in with `gh auth login`. GitHub turns workflows off in a new fork. Open the Actions tab of the fork to enable them.
+- For steps 7 to 9: a GitHub repository that you can push to, such as your own fork of this one, and the GitHub CLI (`gh`) logged in with `gh auth login`. GitHub turns workflows off in a new fork. Open the Actions tab of the fork to enable them.
 
 The commands below use `sudo docker`. If your user is in the `docker` group, or you use Docker Desktop, leave out `sudo`.
 
@@ -251,7 +251,38 @@ To start the workflow without a new commit:
 gh workflow run tests.yml --ref main
 ```
 
-## Step 8. Deploy after CI succeeds (CD)
+## Step 8. Register and start the self-hosted runner
+
+The deploy workflow in step 9 runs on a machine of your own instead of on GitHub's runners, so the repository needs a runner with the labels `self-hosted`, `Linux` and `X64`. Until one is online, every deploy run waits in the queue, and GitHub cancels it after 24 hours. This command prints `"total_count": 0` while no runner is registered:
+
+```bash
+gh api repos/:owner/:repo/actions/runners
+```
+
+1. On GitHub, open the repository's Settings > Actions > Runners and click New self-hosted runner. Choose Linux and x64. The page shows the commands that download the runner and register it, with a token that is valid for one hour.
+2. Run those commands in a folder outside the repository, such as `~/actions-runner`. Accept the default name and the default labels, which are `self-hosted`, `Linux` and `X64`.
+3. The workflow calls `docker` without `sudo`, so the user that starts the runner has to be in the `docker` group: `sudo usermod -aG docker $USER`, then log out and in again.
+4. Start the runner:
+
+   ```bash
+   cd ~/actions-runner
+   ./run.sh
+   ```
+
+   It prints `Listening for Jobs` and keeps that terminal busy. Deployment works only while it runs, Ctrl+C stops it, and `./run.sh` starts it again. A deploy run that is already queued begins within seconds of the runner connecting.
+5. In another terminal, ask GitHub whether it sees the runner:
+
+   ```bash
+   gh api repos/:owner/:repo/actions/runners --jq '.runners[] | "\(.name) \(.status)"'
+   ```
+
+   ```
+   my-runner online
+   ```
+
+To keep the runner online after a reboot, install it as a service instead: `sudo ./svc.sh install` and `sudo ./svc.sh start` in the same folder.
+
+## Step 9. Deploy automatically after CI succeeds (CD)
 
 `.github/workflows/deploy-local.yml` defines the workflow `deploy-local`. GitHub starts it each time a run of `CI Tests (session-04)` completes, and skips its job unless that run succeeded. The job asks for a runner with the labels `self-hosted`, `Linux` and `X64`. That is a machine of your own with Docker, which you register with the repository. On it the job checks out branch `main` and runs, from the root of the repository:
 
@@ -259,23 +290,35 @@ gh workflow run tests.yml --ref main
 docker compose -f projects/session-04/docker-compose.yml down || true
 docker compose -f projects/session-04/docker-compose.yml up -d --build
 docker compose -f projects/session-04/docker-compose.yml ps
+``` 
+
+The stack then runs on that machine, at http://localhost:8088/, built from the code that passed the tests.
+
+This part needs no command from you. Push a commit, the CI workflow from step 7 runs on GitHub's runners, and a few seconds after it reports success the runner from step 8 prints the name of the deploy job in its terminal:
+
+```bash
+git commit -am "Change the page title"
+git push origin main
+
+gh run list --workflow deploy-local --limit 3
+gh run watch --exit-status
 ```
 
-The stack then runs on that machine, at http://localhost:8088/, built from the code that passed the tests. You can run these three commands yourself from the root of the repository to see what the job does. Put `sudo` in front of them if your user is not in the `docker` group.
+The deploy run shows `completed success` when the stack is up. A run that stays `queued` means no runner is online: start it as in step 8, and the queued run begins within seconds.
 
-To set up the runner:
+### Deploy by hand instead
 
-1. On GitHub, open the repository's Settings > Actions > Runners and click New self-hosted runner. Choose Linux and x64. The page shows the commands that download the runner and register it, with a token that is valid for one hour.
-2. Run those commands in a folder outside the repository, such as `~/actions-runner`. Accept the default labels.
-3. The workflow calls `docker` without `sudo`, so the user that starts the runner must be in the `docker` group: `sudo usermod -aG docker $USER`, then log out and in again.
-4. Start the runner with `./run.sh`. It prints `Listening for Jobs`.
-5. Push a commit. When the CI run ends with success, the runner prints the name of the deploy job, and `gh run list --workflow deploy-local --limit 3` shows the run.
+`deploy.sh`, in the root of the repository, does the same without a runner:
 
-Without a runner online, the deploy run waits in the queue and GitHub cancels it after 24 hours.
+```bash
+./deploy.sh
+```
 
-The runner checks the repository out into its own folder, `actions-runner/_work/`. Compose names the project `session-04` after the folder of `docker-compose.yml` in both copies, so the deployment replaces the containers you started in step 2. `sudo docker compose ps` in this folder shows the deployed containers, and step 9 stops them.
+It starts `CI Tests (session-04)` with `gh workflow run`, follows it with `gh run watch --exit-status`, and only if the tests pass runs `docker compose down`, `build` and `up` on `projects/session-04/docker-compose.yml`. After a failed run it prints "Deployment aborted." and stops. The script does not push, so commit and push first, and it calls `docker` without `sudo`. Its last command stays in the foreground, so Ctrl+C there stops the stack.
 
-## Step 9. Stop
+The runner checks the repository out into its own folder, `actions-runner/_work/`. Compose names the project `session-04` after the folder of `docker-compose.yml` in both copies, so the deployment replaces the containers you started in step 2. `sudo docker compose ps` in this folder shows the deployed containers, and step 10 stops them.
+
+## Step 10. Stop
 
 ```bash
 sudo docker compose down
