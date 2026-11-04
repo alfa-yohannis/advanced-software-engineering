@@ -5,16 +5,16 @@
 Setelah mempelajari bab ini, capaian pembelajaran yang diharapkan adalah sebagai berikut:
 
 \begin{enumerate}
-    \item Memahami konsep orkestrasi container dalam konteks sistem terdistribusi modern serta menjelaskan urgensinya dibandingkan pendekatan manual pada skala produksi.
+    \item Memahami konsep orkestrasi\index{orkestrasi} container dalam konteks sistem terdistribusi modern serta menjelaskan urgensinya dibandingkan pendekatan manual pada skala produksi.
 
-    \item Menjelaskan definisi Kubernetes sebagai platform orkestrasi container berbasis \textit{declarative desired state} dan \textit{reconciliation loop}, serta mengidentifikasi arsitektur dan komponen utamanya (\textit{control plane} dan \textit{worker node}).
+    \item Menjelaskan definisi Kubernetes\index{Kubernetes} sebagai platform orkestrasi container berbasis \textit{declarative desired state} dan \textit{reconciliation loop}, serta mengidentifikasi arsitektur dan komponen utamanya (\textit{control plane} dan \textit{worker node}).
 
-    \item Menganalisis bagaimana Kubernetes bekerja dalam menjaga ketersediaan aplikasi melalui mekanisme \textit{self-healing}, \textit{autoscaling}, dan \textit{rolling update}, serta membandingkan perannya dengan pengelola infrastruktur seperti Terraform.
+    \item Menganalisis bagaimana Kubernetes bekerja dalam menjaga ketersediaan aplikasi melalui mekanisme \textit{self-healing}, \textit{autoscaling}, dan \textit{rolling update}, serta membandingkan perannya dengan pengelola infrastruktur seperti Terraform\index{Terraform}.
 \end{enumerate}
 \section{Pendahuluan}
 
 Perangkat lunak modern tidak lagi dijalankan sebagai satu program tunggal pada satu mesin. 
-Sebaliknya, sistem dibangun sebagai sekumpulan layanan (\textit{microservices}) yang berjalan di dalam container dan saling berkomunikasi melalui jaringan. 
+Sebaliknya, sistem dibangun sebagai sekumpulan layanan (\textit{microservices}) yang berjalan di dalam container\index{container} dan saling berkomunikasi melalui jaringan. 
 Pendekatan ini meningkatkan fleksibilitas dan skalabilitas, tetapi sekaligus menambah kompleksitas operasional.
 
 Ketika jumlah container meningkat, muncul sejumlah tantangan fundamental. 
@@ -64,7 +64,7 @@ Worker Node adalah mesin tempat aplikasi dijalankan.
 Di dalamnya terdapat:
 
 \begin{itemize}
-    \item \textbf{kubelet}, agen yang memastikan container dalam Pod berjalan sesuai spesifikasi.
+    \item \textbf{kubelet}, agen\index{agen} yang memastikan container dalam Pod berjalan sesuai spesifikasi.
     \item \textbf{Container Runtime}, seperti containerd, yang menjalankan container.
     \item \textbf{kube-proxy}, yang mengatur komunikasi jaringan antar layanan.
 \end{itemize}
@@ -101,8 +101,11 @@ Dengan mekanisme ini, Kubernetes tidak hanya menjalankan container, tetapi juga 
 
 
 
+
+Gambar~\ref{fig:k8s-architecture-reconcile} menampilkan arsitektur Kubernetes: Control Plane, Worker Node, dan alur kerja reconciliation loop (desired state vs actual state). Pemisahan jelas: Control Plane (kendali /\& state) vs Worker Node (eksekusi aplikasi)..
 \begin{figure}[h]
 \centering
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   scale=0.5,
   transform shape,
@@ -205,7 +208,8 @@ Pod dibuat ulang otomatis};
 \draw[arrow] (pods) -- (crash);
 \draw[arrow, dashed, gray] (crash.west)  -- ++(-10mm,0) -| (controller.south);
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Arsitektur Kubernetes: Control Plane, Worker Node, dan alur kerja \textit{reconciliation loop} (desired state vs actual state). Pemisahan jelas: \textit{Control Plane} (kendali \& state) vs \textit{Worker Node} (eksekusi aplikasi).}
 \label{fig:k8s-architecture-reconcile}
 \end{figure}
@@ -213,17 +217,17 @@ Pod dibuat ulang otomatis};
 
 \section{Struktur Direktori/File Studi Kasus}
 
-Struktur direktori pada studi kasus ini merepresentasikan arsitektur orkestrasi sistem terdistribusi yang dibangun secara deklaratif menggunakan Kubernetes dan Kustomize. Folder \texttt{base} berfungsi sebagai fondasi arsitektur yang bersifat \textit{environment-agnostic}, sedangkan folder \texttt{overlays} merepresentasikan realisasi spesifik untuk setiap environment (dev, staging, dan prod). Pemisahan ini bukan sekadar teknis, tetapi mencerminkan prinsip desain modern dalam Infrastructure as Code (IaC), yaitu pemisahan antara model dasar dan variasi kontekstualnya.
+Struktur direktori pada studi kasus ini merepresentasikan arsitektur orkestrasi sistem terdistribusi yang dibangun secara deklaratif menggunakan Kubernetes dan Kustomize. Folder \texttt{base} berfungsi sebagai fondasi arsitektur yang bersifat \textit{environment-agnostic}, sedangkan folder \texttt{overlays} merepresentasikan realisasi spesifik untuk setiap environment (dev, staging, dan prod). Pemisahan ini bukan sekadar teknis, tetapi mencerminkan prinsip desain modern dalam Infrastructure as Code\index{Infrastructure as Code} (IaC), yaitu pemisahan antara model dasar dan variasi kontekstualnya.
 
 \subsection*{Peran Direktori \texttt{base}}
 
-Direktori \texttt{base} merupakan sumber kebenaran utama (single source of truth) bagi sistem. File \texttt{namespace.yaml} memastikan seluruh resource terisolasi dalam namespace \texttt{tts}, sehingga memudahkan pengelolaan, pembatasan akses, serta observabilitas dalam cluster multi-aplikasi. Tanpa namespace yang eksplisit, risiko konflik resource dan kompleksitas operasional akan meningkat.
+Direktori \texttt{base} merupakan sumber kebenaran utama (single source of truth) bagi sistem. File \texttt{namespace.yaml} memastikan seluruh resource terisolasi dalam namespace \texttt{tts}, sehingga memudahkan pengelolaan, pembatasan akses, serta observabilitas\index{observabilitas} dalam cluster multi-aplikasi. Tanpa namespace yang eksplisit, risiko konflik resource dan kompleksitas operasional akan meningkat.
 
 File \texttt{configmap-app.yaml} mendefinisikan konfigurasi non-sensitif seperti environment variable dan endpoint layanan internal. Perannya adalah memisahkan konfigurasi dari image container agar image tetap immutable dan dapat digunakan ulang lintas environment. Hal ini selaras dengan prinsip \textit{12-Factor App}, di mana konfigurasi tidak ditanamkan dalam kode atau image.
 
 File \texttt{secret-app.yaml} menyimpan kredensial sensitif seperti access key dan token internal. Dengan memisahkan secret dari konfigurasi biasa, sistem menjaga keamanan serta memungkinkan integrasi dengan secret management eksternal jika dibutuhkan pada tahap produksi yang lebih kompleks.
 
-Workload utama sistem didefinisikan melalui beberapa file Deployment: \texttt{deploy-api.yaml}, \texttt{deploy-web.yaml}, \texttt{deploy-worker.yaml}, dan \texttt{deploy-redis.yaml}. API bertanggung jawab atas logika bisnis dan pemrosesan permintaan HTTP. Web berfungsi sebagai antarmuka pengguna atau lapisan presentasi. Worker menjalankan pemrosesan latar belakang berbasis antrian (queue), sementara Redis berperan sebagai message broker atau penyimpan data sementara untuk komunikasi asinkron. Seluruhnya bersifat stateless sehingga dapat direplikasi, diskalakan, dan diperbarui tanpa ketergantungan terhadap identitas pod tertentu.
+Workload utama sistem didefinisikan melalui beberapa file Deployment: \texttt{deploy-api.yaml}, \texttt{deploy-web.yaml}, \texttt{deploy-worker.yaml}, dan \texttt{deploy-redis.yaml}. API bertanggung jawab atas logika bisnis dan pemrosesan permintaan HTTP. Web berfungsi sebagai antarmuka pengguna atau lapisan presentasi. Worker menjalankan pemrosesan latar belakang berbasis antrian (queue), sementara Redis berperan sebagai message broker\index{broker} atau penyimpan data sementara untuk komunikasi asinkron. Seluruhnya bersifat stateless sehingga dapat direplikasi, diskalakan, dan diperbarui tanpa ketergantungan terhadap identitas pod tertentu.
 
 Berbeda dengan komponen stateless, \texttt{statefulset-minio.yaml} digunakan untuk menjalankan MinIO sebagai object storage. StatefulSet dipilih karena memerlukan identitas pod yang stabil dan integrasi dengan persistent storage. File \texttt{pvc-minio.yaml} memastikan adanya alokasi storage yang tetap, sehingga data tidak hilang saat pod direstart atau dipindahkan. Kombinasi StatefulSet dan PVC menjamin durabilitas data, yang merupakan aspek krusial dalam sistem produksi.
 
@@ -231,7 +235,7 @@ File \texttt{svc-api.yaml}, \texttt{svc-web.yaml}, \texttt{svc-redis.yaml}, dan 
 
 File \texttt{ingress.yaml} pada base mendefinisikan routing eksternal dasar, memetakan jalur \texttt{/api} ke service API dan jalur \texttt{/} ke service Web. Ingress berperan sebagai entry point aplikasi dari luar cluster dan bertindak sebagai reverse proxy layer.
 
-File \texttt{hpa-worker.yaml} mengatur Horizontal Pod Autoscaler untuk komponen worker. Dengan mendasarkan scaling pada metrik CPU, sistem dapat beradaptasi terhadap peningkatan beban kerja secara elastis. Autoscaling ini meningkatkan efisiensi penggunaan resource sekaligus menjaga performa layanan.
+File \texttt{hpa-worker.yaml} mengatur Horizontal Pod Autoscaler untuk komponen worker. Dengan mendasarkan scaling pada metrik\index{metrik} CPU, sistem dapat beradaptasi terhadap peningkatan beban kerja secara elastis. Autoscaling ini meningkatkan efisiensi penggunaan resource sekaligus menjaga performa layanan.
 
 File \texttt{job-minio-bootstrap.yaml} berfungsi sebagai mekanisme inisialisasi, misalnya untuk memastikan bucket pada MinIO tersedia sebelum aplikasi memanfaatkannya. Pendekatan ini mengotomatisasi provisioning dependency sehingga mengurangi intervensi manual.
 
@@ -241,7 +245,7 @@ Direktori \texttt{overlays} merepresentasikan lapisan transformasi konfigurasi u
 
 File \texttt{patch-env.yaml} digunakan untuk mengubah variabel environment seperti nilai \texttt{ENV} atau nama bucket penyimpanan. Dengan pendekatan ini, dev, staging, dan prod dapat memiliki konfigurasi berbeda tanpa memodifikasi base. Isolasi ini mencegah tercampurnya data antar environment dan mendukung praktik promosi bertahap.
 
-File \texttt{patch-images.yaml} memungkinkan perubahan tag image container sesuai tahap pipeline CI/CD. Image yang dibangun pada tahap development dapat dipromosikan ke staging dan akhirnya ke production tanpa perubahan struktur arsitektur.
+File \texttt{patch-images.yaml} memungkinkan perubahan tag image container sesuai tahap pipeline\index{pipeline} CI/CD. Image yang dibangun pada tahap development dapat dipromosikan ke staging dan akhirnya ke production tanpa perubahan struktur arsitektur.
 
 File \texttt{patch-replicas.yaml} menyesuaikan jumlah replica sesuai kebutuhan kapasitas dan availability masing-masing environment. Pada production, replica biasanya lebih banyak untuk menjamin high availability, sedangkan pada development cukup satu replica untuk efisiensi resource.
 
@@ -251,10 +255,10 @@ Pada overlay production, ditambahkan \texttt{pdb-api.yaml} dan \texttt{pdb-web.y
 
 \subsection*{Sintesis Arsitektural}
 
-Secara keseluruhan, struktur direktori ini menggambarkan pendekatan arsitektur yang sistematis: base sebagai definisi model infrastruktur, dan overlay sebagai realisasi kontekstualnya. Setiap file tidak berdiri sendiri, melainkan berperan dalam menjaga konsistensi, skalabilitas, keamanan, dan ketersediaan sistem.
+Secara keseluruhan, struktur direktori ini menggambarkan pendekatan arsitektur yang sistematis: base sebagai definisi model infrastruktur, dan overlay sebagai realisasi kontekstualnya. Setiap file tidak berdiri sendiri, melainkan berperan dalam menjaga konsistensi, skalabilitas, keamanan, dan ketersediaan sistem. Kodenya ada pada Listing~\ref{lst:ch06-1}.
 
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Sintesis Arsitektural}, label={lst:ch06-1}]
 kubernetes/
 |-- base
 |   |-- configmap-app.yaml
@@ -303,7 +307,7 @@ kubernetes/
 
 \section{Instalasi Kubernetes dan Minikube}
 
-Bagian ini menjelaskan langkah-langkah instalasi \textit{Kubernetes Command Line Interface} (\texttt{kubectl}) dan Minikube sebagai lingkungan Kubernetes lokal. Instalasi ini ditujukan untuk pengembangan, eksperimen orkestrasi, dan simulasi lingkungan produksi secara mandiri tanpa memerlukan cluster cloud.
+Bagian ini menjelaskan langkah-langkah instalasi \textit{Kubernetes Command Line Interface} (\texttt{kubectl}) dan Minikube\index{Minikube} sebagai lingkungan Kubernetes lokal. Instalasi ini ditujukan untuk pengembangan, eksperimen orkestrasi, dan simulasi lingkungan produksi secara mandiri tanpa memerlukan cluster cloud.
 
 \subsection*{1. Prasyarat Sistem}
 
@@ -311,71 +315,71 @@ Sebelum melakukan instalasi, pastikan sistem memiliki:
 
 \begin{enumerate}
     \item Sistem operasi Linux (direkomendasikan Ubuntu 20.04+)
-    \item Docker terpasang dan berjalan
+    \item Docker\index{Docker} terpasang dan berjalan
     \item Minimal 2 CPU dan 4GB RAM (direkomendasikan 4 CPU dan 8GB RAM)
 \end{enumerate}
 
-Verifikasi Docker berjalan dengan:
+Verifikasi Docker berjalan dengan (Listing~\ref{lst:ch06-2}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa versi Docker}, label={lst:ch06-2}]
 docker --version
 docker ps
 \end{lstlisting}
 
-Jika Docker belum berjalan:
+Jika Docker belum berjalan (Listing~\ref{lst:ch06-3}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah sudo systemctl enable docker}, label={lst:ch06-3}]
 sudo systemctl enable docker
 sudo systemctl start docker
 \end{lstlisting}
 
 \subsection*{2. Instalasi \texttt{kubectl}}
 
-Unduh versi stabil terbaru:
+Unduh versi stabil terbaru (Listing~\ref{lst:ch06-4}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl}, label={lst:ch06-4}]
 curl -LO "https://dl.k8s.io/release/$(curl -L -s \
 https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 \end{lstlisting}
 
-Berikan izin eksekusi dan pindahkan ke direktori sistem:
+Berikan izin eksekusi dan pindahkan ke direktori sistem (Listing~\ref{lst:ch06-5}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengatur izin berkas}, label={lst:ch06-5}]
 chmod +x kubectl
 sudo mv kubectl /usr/local/bin/
 \end{lstlisting}
 
-Verifikasi instalasi:
+Verifikasi instalasi (Listing~\ref{lst:ch06-6}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah kubectl version --client}, label={lst:ch06-6}]
 kubectl version --client
 \end{lstlisting}
 
 \subsection*{3. Instalasi Minikube}
 
-Unduh binary Minikube:
+Unduh binary Minikube (Listing~\ref{lst:ch06-7}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl (2)}, label={lst:ch06-7}]
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 \end{lstlisting}
 
-Instal ke sistem:
+Instal ke sistem (Listing~\ref{lst:ch06-8}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah sudo install minikube-linux-amd64 /usr/local/bin/minikube}, label={lst:ch06-8}]
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 \end{lstlisting}
 
-Verifikasi instalasi:
+Verifikasi instalasi (Listing~\ref{lst:ch06-9}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah minikube version}, label={lst:ch06-9}]
 minikube version
 \end{lstlisting}
 
 \subsection*{4. Inisialisasi Cluster Lokal}
 
-Jalankan Minikube dengan alokasi resource yang memadai untuk eksperimen orkestrasi:
+Jalankan Minikube dengan alokasi resource yang memadai untuk eksperimen orkestrasi (Listing~\ref{lst:ch06-10}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menjalankan klaster Minikube}, label={lst:ch06-10}]
 minikube start --driver=docker --cpus=4 --memory=8192
 \end{lstlisting}
 
@@ -386,9 +390,9 @@ Parameter:
     \item \texttt{--memory} menentukan alokasi RAM (MB)
 \end{itemize}
 
-Verifikasi node Kubernetes aktif:
+Verifikasi node Kubernetes aktif (Listing~\ref{lst:ch06-11}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa objek Kubernetes}, label={lst:ch06-11}]
 kubectl get nodes
 \end{lstlisting}
 
@@ -396,26 +400,26 @@ Status \texttt{Ready} menunjukkan cluster berhasil dijalankan.
 
 \subsection*{5. Mengaktifkan Addon Penting}
 
-Untuk mendukung orkestrasi web dan autoscaling, aktifkan addon berikut:
+Untuk mendukung orkestrasi web dan autoscaling, aktifkan addon berikut (Listing~\ref{lst:ch06-12}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah minikube addons enable ingress}, label={lst:ch06-12}]
 minikube addons enable ingress
 minikube addons enable metrics-server
 \end{lstlisting}
 
 Addon \texttt{ingress} memungkinkan routing HTTP eksternal, sedangkan \texttt{metrics-server} diperlukan untuk Horizontal Pod Autoscaler.
 
-Verifikasi addon:
+Verifikasi addon (Listing~\ref{lst:ch06-13}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah minikube addons list}, label={lst:ch06-13}]
 minikube addons list
 \end{lstlisting}
 
 \subsection*{6. Mengelola Lifecycle Minikube}
 
-Beberapa perintah dasar untuk pengelolaan cluster:
+Beberapa perintah dasar untuk pengelolaan cluster (Listing~\ref{lst:ch06-14}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengelola klaster Minikube}, label={lst:ch06-14}]
 minikube stop        # Menghentikan cluster
 minikube start       # Menjalankan kembali
 minikube delete      # Menghapus cluster sepenuhnya
@@ -424,28 +428,28 @@ minikube ip          # Mendapatkan IP cluster
 \end{lstlisting}
 
 
-\section{Instalasi Lokal Kubernetes (Minikube) dan Deployment Lingkungan Production}
+\section[Instalasi Lokal Kubernetes]{Instalasi Lokal Kubernetes (Minikube) dan Deployment Lingkungan Production}
 
 Bagian ini menjelaskan langkah-langkah instalasi Kubernetes secara lokal menggunakan Minikube, konfigurasi cluster, deployment environment production, serta prosedur pengujian dan validasi sistem.
 
 \subsection*{1. Instalasi dan Inisialisasi Minikube}
 
-Pastikan Docker telah berjalan. Kemudian lakukan reset cluster (jika ada konfigurasi sebelumnya):
+Pastikan Docker telah berjalan. Kemudian lakukan reset cluster (jika ada konfigurasi sebelumnya) (Listing~\ref{lst:ch06-15}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengelola klaster Minikube (2)}, label={lst:ch06-15}]
 minikube stop
 minikube delete
 \end{lstlisting}
 
-Jalankan Minikube dengan alokasi resource yang memadai untuk simulasi production:
+Jalankan Minikube dengan alokasi resource yang memadai untuk simulasi production (Listing~\ref{lst:ch06-16}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menjalankan klaster Minikube (2)}, label={lst:ch06-16}]
 minikube start --cpus=4 --memory=8192
 \end{lstlisting}
 
-Aktifkan addon yang dibutuhkan:
+Aktifkan addon yang dibutuhkan (Listing~\ref{lst:ch06-17}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah minikube addons enable ingress (2)}, label={lst:ch06-17}]
 minikube addons enable ingress
 minikube addons enable metrics-server
 \end{lstlisting}
@@ -454,9 +458,9 @@ Addon ingress diperlukan untuk routing HTTP eksternal, sedangkan metrics-server 
 
 \subsection*{2. Memuat Image ke Minikube}
 
-Karena deployment production menggunakan image lokal, image perlu dimuat ke dalam environment Minikube:
+Karena deployment production menggunakan image lokal, image perlu dimuat ke dalam environment Minikube (Listing~\ref{lst:ch06-18}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengelola klaster Minikube (3)}, label={lst:ch06-18}]
 minikube image load session05-api:production
 minikube image load session05-web:production
 minikube image load session05-worker:production
@@ -464,42 +468,42 @@ minikube image load redis:7-alpine
 minikube image load minio/minio:RELEASE.2025-09-07T16-13-09Z
 \end{lstlisting}
 
-Verifikasi bahwa image telah tersedia:
+Verifikasi bahwa image telah tersedia (Listing~\ref{lst:ch06-19}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengelola klaster Minikube (4)}, label={lst:ch06-19}]
 minikube image ls
 \end{lstlisting}
 
 \subsection*{3. Deployment Lingkungan Production}
 
-Deploy seluruh resource menggunakan overlay production:
+Deploy seluruh resource menggunakan overlay production (Listing~\ref{lst:ch06-20}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menerapkan manifes Kubernetes}, label={lst:ch06-20}]
 kubectl apply -k ./overlays/prod
 \end{lstlisting}
 
-Verifikasi seluruh komponen berjalan:
+Verifikasi seluruh komponen berjalan (Listing~\ref{lst:ch06-21}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa objek Kubernetes (2)}, label={lst:ch06-21}]
 kubectl get all -n tts
 kubectl get ingress -n tts -o wide
 \end{lstlisting}
 
-Untuk memastikan routing eksternal aktif, jalankan tunnel:
+Untuk memastikan routing eksternal aktif, jalankan tunnel (Listing~\ref{lst:ch06-22}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah minikube tunnel}, label={lst:ch06-22}]
 minikube tunnel
 \end{lstlisting}
 
-Ambil IP Minikube:
+Ambil IP Minikube (Listing~\ref{lst:ch06-23}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah minikube ip}, label={lst:ch06-23}]
 minikube ip
 \end{lstlisting}
 
-Kemudian uji endpoint production:
+Kemudian uji endpoint production (Listing~\ref{lst:ch06-24}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl (3)}, label={lst:ch06-24}]
 curl -i -H "Host: tts.local" http://<MINIKUBE_IP>/api/healthz
 \end{lstlisting}
 
@@ -507,9 +511,9 @@ Jika sistem berjalan dengan benar, respons HTTP 200 akan diterima.
 
 \subsection*{4. Verifikasi Rolling Update}
 
-Lakukan pembaruan image secara rolling:
+Lakukan pembaruan image secara rolling (Listing~\ref{lst:ch06-25}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada 4. Verifikasi Rolling Update}, label={lst:ch06-25}]
 kubectl set image -n tts deploy/api api=session05-api:production
 kubectl rollout status -n tts deploy/api
 kubectl get pods -n tts -w
@@ -519,9 +523,9 @@ Perhatikan bahwa pod diperbarui secara bertahap tanpa downtime total. Inilah keu
 
 \subsection*{5. Pengujian Self-Healing}
 
-Hapus salah satu pod secara manual:
+Hapus salah satu pod secara manual (Listing~\ref{lst:ch06-26}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes}, label={lst:ch06-26}]
 kubectl delete pod -n tts <nama-pod>
 kubectl get pods -n tts -w
 \end{lstlisting}
@@ -530,16 +534,16 @@ Kubernetes akan secara otomatis membuat pod baru untuk menjaga \textit{desired s
 
 \subsection*{6. Pengujian Horizontal Pod Autoscaler}
 
-Pastikan HPA aktif:
+Pastikan HPA aktif (Listing~\ref{lst:ch06-27}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa objek Kubernetes (3)}, label={lst:ch06-27}]
 kubectl get hpa -n tts
 watch -n 1 kubectl get hpa -n tts
 \end{lstlisting}
 
-Generate beban kerja untuk memicu scale up:
+Generate beban kerja untuk memicu scale up (Listing~\ref{lst:ch06-28}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah python ../../app/client/load\_client.py /}, label={lst:ch06-28}]
 python ../../app/client/load_client.py \
   --base-url http://tts.local \
   --concurrency 20 \
@@ -547,9 +551,9 @@ python ../../app/client/load_client.py \
   --check-mp3
 \end{lstlisting}
 
-Atau gunakan tool benchmarking:
+Atau gunakan tool benchmarking (Listing~\ref{lst:ch06-29}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah hey -n 2000 -c 50 http://tts.local/api/healthz}, label={lst:ch06-29}]
 hey -n 2000 -c 50 http://tts.local/api/healthz
 \end{lstlisting}
 
@@ -557,25 +561,25 @@ Amati jumlah pod worker meningkat saat beban naik dan kembali turun saat beban b
 
 \subsection*{7. Validasi Konfigurasi dan Environment}
 
-Pastikan konfigurasi production benar-benar terpasang:
+Pastikan konfigurasi production benar-benar terpasang (Listing~\ref{lst:ch06-30}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menelusuri pod Kubernetes}, label={lst:ch06-30}]
 kubectl exec -n tts deploy/api -- printenv | egrep 'ENV|MP3_BUCKET'
 kubectl get configmap -n tts tts-config -o yaml
 \end{lstlisting}
 
-Verifikasi image yang digunakan:
+Verifikasi image yang digunakan (Listing~\ref{lst:ch06-31}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa objek Kubernetes (4)}, label={lst:ch06-31}]
 kubectl get deploy -n tts api \
   -o jsonpath='{.spec.template.spec.containers[0].image}'; echo
 \end{lstlisting}
 
 \subsection*{8. Demonstrasi Stateful Resilience}
 
-Uji ketahanan storage:
+Uji ketahanan storage (Listing~\ref{lst:ch06-32}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes (2)}, label={lst:ch06-32}]
 kubectl delete pod -n tts minio-0
 kubectl get pods -n tts -w
 \end{lstlisting}
@@ -605,15 +609,15 @@ Fokus demo:
 % ============================================================
 \subsection{Self-Healing}
 
-\textbf{Langkah 1 -- Lihat pod}
+\textbf{Langkah 1 -- Lihat pod} (Listing~\ref{lst:ch06-33}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa objek Kubernetes (5)}, label={lst:ch06-33}]
 kubectl get pods -n tts
 \end{lstlisting}
 
-\textbf{Langkah 2 -- Hapus satu pod}
+\textbf{Langkah 2 -- Hapus satu pod} (Listing~\ref{lst:ch06-34}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes (3)}, label={lst:ch06-34}]
 kubectl delete pod -n tts <nama-pod-api>
 kubectl get pods -n tts -w
 \end{lstlisting}
@@ -626,27 +630,27 @@ Kubernetes merekonsiliasi desired state secara kontinu.
 % ============================================================
 \subsection{Horizontal Auto Scaling (Scale Up \& Down)}
 
-\textbf{Pastikan konfigurasi ter-apply}
+\textbf{Pastikan konfigurasi ter-apply} (Listing~\ref{lst:ch06-35}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menerapkan manifes Kubernetes (2)}, label={lst:ch06-35}]
 kubectl apply -k overlays/prod
 \end{lstlisting}
 
-\textbf{Monitor HPA secara live}
+\textbf{Monitor HPA secara live} (Listing~\ref{lst:ch06-36}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah watch -n 1 kubectl get hpa -n tts}, label={lst:ch06-36}]
 watch -n 1 kubectl get hpa -n tts
 \end{lstlisting}
 
-\textbf{Monitor pod worker}
+\textbf{Monitor pod worker} (Listing~\ref{lst:ch06-37}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Horizontal Auto Scaling (Scale Up /\& Down)}, label={lst:ch06-37}]
 watch -n 1 kubectl get pods -n tts -l app=worker
 \end{lstlisting}
 
-\textbf{Generate load (trigger scale up)}
+\textbf{Generate load (trigger scale up)} (Listing~\ref{lst:ch06-38}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah python ../../app/client/load\_client.py / (2)}, label={lst:ch06-38}]
 python ../../app/client/load_client.py \
   --base-url http://tts.local \
   --concurrency 20 \
@@ -662,9 +666,9 @@ Kubernetes melakukan autoscaling naik dan turun berbasis metrik. \\
 Terraform tidak mengelola autoscaling runtime aplikasi.
 
 % ============================================================
-\subsection{Rolling Update Tanpa Downtime}
+\subsection{Rolling Update Tanpa Downtime} Potongan kodenya ada pada Listing~\ref{lst:ch06-39}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Rolling Update Tanpa Downtime}, label={lst:ch06-39}]
 kubectl set image -n tts deploy/worker api=session05-worker:new-version
 kubectl rollout status -n tts deploy/api
 kubectl get pods -n tts -w
@@ -674,9 +678,9 @@ Terraform destroy \& recreate. \\
 Kubernetes rolling update dengan health check.
 
 % ============================================================
-\subsection{Restart Otomatis Saat Crash}
+\subsection{Restart Otomatis Saat Crash} Listing~\ref{lst:ch06-40} memuat perintahnya.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menelusuri pod Kubernetes (2)}, label={lst:ch06-40}]
 kubectl exec -n tts deploy/worker -- sh -c "kill 1"
 kubectl get pods -n tts -w
 \end{lstlisting}
@@ -684,9 +688,9 @@ kubectl get pods -n tts -w
 Controller Kubernetes memastikan aplikasi tetap berjalan.
 
 % ============================================================
-\subsection{Service Discovery}
+\subsection{Service Discovery} Perintahnya ada pada Listing~\ref{lst:ch06-41}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menelusuri pod Kubernetes (3)}, label={lst:ch06-41}]
 kubectl exec -n tts deploy/web -- \
   curl http://api:8000/healthz
 \end{lstlisting}
@@ -697,16 +701,16 @@ DNS internal dan Service abstraction disediakan Kubernetes.
 % ============================================================
 \subsection{Declarative Desired State}
 
-\textbf{Scale manual}
+\textbf{Scale manual} (Listing~\ref{lst:ch06-42}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes (4)}, label={lst:ch06-42}]
 kubectl scale deploy/worker -n tts --replicas=10
 kubectl get pods -n tts
 \end{lstlisting}
 
-\textbf{Kembalikan}
+\textbf{Kembalikan} (Listing~\ref{lst:ch06-43}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes (5)}, label={lst:ch06-43}]
 kubectl scale deploy/worker -n tts --replicas=1
 \end{lstlisting}
 
@@ -714,16 +718,16 @@ Kubernetes menjaga desired state secara kontinu. \\
 Terraform apply sekali lalu selesai.
 
 % ============================================================
-\subsection{Switching Environment}
+\subsection{Switching Environment} Perintah lengkapnya ada pada Listing~\ref{lst:ch06-44}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes (6)}, label={lst:ch06-44}]
 kubectl delete ns tts
 kubectl apply -k overlays/dev
 \end{lstlisting}
 
-Lalu kembali ke prod:
+Lalu kembali ke prod (Listing~\ref{lst:ch06-45}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes (7)}, label={lst:ch06-45}]
 kubectl delete ns tts
 kubectl apply -k overlays/prod
 \end{lstlisting}
@@ -783,18 +787,18 @@ Terraform dapat membuat:
     \item Identity and Access Management (IAM)
 \end{itemize}
 
-Contoh Terraform membuat VM di Amazon Web Services (AWS):
+Contoh Terraform membuat VM di Amazon Web Services (AWS) (Listing~\ref{lst:ch06-46}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Provisioning Infrastruktur Cloud}, label={lst:ch06-46}]
 resource "aws_instance" "api_server" {
   ami           = "ami-123456"
   instance_type = "t3.medium"
 }
 \end{lstlisting}
 
-Perintah:
+Perintah (Listing~\ref{lst:ch06-47}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menyiapkan direktori kerja Terraform}, label={lst:ch06-47}]
 terraform init
 terraform plan
 terraform apply
@@ -815,9 +819,9 @@ Terraform dapat mengelola banyak provider sekaligus:
     \item GitHub
 \end{itemize}
 
-Contoh membuat DNS record di Cloudflare:
+Contoh membuat DNS record di Cloudflare (Listing~\ref{lst:ch06-48}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Multi-Cloud Orchestration}, label={lst:ch06-48}]
 resource "cloudflare_record" "api_dns" {
   zone_id = "xxxx"
   name    = "api"
@@ -831,9 +835,9 @@ Kubernetes tidak mengelola DNS eksternal cloud provider.
 % ============================================================
 \subsection{Infrastructure Lifecycle Management}
 
-Terraform memiliki workflow eksplisit:
+Terraform memiliki workflow eksplisit (Listing~\ref{lst:ch06-49}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa rencana perubahan Terraform}, label={lst:ch06-49}]
 terraform plan
 terraform apply
 terraform destroy
@@ -862,9 +866,9 @@ Terraform dapat mengelola:
     \item Role dan Policy
 \end{itemize}
 
-Contoh membuat IAM Role:
+Contoh membuat IAM Role (Listing~\ref{lst:ch06-50}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Manajemen Identity dan Keamanan Cloud}, label={lst:ch06-50}]
 resource "aws_iam_role" "api_role" {
   name = "api-role"
   assume_role_policy = data.aws_iam_policy_document.assume.json
@@ -878,9 +882,9 @@ Kubernetes tidak mengelola IAM cloud secara langsung.
 
 Terraform dapat membuat Kubernetes cluster:
 
-Contoh Elastic Kubernetes Service (EKS):
+Contoh Elastic Kubernetes Service (EKS) (Listing~\ref{lst:ch06-51}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Provisioning Kubernetes Cluster Itu Sendiri}, label={lst:ch06-51}]
 resource "aws_eks_cluster" "main" {
   name     = "session06-cluster"
   role_arn = aws_iam_role.eks_role.arn
@@ -893,9 +897,9 @@ Ia membutuhkan infrastruktur yang sudah ada.
 % ============================================================
 \subsection{Destruction dan Environment Rebuild}
 
-Terraform dapat menghancurkan seluruh environment:
+Terraform dapat menghancurkan seluruh environment (Listing~\ref{lst:ch06-52}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menghapus sumber daya Terraform}, label={lst:ch06-52}]
 terraform destroy
 \end{lstlisting}
 
@@ -908,9 +912,9 @@ Ini dapat menghapus:
     \item Network
 \end{itemize}
 
-Kubernetes hanya dapat menghapus resource di dalam cluster:
+Kubernetes hanya dapat menghapus resource di dalam cluster (Listing~\ref{lst:ch06-53}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengubah objek Kubernetes (8)}, label={lst:ch06-53}]
 kubectl delete ns tts
 \end{lstlisting}
 
@@ -936,9 +940,12 @@ Keduanya saling melengkapi, bukan saling menggantikan.
 
 \section{Ringkasan Perbandingan Kubernetes vs Terraform}
 
+
+Tabel~\ref{tab:ch06-1} menampilkan perbandingan Fundamental Kubernetes dan Terraform.
 \begin{table}[h!]
 \centering
 \small
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|p{.3\textwidth}|p{.3\textwidth}|p{.3\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{Kubernetes} & \textbf{Terraform} \\
@@ -975,16 +982,21 @@ Keduanya saling melengkapi, bukan saling menggantikan.
 \hline
 \textbf{Membangun Kubernetes Cluster} & Tidak & Ya (EKS, GKE, AKS, dll) \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Perbandingan Fundamental Kubernetes dan Terraform}
+\label{tab:ch06-1}
 \end{table}
 
 
 \section{Layered Architecture}
 
+
+Tabel~\ref{tab:ch06-2} menampilkan arsitektur Berlapis: Terraform dan Kubernetes.
 \begin{table}[h!]
 \centering
 \small
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|p{.4\textwidth}|p{.5\textwidth}|}
 \hline
 \textbf{Layer Infrastruktur} & \textbf{Layer Aplikasi} \\
@@ -995,8 +1007,10 @@ Desired state infrastruktur & Desired state aplikasi \\
 \hline
 Dieksekusi via plan/apply/destroy & Direkonsiliasi kontinu oleh controller \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Arsitektur Berlapis: Terraform dan Kubernetes}
+\label{tab:ch06-2}
 \end{table}
 
 \section{Ringkasan}
@@ -1004,3 +1018,25 @@ Dieksekusi via plan/apply/destroy & Direkonsiliasi kontinu oleh controller \\
 Bab ini menempatkan orkestrasi container sebagai jawaban atas kompleksitas operasional sistem terdistribusi modern. Kubernetes diperkenalkan sebagai platform orkestrasi \textit{open-source} berbasis pendekatan deklaratif: pengguna mendefinisikan \textit{desired state} (mis. jumlah replica), lalu sistem menjaga ketersediaan secara kontinu melalui \textit{reconciliation loop}. Arsitekturnya memisahkan \textit{control plane} (kube-apiserver, etcd, scheduler, controller-manager) dan \textit{worker node} (kubelet, container runtime, kube-proxy) untuk membedakan fungsi kendali dan eksekusi.
 
 Melalui studi kasus TTS dan struktur \texttt{base}+\texttt{overlays} pada Kustomize, bab ini menunjukkan bagaimana konfigurasi dapat tetap konsisten lintas environment tanpa duplikasi. Praktik instalasi Minikube dan deployment production menegaskan kemampuan Kubernetes pada runtime: \textit{self-healing}, \textit{autoscaling} (HPA), dan \textit{rolling update} tanpa downtime total. Perbandingan dengan Terraform menegaskan pembagian peran: Terraform mengelola lifecycle infrastruktur (VM/VPC/IAM/destroy), sedangkan Kubernetes mengelola lifecycle aplikasi di dalam infrastruktur tersebut; keduanya saling melengkapi dalam arsitektur berlapis.
+
+\section{Latihan}
+
+Kerjakan latihan berikut pada klaster Minikube lokal.
+
+\begin{enumerate}
+  \item Jalankan Minikube, terapkan seluruh manifes, lalu catat status setiap pod sampai semuanya siap. Sebutkan pod mana yang paling lama mencapai status siap dan jelaskan sebabnya.
+  \item Naikkan jumlah replika Deployment worker, lalu amati perubahan jumlah pod dan pembagian pekerjaan di antara mereka.
+  \item Rusak satu Deployment dengan tag image yang tidak ada. Baca keluaran \texttt{kubectl describe} dan daftar event, tuliskan diagnosis Anda, lalu perbaiki dan pastikan penerapan pulih.
+  \item Lakukan satu perubahan yang sama, misalnya menambah satu worker, melalui Terraform dan melalui Kubernetes. Bandingkan jumlah langkah dan waktu yang dibutuhkan masing-masing.
+  \item Jelaskan peran setiap komponen bidang kendali ketika sebuah pod mati dan digantikan secara otomatis.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Kubernetes Concepts} \cite{doc-k8s}: pod, deployment, service, dan bidang kendali klaster.
+  \item \textit{minikube Documentation} \cite{doc-minikube}: menjalankan klaster Kubernetes satu mesin untuk percobaan.
+  \item \textit{Infrastructure as Code} \cite{morris2021iac}: perbandingan pendekatan deklaratif pada infrastruktur dan orkestrasi.
+\end{itemize}

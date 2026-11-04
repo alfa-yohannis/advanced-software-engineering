@@ -1,80 +1,255 @@
 \chapter{Pendahuluan}
 
-\section{Isi Mata Kuliah}
+\section*{Latar Belakang}\addcontentsline{toc}{section}{Latar Belakang}
 
-\subsection*{Sesi 1 --- Sistem Berjalan}
-\textbf{Deskripsi:} Sesi ini memperkenalkan mahasiswa pada sebuah sistem perangkat lunak yang benar-benar berjalan, dengan tujuan agar seluruh abstraksi pada sesi berikutnya berangkat dari perilaku runtime yang konkret, sebelum konsep arsitektur atau pemodelan apa pun diperkenalkan.  
-\textbf{Alat:} Docker.  
+Sistem perangkat lunak saat ini dinilai dari perilakunya ketika berjalan. Sistem
+dibangun, diuji, dikirim, dan dioperasikan dalam satu alur yang berulang, dan
+praktik DevOps menempatkan pengembangan dan operasi sebagai satu tanggung jawab
+\cite{bass2015devops}. Jalur rilisnya diotomasi melalui \textit{continuous
+integration} dan \textit{continuous delivery}, sehingga setiap perubahan kode
+melewati rangkaian langkah yang sama sebelum sampai ke lingkungan produksi
+\cite{humble2010cd}. Infrastruktur yang menjalankan sistem itu sendiri ditulis
+sebagai kode, sehingga lingkungan dapat dibuat ulang secara konsisten
+\cite{morris2021iac}.
 
-\subsection*{Sesi 2 --- Observabilitas}
-\textbf{Deskripsi:} Mahasiswa belajar mengamati perilaku sistem sebelum menalar struktur atau desain, dengan menjadikan data runtime sebagai sumber utama pemahaman sistem.  
-\textbf{Alat:} Prometheus, Grafana, dan konsep OpenTelemetry.  
+Otomasi tersebut memindahkan kerumitan, dan tidak menghapusnya. Satu sistem kecil
+dapat memiliki berkas Compose, berkas alur kerja CI, modul Terraform, manifes
+Kubernetes, dan skrip pendukung, masing-masing dengan salinan untuk lingkungan
+pengembangan, \textit{staging}, dan produksi. Satu perubahan kecil, misalnya
+penambahan satu variabel lingkungan, harus disalin ke banyak berkas yang berbeda
+sintaksnya. Duplikasi inilah yang menjadi sumber ketidakkonsistenan antar
+lingkungan.
 
-\subsection*{Sesi 3 --- Keamanan Sistem Perangkat Lunak}
-\textbf{Deskripsi:} Keamanan dan kepatuhan diperkenalkan sebagai mekanisme yang secara aktif membatasi perilaku runtime sistem, bukan sekadar sebagai aktivitas audit eksternal.  
-\textbf{Alat:} Docker, Python, Docker Compose.  
+Rekayasa perangkat lunak berbasis model menawarkan jalan keluar dengan menaikkan
+tingkat abstraksi: model diperlakukan sebagai artefak utama, dan artefak teknis
+diturunkan darinya melalui transformasi \cite{schmidt2006mde, brambilla2017mdse}.
+Ekosistem Epsilon menyediakan bahasa untuk mengerjakan tugas tersebut, yaitu EOL
+untuk manipulasi model \cite{kolovos2006eol}, ETL untuk transformasi model ke
+model \cite{kolovos2008etl}, EGL untuk generasi teks \cite{rose2008egl}, dan EVL
+untuk validasi dengan pesan dan tingkat keparahan yang dapat diatur
+\cite{kolovos2009evl}.
 
-\subsection*{Sesi 4 --- CI/CD dan Otomasi Terstruktur}
+Dua bidang itu jarang bertemu di ruang kelas. Mata kuliah DevOps umumnya berhenti
+pada pipeline yang berjalan, sedangkan mata kuliah pemodelan sering berhenti pada
+diagram yang tidak pernah dieksekusi. Mahasiswa kemudian mengenal model sebagai
+dokumentasi, dan mengenal otomasi sebagai kumpulan skrip, tanpa melihat keduanya
+sebagai satu rantai yang sama.
 
-\textbf{Deskripsi:} Mahasiswa mempelajari penerapan \textit{continuous integration} dan \textit{continuous deployment} sebagai bentuk otomasi terstruktur dalam pengembangan perangkat lunak. Melalui pipeline CI/CD, mahasiswa mengamati bagaimana proses build, pengujian, dan deployment dapat dijalankan secara konsisten, terverifikasi, dan dapat direproduksi tanpa bergantung pada langkah manual.
-\textbf{Alat:} CI/CD berbasis YAML (GitHub Actions), Bash, Docker, dan Docker Compose.
+Buku ini menyatukan keduanya pada satu alur yang berangkat dari sistem yang
+benar-benar berjalan. Materinya dikembangkan dan diajarkan pada mata kuliah
+Advanced Software Engineering and DevOps di Program Studi Informatika,
+Universitas Pradita. Seluruh studi kasus, perkakas, model, dan generator yang
+dibahas dibangun dan dijalankan oleh penulis, dan kodenya tersedia terbuka pada
+repositori \url{https://github.com/alfa-yohannis/advanced-software-engineering}.
 
+\section*{Rumusan Masalah}\addcontentsline{toc}{section}{Rumusan Masalah}
 
-\subsection*{Sesi 5 --- Kode sebagai Infrastruktur (Infrastructure as Code)}
+Penyusunan buku ini diarahkan oleh tiga pertanyaan berikut.
 
-\textbf{Deskripsi:} Infrastruktur sistem tidak lagi diperlakukan sebagai konfigurasi manual atau sekadar file orkestrasi lokal, melainkan sebagai kode deklaratif yang mendefinisikan kondisi akhir (\textit{desired state}) secara eksplisit. Sesi ini membahas bagaimana pendekatan Infrastructure as Code (IaC) menggunakan Terraform memungkinkan konsistensi, reproducibility, dan skalabilitas pada TTS microservice stack. Penekanan diberikan pada pengelolaan multi-environment (\texttt{dev}, \texttt{staging}, \texttt{production}), pemisahan konfigurasi dari implementasi, serta pengendalian perubahan infrastruktur secara terstruktur.
-\textbf{Alat:} Terraform sebagai alat IaC deklaratif, konsep module dan variable untuk reuse konfigurasi lintas environment, serta alur kerja \textit{plan} dan \textit{apply} untuk mengontrol perubahan infrastruktur.
- 
+\begin{enumerate}
+  \item Bagaimana menyusun jalur pembahasan yang bergerak dari sistem yang
+        berjalan menuju model yang dapat dieksekusi, sehingga setiap abstraksi
+        yang diperkenalkan tetap terhubung ke artefak operasional yang nyata?
+  \item Bagaimana satu studi kasus yang sama dapat dipakai lintas tahapan, mulai
+        dari eksekusi, observabilitas, keamanan, CI/CD, infrastruktur sebagai
+        kode, orkestrasi, pemodelan, transformasi, validasi, sampai generasi
+        artefak?
+  \item Sejauh mana pendekatan berbasis model mengurangi duplikasi artefak
+        operasional lintas lingkungan, dan di titik mana pendekatan itu
+        menambah biaya alih-alih menurunkannya?
+\end{enumerate}
 
+\section*{Tujuan dan Manfaat}\addcontentsline{toc}{section}{Tujuan dan Manfaat}
 
-\subsection*{Sesi 5 --- Model Runtime dan Perilaku Eksekutabel}
-\textbf{Deskripsi:} Artefak runtime dieksplisitkan sebagai model dan langsung diperlakukan sebagai struktur keputusan yang dapat dieksekusi, menjembatani transisi dari konfigurasi implisit ke eksekusi yang terkendali.  
-\textbf{Alat:} Pemodelan konseptual, representasi YAML atau JSON, serta interpreter Python sederhana.  
+Buku ini disusun untuk menjawab ketiga pertanyaan di atas melalui satu rangkaian
+bab yang dapat diikuti secara berurutan. Sasaran yang lebih rinci:
 
-\subsection*{Sesi 6 --- Dasar-Dasar Metamodeling}
-\textbf{Deskripsi:} Mahasiswa mendefinisikan struktur model yang valid dengan memperkenalkan metamodel sebagai sistem tipe yang memformalkan perhatian runtime dan batas eksekusi.  
-\textbf{Alat:} EMF dan Ecore.  
+\begin{itemize}
+  \item menyediakan jalur belajar dan rujukan yang membawa pembaca dari
+        menjalankan sistem terdistribusi sederhana sampai membangkitkan artefak
+        operasionalnya dari model;
+  \item menyediakan studi kasus yang dapat dijalankan ulang oleh pembaca,
+        lengkap dengan kode, model, dan perintah yang dipakai;
+  \item menyediakan perbandingan antar perkakas pada tugas yang sama, sehingga
+        pembaca memiliki dasar untuk memilih perkakas pada proyeknya sendiri;
+        serta
+  \item menyediakan bahan berbahasa Indonesia untuk topik yang rujukannya
+        sebagian besar berbahasa Inggris.
+\end{itemize}
 
-\subsection*{Sesi 7 --- Rekayasa DSL Tekstual}
-\textbf{Deskripsi:} Sebuah domain-specific language (DSL) tekstual direkayasa untuk menggantikan praktik konfigurasi dan skrip yang terfragmentasi dengan sintaks konkret yang koheren.  
-\textbf{Alat:} Xtext.  
+Bagi pengajar, buku ini dapat dipakai sebagai pegangan satu mata kuliah empat
+belas pertemuan. Bagi praktisi, tiap bab dapat dibaca terpisah sebagai rujukan
+perkakas beserta contoh penerapannya.
 
-\subsection*{Sesi 8 --- Rekayasa Bahasa Visual untuk Model Runtime}
-\textbf{Deskripsi:} Bahasa visual diperkenalkan sebagai sintaks konkret yang dapat dieksekusi di atas sintaks abstrak yang sama, dengan penekanan pada pengeditan dan validasi model, bukan sekadar dokumentasi.  
-\textbf{Alat:} Sirius atau Papyrus.  
+\section*{Ruang Lingkup dan Batasan}\addcontentsline{toc}{section}{Ruang Lingkup dan Batasan}
 
-\subsection*{Sesi 9 --- Rekayasa Bahasa Proyeksional}
-\textbf{Deskripsi:} Rekayasa bahasa proyeksional diperkenalkan untuk menunjukkan komposisi dan evolusi bahasa yang sadar struktur tanpa keterbatasan parsing.  
-\textbf{Alat:} JetBrains MPS.  
+Pembahasan mencakup Docker dan Docker Compose, Prometheus dan Grafana, GitHub
+Actions, Terraform, Kubernetes pada Minikube, EMF dan Ecore, ANTLR, Xtext,
+Langium, Sirius, Epsilon ETL, EGL, dan EVL, OCL, serta sistem multi-agen berbasis
+Model Context Protocol. Seluruhnya dijalankan pada satu mesin, dengan Linux
+sebagai lingkungan rujukan.
 
-\subsection*{Sesi 10 --- Desain Semantik Model Eksekutabel}
-\textbf{Deskripsi:} Model diberikan makna operasional yang presisi dengan mendefinisikan bagaimana elemen model berperilaku saat dieksekusi, serta membedakan antara interpretasi dan generasi.  
-\textbf{Alat:} Java, Kotlin, atau Python.  
+Pokok bahasan berikut berada di luar cakupan: penyedia layanan awan komersial dan
+biayanya, verifikasi formal, rekayasa keamanan tingkat lanjut seperti uji
+penetrasi, pengelolaan basis data berskala besar, dan rekayasa kinerja pada
+beban produksi. Keamanan dibahas pada tingkat kontrol runtime yang dapat diamati,
+sebagaimana dijelaskan pada Bab 3.
 
-\subsection*{Sesi 11 --- Transformasi Model ke Model dan Refinement}
-\textbf{Deskripsi:} Model ditransformasikan dan diperkaya secara sistematis untuk mendukung pengelolaan abstraksi, variabilitas, dan spesialisasi lingkungan, sambil tetap menjaga semantik model.  
-\textbf{Alat:} Epsilon ETL atau alat transformasi model-ke-model yang setara.  
+\section*{Metodologi Penyusunan}\addcontentsline{toc}{section}{Metodologi Penyusunan}
 
-\subsection*{Sesi 12 --- Constraint dan Validasi Model}
-\textbf{Deskripsi:} Constraint terkait kebenaran, keselamatan, dan keamanan diterapkan pada model sejak tahap desain untuk mencegah konfigurasi runtime yang tidak valid atau berbahaya.  
-\textbf{Alat:} OCL terintegrasi dengan model berbasis EMF.  
+Naskah ini disusun melalui enam langkah berikut.
 
-\subsection*{Sesi 13 --- Generasi Model ke Teks dan Eksekusi DevSecOps}
-\textbf{Deskripsi:} Model yang telah tervalidasi diterjemahkan menjadi artefak yang dapat dieksekusi, menutup siklus antara pemodelan dan eksekusi DevSecOps otomatis.  
-\textbf{Alat:} Epsilon EGL, generator Xtext atau MPS, dengan target pipeline CI/CD, Kubernetes, dan Terraform.  
+\begin{enumerate}
+  \item \textbf{Perumusan capaian.} Daftar topik disusun dari capaian
+        pembelajaran mata kuliah, lalu diurutkan mengikuti satu prinsip:
+        eksekusi lebih dahulu, abstraksi menyusul.
+  \item \textbf{Pembangunan studi kasus.} Dua sistem dibangun sebagai bahan
+        tetap, yaitu pipeline pemrosesan video berbasis ZeroMQ untuk bagian
+        eksekusi dan observabilitas, serta \textit{stack} layanan \textit{text to
+        speech} untuk bagian CI/CD, infrastruktur sebagai kode, dan orkestrasi.
+        Bagian pemodelan memakai domain MediaFlow, yaitu pipeline pemrosesan
+        media yang metamodelnya dibangun khusus untuk buku ini.
+  \item \textbf{Implementasi perkakas.} Metamodel, DSL tekstual, DSL visual,
+        transformasi model ke model, generator model ke teks, aturan validasi,
+        dan sistem multi-agen diimplementasikan, bukan sekadar dijelaskan.
+  \item \textbf{Eksekusi dan verifikasi.} Setiap perintah, berkas konfigurasi,
+        dan potongan kode dijalankan pada mesin rujukan, dan keluarannya
+        dicatat. Artefak hasil generasi diperiksa dengan menjalankannya.
+  \item \textbf{Penulisan bab.} Bab pemodelan mengikuti pola yang sama, yaitu
+        deskripsi masalah domain, metodologi, implementasi, pengujian dan
+        evaluasi, perbandingan antar pendekatan, serta risiko dan kesalahan yang
+        sering terjadi.
+  \item \textbf{Publikasi kode.} Seluruh kode, model, dan berkas konfigurasi
+        diterbitkan pada repositori publik, sehingga pembaca dapat menjalankan
+        ulang dan memeriksa klaim yang dibuat di dalam buku.
+\end{enumerate}
 
+\section*{Kebaruan dan Kontribusi}\addcontentsline{toc}{section}{Kebaruan dan Kontribusi}
 
-\section{Tugas Mata Kuliah: Pilihan 1}
+Empat hal berikut membedakan buku ini dari bahan sejenis.
+
+\begin{enumerate}
+  \item \textbf{Urutan dari sistem berjalan menuju generasi.} Pembahasan dimulai
+        dari sistem yang dijalankan dan diamati, lalu bergerak ke model, dan
+        berakhir pada generasi artefak operasional. Urutan ini membalik
+        kebiasaan mengajarkan model lebih dahulu dan menunda eksekusi, sehingga
+        setiap abstraksi diperkenalkan setelah masalah yang diatasinya terlihat.
+  \item \textbf{Satu metamodel yang dipakai lintas bab.} Metamodel MediaFlow
+        dipakai berturut-turut pada DSL tekstual, DSL visual, transformasi model
+        ke model, generasi model ke teks, validasi, dan sistem multi-agen.
+        Pembaca dapat mengamati akibat satu keputusan perancangan metamodel pada
+        enam tahapan berbeda.
+  \item \textbf{Perbandingan antar perkakas pada tugas yang sama.} Buku ini
+        membandingkan ANTLR, Xtext, dan Langium untuk satu grammar yang sama,
+        ATL dengan ETL untuk satu transformasi yang sama, EVL dengan OCL untuk
+        satu kumpulan aturan yang sama, DSL visual dengan DSL tekstual untuk satu
+        model yang sama, serta agen tunggal dengan multi-agen untuk satu tugas
+        yang sama.
+  \item \textbf{Artefak yang dapat dijalankan ulang.} Kode, model, dan berkas
+        konfigurasi tersedia terbuka, sehingga setiap angka dan keluaran yang
+        dilaporkan dapat diperiksa kembali oleh pembaca.
+\end{enumerate}
+
+Kontribusi tersebut bersifat rancangan dan implementasi. Pengukuran pengaruhnya
+terhadap capaian belajar mahasiswa belum dilakukan, dan rencananya diuraikan
+pada bab penutup.
+
+\section*{Sistematika Penulisan}\addcontentsline{toc}{section}{Sistematika Penulisan}
+
+Isi buku terbagi menjadi empat belas bab yang dikelompokkan sebagai berikut.
+
+\begin{itemize}
+  \item \textbf{Bab 1 sampai Bab 3} membahas sistem yang berjalan, yaitu
+        eksekusi berbasis kontainer, observabilitas melalui metrik dan
+        visualisasi, serta kontrol keamanan pada saat sistem berjalan.
+  \item \textbf{Bab 4 sampai Bab 6} membahas otomasi, yaitu pipeline CI/CD,
+        infrastruktur sebagai kode dengan Terraform, dan orkestrasi dengan
+        Kubernetes.
+  \item \textbf{Bab 7 dan Bab 8} menjembatani otomasi dan pemodelan, melalui
+        pendekatan berbasis model untuk membangkitkan artefak infrastruktur dan
+        melalui pengenalan rekayasa perangkat lunak berbasis model pada domain
+        MediaFlow.
+  \item \textbf{Bab 9 dan Bab 10} membahas rekayasa bahasa, yaitu DSL tekstual
+        dengan ANTLR, Xtext, dan Langium, serta DSL visual dengan Sirius.
+  \item \textbf{Bab 11 sampai Bab 13} membahas pengolahan model, yaitu
+        transformasi model ke model, generasi model ke teks, dan validasi model.
+  \item \textbf{Bab 14} membahas sistem multi-agen berbasis Model Context
+        Protocol yang menjalankan rantai perkakas tersebut.
+\end{itemize}
+
+Tiap bab dibuka dengan tujuan pembelajaran dan ditutup dengan ringkasan, dan
+sebagian besar bab menyertakan pertanyaan diskusi. Bagian berikutnya memuat
+rincian materi tiap pertemuan dan dua pilihan tugas mata kuliah.
+
+\section*{Isi Mata Kuliah}\addcontentsline{toc}{section}{Isi Mata Kuliah}
+
+\subsection*{Bab 1 --- Sistem yang Berjalan}
+\textbf{Deskripsi:} Pembahasan dimulai dari sebuah sistem perangkat lunak yang benar-benar berjalan, berupa pipeline pemrosesan video dengan empat node, agar seluruh abstraksi pada bab berikutnya berangkat dari perilaku runtime yang konkret.
+\textbf{Alat:} Python, ZeroMQ, Docker, dan Docker Compose.
+
+\subsection*{Bab 2 --- Observabilitas Sistem Terdistribusi}
+\textbf{Deskripsi:} Perilaku sistem diamati melalui data runtime sebelum strukturnya ditalar, dengan metrik, log, dan trace sebagai sumber utama pemahaman sistem.
+\textbf{Alat:} Prometheus, Grafana, dan konsep OpenTelemetry.
+
+\subsection*{Bab 3 --- Security in Software Systems}
+\textbf{Deskripsi:} Keamanan diperlakukan sebagai kontrol yang membatasi perilaku sistem yang sedang berjalan, dengan enkripsi payload sebagai contoh kontrol runtime yang dampaknya dapat diamati.
+\textbf{Alat:} Docker Compose, Python, pustaka kriptografi, dan sniffer jaringan.
+
+\subsection*{Bab 4 --- Integrasi dan Penerapan Berkelanjutan}
+\textbf{Deskripsi:} Pipeline CI/CD dibangun sebagai otomasi terstruktur, sehingga proses build, pengujian, dan deployment berjalan konsisten dan dapat direproduksi tanpa langkah manual.
+\textbf{Alat:} GitHub Actions, pytest, Docker, Docker Compose, dan self-hosted runner.
+
+\subsection*{Bab 5 --- Kode sebagai Infrastruktur}
+\textbf{Deskripsi:} Infrastruktur ditulis sebagai kode deklaratif yang menyatakan kondisi akhir yang diinginkan, dengan pengelolaan lingkungan \texttt{dev}, \texttt{staging}, dan \texttt{production} pada \textit{stack} layanan text to speech.
+\textbf{Alat:} Terraform, dengan module dan variable untuk reuse lintas lingkungan serta alur kerja \textit{plan} dan \textit{apply}.
+
+\subsection*{Bab 6 --- Orkestrasi Infrastruktur Perangkat Lunak}
+\textbf{Deskripsi:} Sistem yang sama dijalankan di atas orkestrator, dengan pembahasan arsitektur klaster, objek Deployment dan Service, serta perbandingan terhadap pendekatan Terraform.
+\textbf{Alat:} Kubernetes, Minikube, dan kubectl.
+
+\subsection*{Bab 7 --- Pendekatan Berbasis Model untuk Otomasi Infrastruktur}
+\textbf{Deskripsi:} Artefak infrastruktur dibangkitkan dari model, dengan model lingkungan dan templat sebagai dua masukan utama bagi mesin transformasi, sehingga duplikasi lintas lingkungan berkurang.
+\textbf{Alat:} Model berbasis YAML, templat Jinja2, dan generator Python.
+
+\subsection*{Bab 8 --- Model-Driven Software Engineering untuk MediaFlow}
+\textbf{Deskripsi:} Konsep dasar rekayasa perangkat lunak berbasis model diperkenalkan melalui domain MediaFlow, mulai dari metamodel, model, sampai representasi tekstual dan visualnya.
+\textbf{Alat:} EMF, Ecore, dan Emfatic.
+
+\subsection*{Bab 9 --- Textual Domain-Specific Language}
+\textbf{Deskripsi:} Satu grammar MediaFlow diimplementasikan dengan tiga perkakas berbeda, lalu hasilnya dibandingkan dari sisi parsing, dukungan editor, dan integrasi.
+\textbf{Alat:} ANTLR, Xtext, dan Langium.
+
+\subsection*{Bab 10 --- Visual Domain-Specific Language}
+\textbf{Deskripsi:} Sintaks konkret visual dibangun di atas metamodel yang sama, dengan penekanan pada pengeditan dan validasi model, lalu dibandingkan dengan DSL tekstual.
+\textbf{Alat:} Eclipse Sirius.
+
+\subsection*{Bab 11 --- Model-to-Model Transformation}
+\textbf{Deskripsi:} Model MediaFlow ditransformasikan menjadi UML Activity Diagram, dengan pemetaan antarelemen yang eksplisit dan pengujian pada dua model masukan.
+\textbf{Alat:} Epsilon ETL, dengan perbandingan terhadap ATL.
+
+\subsection*{Bab 12 --- Model-to-Text Transformation}
+\textbf{Deskripsi:} Model tervalidasi diterjemahkan menjadi artefak teks, yaitu berkas JSON untuk tata letak graf dan fragmen HTML untuk tabel, yang langsung dipakai oleh penampil berbasis web.
+\textbf{Alat:} Epsilon EGL dan EGX, dengan target JSON ELK dan HTML.
+
+\subsection*{Bab 13 --- Model Validation}
+\textbf{Deskripsi:} Aturan kebenaran diterapkan pada model sejak tahap perancangan untuk mencegah konfigurasi yang tidak valid, dengan korpus model valid dan tidak valid sebagai bahan uji.
+\textbf{Alat:} Epsilon EVL, dengan perbandingan terhadap OCL.
+
+\subsection*{Bab 14 --- Multi-Agent Software Systems}
+\textbf{Deskripsi:} Beberapa agen berbasis model bahasa besar dikoordinasikan melalui antrean tugas bersama untuk menjalankan pekerjaan yang memakai perkakas pada bab-bab sebelumnya, lalu dibandingkan dengan pendekatan agen tunggal.
+\textbf{Alat:} Model Context Protocol, Claude CLI, Gemini CLI, dan server MCP berbasis Python.
+
+\section*{Tugas Mata Kuliah: Pilihan 1}\addcontentsline{toc}{section}{Tugas Mata Kuliah: Pilihan 1}
 
 Tugas mata kuliah ini dirancang dalam bentuk studi kasus pemodelan sistem nyata yang berasal dari lingkungan kerja mahasiswa. Sistem yang dikaji, selanjutnya disebut sebagai \textit{Sistem X}, dapat berupa sistem manual, sistem berbasis teknologi informasi, maupun kombinasi keduanya. Tujuan utama tugas ini bukanlah implementasi teknis, melainkan pengembangan kemampuan mahasiswa dalam memahami, memodelkan, dan menalar perilaku sistem berdasarkan observasi runtime. Integrasikan teknologi-teknologi terbaru, seperti 3D printers, Artificial Intelligence, Business Intelligence, Information Systems, Internet of Things, Sensors, DevOps, atau teknologi lama yang dapat meningkatkan kualitas sistem tersebut (lebih murah, lebih cepat, lebih akurat, mempunyai kemampuan baru, dsb).
 
-\subsection{Deskripsi Tugas}
+\subsection*{Deskripsi Tugas}
 
 Mahasiswa diminta untuk mengidentifikasi sebuah proses bisnis nyata (manual, menggunakan teknologi, atau kombinasi keduanya) yang dijalankan di kantor atau unit kerja tempat mahasiswa bekerja. Proses tersebut kemudian dianalisis dengan langkah-langkah berikut:
 
 \begin{itemize}
     \item Mengidentifikasi aktor (manusia atau non-manusia yang memiliki peran tertentu) yang terlibat (manusia dan/atau sistem).
-    \item Mendeskripsikan interaksi antar aktor beserta aliran pesan atau data yang dipertukarkan.	
+    \item Mendeskripsikan interaksi antar aktor beserta aliran pesan atau data yang dipertukarkan.
     \item Mengklasifikasikan elemen proses yang bersifat tetap (invariant), berulang, dan bervariasi.
 	\item MEngidentifikasi aktivitas manual yang dapat di-otomasi dan tidak dapat di-otomasi.
 	\item Mengamati perilaku sistem dalam kondisi normal maupun ketika terjadi gangguan, keterlambatan, atau pengecualian, elemen-elemen mana yang sering bermasalah dan bagaimana solusinya.
@@ -85,25 +260,25 @@ Mahasiswa diminta untuk mengidentifikasi sebuah proses bisnis nyata (manual, men
 
 Model yang dihasilkan tidak ditujukan sebagai dokumentasi statis, melainkan sebagai artefak analitis untuk menjelaskan perilaku runtime Sistem X serta mendukung penalaran terhadap perubahan dan keputusan otomasi.
 
-\subsection{Research Questions}
+\subsection*{Research Questions}
 
 Tugas ini diarahkan untuk menjawab dua \textit{research questions} berikut:
 
 \begin{enumerate}
-    \item \textbf{RQ1:} 
+    \item \textbf{RQ1:}
     Sejauh mana model perilaku runtime Sistem X yang disusun berdasarkan observasi lapangan memenuhi kriteria kelengkapan, konsistensi, dan keterlacakan terhadap kondisi nyata?
 
-    \item \textbf{RQ2:} 
+    \item \textbf{RQ2:}
     Apakah penggunaan model runtime yang eksplisit menghasilkan peningkatan kualitas penalaran terhadap kegagalan, risiko, dan dampak perubahan pada Sistem X dibandingkan dengan deskripsi informal?
 \end{enumerate}
 
 Kedua pertanyaan penelitian ini berfokus pada kualitas model yang dihasilkan serta dampaknya terhadap kemampuan penalaran mahasiswa, tanpa mensyaratkan keahlian pemrograman atau implementasi teknis.
 
-\subsection{Metode Evaluasi}
+\subsection*{Metode Evaluasi}
 
 Untuk menjawab kedua \textit{research questions} tersebut, digunakan dua metode evaluasi yang bersifat sederhana, terstruktur, dan dapat direplikasi. Keduanya membutuhkan responden pakar paling sedikit 5 orang.
 
-\subsubsection{Evaluasi Kualitas Model (RQ1)}
+\subsubsection*{Evaluasi Kualitas Model (RQ1)}
 
 Evaluasi terhadap RQ1 dilakukan menggunakan rubrik penilaian kualitas model. Setiap model \textit{AS-IS} dan \textit{TO-BE} dinilai berdasarkan beberapa kriteria berikut:
 
@@ -117,7 +292,7 @@ Evaluasi terhadap RQ1 dilakukan menggunakan rubrik penilaian kualitas model. Set
 
 Cari referensi yang menyebutkan bahwa kelima dimensi tersebut adalah penting. Setiap kriteria dinilai menggunakan skala ordinal (misalnya 1--5), disertai catatan kualitatif untuk menjelaskan kekuatan dan kelemahan model.
 
-\subsubsection{Evaluasi Dukungan Penalaran Berbasis Model (RQ2)}
+\subsubsection*{Evaluasi Dukungan Penalaran Berbasis Model (RQ2)}
 
 Evaluasi terhadap RQ2 dilakukan melalui analisis komparatif terhadap artefak model \textit{AS-IS} dan \textit{TO-BE} Sistem X. Evaluasi ini bertujuan untuk menilai sejauh mana masing-masing model menyediakan struktur dan informasi yang memadai untuk mendukung penalaran yang sistematis terhadap kegagalan, risiko, dan dampak perubahan sistem, dibandingkan dengan deskripsi informal proses.
 
@@ -130,7 +305,7 @@ Penilaian dilakukan dengan menganalisis kemampuan masing-masing representasi dal
 
 Model \textit{AS-IS}, model \textit{TO-BE}, dan deskripsi informal dibandingkan secara kualitatif berdasarkan tingkat eksplisitasi perilaku, kejelasan hubungan antar elemen, dan konsistensi representasi analitis. Hasil perbandingan ini digunakan untuk menilai sejauh mana model runtime yang eksplisit memberikan dukungan penalaran yang lebih kuat dibandingkan pendekatan deskriptif.
 
-\subsection{Struktur Makalah IEEE}
+\subsection*{Struktur Makalah IEEE}
 
 Hasil tugas ini disusun dalam bentuk makalah ilmiah dengan struktur standar IEEE conference sebagai berikut:
 
@@ -148,7 +323,7 @@ Hasil tugas ini disusun dalam bentuk makalah ilmiah dengan struktur standar IEEE
 Struktur ini memastikan bahwa hasil tugas mahasiswa tidak hanya bernilai pedagogis, tetapi juga memenuhi standar pelaporan ilmiah untuk publikasi pada konferensi IEEE tingkat regional.
 
 
-\section{Tugas Mata Kuliah: Pilihan 2}
+\section*{Tugas Mata Kuliah: Pilihan 2}\addcontentsline{toc}{section}{Tugas Mata Kuliah: Pilihan 2}
 
 Tugas ini berupa studi komparasi dua perangkat lunak, library, atau format data yang digunakan untuk tujuan serupa. Studi dilakukan melalui eksperimen performa yang dapat dijalankan pada satu komputer tanpa melibatkan responden manusia. Evaluasi difokuskan pada pengukuran waktu eksekusi, penggunaan memori, ukuran data, dan throughput, dengan konfigurasi eksperimen yang terkontrol dan dapat direplikasi.
 
@@ -165,4 +340,3 @@ Contoh topik studi komparasi yang dapat dilakukan secara mandiri dan berpotensi 
 	\item PostgreSQLvs MongoDB dalam hal penyimpanan gambar atau gambar time-series.
 \end{enumerate}
 
-\cite{020practical}.

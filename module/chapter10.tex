@@ -3,26 +3,26 @@
 
 \section*{Tujuan Pembelajaran}
 \begin{enumerate}
-  \item Menjelaskan perbedaan pendekatan \textit{visual DSL} dibandingkan \textit{textual DSL} dan alasan penggunaan notasi grafis sebagai representasi model domain pipeline media.
-  \item Menerapkan metodologi pengembangan visual DSL menggunakan Eclipse Sirius, mulai dari perancangan viewpoint, definisi mapping grafis, konfigurasi palet alat, hingga pembuatan model instans berbasis diagram.
+  \item Menjelaskan perbedaan pendekatan \textit{visual DSL} dibandingkan \textit{textual DSL} dan alasan penggunaan notasi grafis sebagai representasi model domain pipeline\index{pipeline} media.
+  \item Menerapkan metodologi pengembangan visual DSL menggunakan Eclipse Sirius\index{Sirius}, mulai dari perancangan viewpoint, definisi mapping grafis, konfigurasi palet alat, hingga pembuatan model instans berbasis diagram.
   \item Menganalisis trade-off antara visual DSL dan textual DSL serta menentukan pendekatan yang paling sesuai untuk konteks kebutuhan pengguna dan tim.
 \end{enumerate}
 
 \section{Pendahuluan}
 
-Pada bab sebelumnya, DSL \textit{MediaFlow} diimplementasikan menggunakan pendekatan tekstual melalui ANTLR, Xtext, dan Langium. Ketiga pendekatan tersebut menghasilkan bahasa yang ditulis sebagai teks terstruktur, diedit dengan text editor, dan diparsing melalui grammar formal. Pendekatan ini sangat cocok bagi engineer yang nyaman dengan sintaks berbasis teks dan alur kerja berbasis kode.
+Pada bab sebelumnya, DSL \textit{MediaFlow} diimplementasikan menggunakan pendekatan tekstual melalui ANTLR, Xtext, dan Langium\index{Langium}. Ketiga pendekatan tersebut menghasilkan bahasa yang ditulis sebagai teks terstruktur, diedit dengan text editor, dan diparsing melalui grammar formal. Pendekatan ini sangat cocok bagi engineer yang nyaman dengan sintaks berbasis teks dan alur kerja berbasis kode.
 
 Namun, tidak semua pemangku kepentingan pipeline media memiliki latar belakang teknis yang sama. Arsitek alur, operator produksi, atau desainer sistem distribusi sering lebih memahami alur data sebagai diagram visual: blok yang terhubung, arah panah, dan warna yang membedakan jenis komponen. Dalam konteks ini, pendekatan \textit{textual DSL} memiliki hambatan tersendiri: kurva belajar sintaks, kesalahan referensi yang sulit terdeteksi secara visual, serta ketidakintuitifan membaca hubungan antar-komponen yang tersebar di baris teks.
 
-\textit{Visual DSL} hadir sebagai pendekatan komplementer: model domain dinyatakan dan diedit dalam notasi grafis, bukan teks. Pengguna \textit{drag-and-drop} node ke kanvas, menghubungkan port dengan panah, dan atribut dikonfigurasi melalui properti grafis. Namun, di balik interaksi visual tersebut, model tetap disimpan sebagai XMI pada berkas semantik yang dapat diversi, diintegrasikan, dan divalidasi.
+\textit{Visual DSL} hadir sebagai pendekatan komplementer: model domain dinyatakan dan diedit dalam notasi grafis, bukan teks. Pengguna \textit{drag-and-drop} node ke kanvas, menghubungkan port dengan panah, dan atribut dikonfigurasi melalui properti grafis. Namun, di balik interaksi visual tersebut, model tetap disimpan sebagai XMI\index{XMI} pada berkas semantik yang dapat diversi, diintegrasikan, dan divalidasi.
 
-Bab ini memperlihatkan bagaimana kebutuhan tersebut dijawab melalui implementasi visual DSL \textit{MediaFlow} menggunakan \textbf{Eclipse Sirius}. Seperti pada bab sebelumnya, metamodel yang sama (\texttt{mediaflow.ecore}) menjadi fondasi bersama, sehingga model visual dan model tekstual berbagi kontrak domain yang konsisten.
+Bab ini memperlihatkan bagaimana kebutuhan tersebut dijawab melalui implementasi visual DSL \textit{MediaFlow} menggunakan \textbf{Eclipse Sirius}. Seperti pada bab sebelumnya, metamodel\index{metamodel} yang sama (\texttt{mediaflow.ecore}) menjadi fondasi bersama, sehingga model visual dan model tekstual berbagi kontrak domain yang konsisten.
 
 \section{Deskripsi Masalah Domain yang Diselesaikan}
 
 \subsection{Konteks Domain}
 
-Domain yang dibahas tetap sama: orkestrasi pipeline pemrosesan media digital end-to-end. Pipeline direpresentasikan sebagai graf terarah yang terdiri dari komponen pemrosesan (\texttt{Node}), titik koneksi (\texttt{Port}), dan relasi aliran data (\texttt{Edge}). Metamodel \textit{MediaFlow} mendefinisikan hierarki ini secara formal.
+Domain yang dibahas tetap sama: orkestrasi\index{orkestrasi} pipeline pemrosesan media digital end-to-end. Pipeline direpresentasikan sebagai graf terarah yang terdiri dari komponen pemrosesan (\texttt{Node}), titik koneksi (\texttt{Port}), dan relasi aliran data (\texttt{Edge}). Metamodel \textit{MediaFlow} mendefinisikan hierarki ini secara formal.
 
 Yang berubah pada bab ini adalah \textit{cara pengguna berinteraksi dengan model}: dari menulis teks DSL ke menggambar diagram. Perubahan ini memengaruhi pemilihan tooling, cara mendefinisikan notasi, dan cara model disimpan, tetapi tidak mengubah struktur domain itu sendiri.
 
@@ -67,7 +67,7 @@ Target model visual pada bab ini adalah dua instans pipeline yang tersimpan seba
 </mediaflow:Graph>
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch10-flow2-xmi} memperlihatkan bahwa meskipun pengguna berinteraksi secara grafis, model yang tersimpan tetap berupa XMI terstruktur. Struktur ini setara dengan model yang dihasilkan Xtext, sehingga validasi, transformasi, dan integrasi tooling lain tetap dapat dilakukan pada level model yang sama.
+\noindent Listing~\ref{lst:ch10-flow2-xmi} memperlihatkan bahwa meskipun pengguna berinteraksi secara grafis, model yang tersimpan tetap berupa XMI terstruktur. Struktur ini setara dengan model yang dihasilkan Xtext\index{Xtext}, sehingga validasi, transformasi, dan integrasi tooling lain tetap dapat dilakukan pada level model yang sama.
 
 \subsection{Masalah Utama}
 
@@ -114,7 +114,7 @@ Visual DSL dan textual DSL berbagi fondasi yang sama: metamodel domain. Langkah 
 
 Pemilihan framework visual DSL bergantung pada ekosistem tim dan jenis editor yang dibutuhkan:
 \begin{itemize}
-  \item \textbf{Eclipse Sirius}: visual workbench berbasis Eclipse, cocok untuk ekosistem EMF/Java.
+  \item \textbf{Eclipse Sirius}: visual workbench berbasis Eclipse, cocok untuk ekosistem EMF\index{EMF}/Java.
   \item \textbf{Eclipse GMF (Graphical Modeling Framework)}: framework diagran level lebih rendah, lebih banyak konfigurasi manual.
   \item \textbf{Obeo Designer}: berbasis Sirius dengan layanan managed.
   \item \textbf{Theia/GLSP}: visual DSL berbasis web dan Language Server Protocol.
@@ -130,7 +130,7 @@ Pada bab ini, Sirius dipilih karena integrasinya yang erat dengan EMF, deklarati
 
 Tahap ini menentukan bagaimana setiap konsep metamodel dipresentasikan secara visual:
 \begin{itemize}
-  \item \textbf{Bentuk (shape):} container, node, ellipse, atau elemen kustom.
+  \item \textbf{Bentuk (shape):} container\index{container}, node, ellipse, atau elemen kustom.
   \item \textbf{Warna:} membedakan kategori elemen (misalnya biru untuk Resource, hijau untuk Scaler, oranye untuk Transcoder).
   \item \textbf{Label:} ekspresi AQL yang menampilkan atribut kunci di atas elemen.
   \item \textbf{Ikon:} gambar kecil yang memperkuat identifikasi jenis elemen.
@@ -568,13 +568,14 @@ Untuk konteks pembelajaran, set minimal yang direkomendasikan adalah:
 
 \subsection{Perbandingan Aspek Teknis}
 
-Tabel~\ref{tab:ch10-perbandingan-teknis} merangkum perbedaan teknis utama antara pendekatan visual DSL (Sirius) dan textual DSL (ANTLR/Xtext/Langium) pada konteks \textit{MediaFlow}.
+Tabel~\ref{tab:ch10-perbandingan-teknis} merangkum perbedaan teknis utama antara pendekatan visual DSL (Sirius) dan textual DSL (ANTLR\index{ANTLR}/Xtext/Langium) pada konteks \textit{MediaFlow}.
 
 \begin{table}[h]
 \centering
 \caption{Perbandingan aspek teknis Visual DSL (Sirius) vs Textual DSL}
 \label{tab:ch10-perbandingan-teknis}
 \scriptsize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.13\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{Visual DSL (Sirius)} & \textbf{Textual DSL (ANTLR/Xtext/Langium)} \\
@@ -591,17 +592,21 @@ Linking referensi & Dikelola oleh Sirius melalui \texttt{sourceFinderExpression}
 \hline
 Keterbacaan model & Lebih intuitif untuk topologi bercabang; sulit untuk model yang sangat besar (ratusan node). & Mudah dibaca dan ditulis untuk model kecil--menengah; sulit dipahami topologinya tanpa tool. \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
 \subsection{Perbandingan Aspek Tooling dan Produktivitas}
 
+
+Tabel~\ref{tab:ch10-perbandingan-tooling} menampilkan perbandingan tooling dan produktivitas Visual DSL vs Textual DSL.
 \begin{table}[h]
 \centering
 \caption{Perbandingan tooling dan produktivitas Visual DSL vs Textual DSL}
 \label{tab:ch10-perbandingan-tooling}
 \scriptsize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.13\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{Visual DSL (Sirius)} & \textbf{Textual DSL} \\
@@ -618,7 +623,8 @@ Ekstensi notasi & Melalui \texttt{.odesign} secara deklaratif; perubahan bentuk/
 \hline
 Kesesuaian skenario & Model yang topologinya kompleks dan perlu dinavigasi secara visual. & Model yang perlu diversi, di-review pull-request, atau dibuat secara programatik. \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -627,7 +633,7 @@ Kesesuaian skenario & Model yang topologinya kompleks dan perlu dinavigasi secar
 Panduan pemilihan praktis berdasarkan konteks penggunaan:
 \begin{enumerate}
   \item \textbf{Pilih Visual DSL (Sirius)} jika pengguna utama adalah arsitek atau operator yang lebih nyaman dengan diagram, jika topologi model perlu divisualisasikan secara langsung, atau jika tim membutuhkan tool kolaborasi lintas peran tanpa hambatan sintaks.
-  \item \textbf{Pilih Textual DSL (Xtext/Langium)} jika pengguna utama adalah developer, jika model perlu diversi secara bersih di Git, diintegrasikan ke pipeline CI/CD, atau dibuat secara programatik.
+  \item \textbf{Pilih Textual DSL (Xtext/Langium)} jika pengguna utama adalah developer, jika model perlu diversi secara bersih di Git, diintegrasikan ke pipeline CI/CD\index{CI/CD}, atau dibuat secara programatik.
   \item \textbf{Kombinasikan keduanya} dalam proyek besar: textual DSL sebagai format penyimpanan dan source-of-truth, visual DSL sebagai lapisan presentasi dan authoring untuk pemangku kepentingan non-teknis. Keduanya berbagi metamodel yang sama sehingga model dapat dibuka di kedua antarmuka.
 \end{enumerate}
 
@@ -640,3 +646,25 @@ Bab ini menunjukkan bahwa Visual DSL merupakan pendekatan komplementer terhadap 
 Implementasi menggunakan Eclipse Sirius memperlihatkan bagaimana \textit{viewpoint specification} (\texttt{.odesign}) mendefinisikan seluruh aspek notasi visual secara deklaratif: bentuk dan warna node, label berbasis AQL, port sebagai bordered node, koneksi edge antar-port, serta palet alat untuk pembuatan elemen. Model yang dihasilkan tersimpan sebagai XMI, tetap kompatibel dengan pipeline tooling EMF, dan dapat diintegrasikan dengan transformasi model dari pendekatan textual DSL.
 
 Trade-off utama yang perlu dipertimbangkan adalah: Visual DSL unggul pada keterbacaan topologi dan inklusivitas pengguna non-teknis, tetapi lebih kompleks dari sisi version control dan CI/CD. Textual DSL unggul pada kolaborasi berbasis teks dan integrasi pipeline, tetapi memiliki barrier masuk yang lebih tinggi. Pemilihan dan kombinasi keduanya sebaiknya didasarkan pada persona pengguna, kebutuhan kolaborasi, dan arsitektur tooling proyek secara keseluruhan.
+
+\section{Latihan}
+
+Kerjakan latihan berikut dengan editor visual MediaFlow.
+
+\begin{enumerate}
+  \item Buka model MediaFlow pada editor Sirius, tambahkan satu node, lalu periksa bagian mana dari berkas model yang berubah.
+  \item Tambahkan satu aturan gaya yang membedakan \texttt{Scaler} dari \texttt{Transcoder}, misalnya melalui warna atau bentuk, lalu uji pada model bercabang.
+  \item Tanam satu kesalahan pada model, misalnya edge yang menunjuk port dengan arah yang salah. Bandingkan waktu yang Anda butuhkan untuk menemukannya pada diagram dan pada berkas teks.
+  \item Jelaskan apa yang terjadi pada berkas diagram ketika dua orang mengubah model yang sama, lalu usulkan cara menanganinya pada pengelolaan versi.
+  \item Tentukan kapan Anda memilih editor visual dan kapan editor teks untuk proyek yang Anda kerjakan, beserta alasannya.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Eclipse Sirius Documentation} \cite{doc-sirius}: viewpoint, mapping, dan gaya untuk editor model visual.
+  \item \textit{Eclipse Modeling Framework} \cite{doc-emf}: metamodel yang menjadi dasar editor visual.
+  \item \textit{Model-Driven Software Engineering in Practice} \cite{brambilla2017mdse}: hubungan sintaks abstrak dan sintaks konkret.
+\end{itemize}

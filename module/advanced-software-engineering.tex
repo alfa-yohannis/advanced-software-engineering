@@ -1,4 +1,4 @@
-\documentclass[11pt,b5paper]{book}
+\documentclass[11pt]{book}
 
 \usepackage{parskip}
 \setlength{\parskip}{0.5em}
@@ -7,6 +7,11 @@
 \usepackage{longtable}
 \usepackage{xcolor}
 \usepackage{fontspec}
+% Penyesuaian untuk lebar kolom 15 x 23 cm: pola pemenggalan bahasa Indonesia,
+% pemenggalan di dalam \texttt, dan perapatan antarkata agar baris tidak meluber.
+\usepackage[bahasai]{babel}
+\usepackage[htt]{hyphenat}
+\usepackage{microtype}
 \setmainfont[
 Path = fonts/, 
 UprightFont = TitilliumWeb-Regular.ttf,
@@ -30,18 +35,26 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 \usepackage{amsmath}
 
 \usepackage{tabularx}
-\usepackage[b5paper,inner=2.5cm,
+% Ukuran B5 ISO 17,6 x 25 cm, ukuran terbesar yang disebut penerbit sebagai
+% alternatif yang diterima untuk pengajuan angka kredit, di samping ukuran
+% UNESCO 15,5 x 23 cm.
+\usepackage[paperwidth=17.6cm,paperheight=25cm,
+  inner=2.5cm,
   outer=2.0cm,
   top=2.5cm,
   bottom=2.5cm]{geometry}
 \usepackage[colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue]{hyperref}
 \usepackage{graphicx}
+% Mengecilkan isi yang melebihi lebar teks, tanpa membesarkan yang sudah muat.
+\usepackage[export]{adjustbox}
 \usepackage{xcolor}
 \graphicspath{{images/}}
 \usepackage{svg}
 
 \usepackage{subcaption}
 
+\usepackage{makeidx}
+\makeindex
 \usepackage{hyperref}  
 \usepackage{xurl}  
 
@@ -61,6 +74,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
     breaklines=true,
     frame=lines,
     numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
     numberstyle=\tiny\color{gray},
     backgroundcolor=\color{lightgray!10},
     tabsize=2
@@ -75,6 +90,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
     breaklines=true,
     frame=lines,
     numbers=left,
+    xleftmargin=1.8em,
+    numbersep=0.5em,
     numberstyle=\tiny\color{gray},
     backgroundcolor=\color{lightgray!10},
     tabsize=2,
@@ -96,6 +113,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	tabsize=2,
 	captionpos=b,
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	frame=lines,
 	backgroundcolor=\color{lightgray!10},
@@ -120,6 +139,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	tabsize=2,
 	captionpos=b,
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	frame=lines,
 	backgroundcolor=\color{lightgray!10},
@@ -142,6 +163,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -164,6 +187,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -187,6 +212,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -214,6 +241,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	tabsize=4,
 	captionpos=b,
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	frame=lines,
 	backgroundcolor=\color{lightgray!10},
@@ -239,6 +268,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	tabsize=4,
 	captionpos=b,
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	frame=lines,
 	backgroundcolor=\color{lightgray!10},
@@ -263,6 +294,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -289,6 +322,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	sensitive=true,
 	commentstyle=\color{gray},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -313,6 +348,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -339,6 +376,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
   morestring=[b]",
   basicstyle=\ttfamily\scriptsize,
   numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
   numberstyle=\tiny\color{gray},
   breaklines=true,
   frame=lines,
@@ -356,6 +395,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -380,6 +421,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -404,6 +447,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -428,6 +473,8 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	commentstyle=\color{gray},
 	stringstyle=\color{red},
 	numbers=left,
+	xleftmargin=1.8em,
+	numbersep=0.5em,
 	numberstyle=\tiny\color{gray},
 	breaklines=true,
 	frame=lines,
@@ -447,11 +494,24 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 
 
 \newcommand{\authors}[1]{{\chapterauthor{#1}\addtocontents{toc}{#1\par}}}
+\newcommand{\isian}[1]{\textcolor{red}{[#1]}}
 \newcommand{\HUGE}{\fontsize{40}{48}\selectfont}
 
+% Nomor halaman romawi panjang seperti xxxviii perlu kotak lebih lebar di daftar isi.
+\makeatletter
+\renewcommand{\@pnumwidth}{2.6em}
+\renewcommand{\@tocrmarg}{3.6em}
+\makeatother
 \renewcommand{\contentsname}{Daftar Isi}
 \renewcommand{\chaptername}{Bab}
 \renewcommand{\figurename}{Gambar}
+\renewcommand{\tablename}{Tabel}
+\renewcommand{\listfigurename}{Daftar Gambar}
+\renewcommand{\listtablename}{Daftar Tabel}
+\renewcommand{\bibname}{Daftar Pustaka}
+\renewcommand{\indexname}{Indeks}
+\renewcommand{\lstlistingname}{Listing}
+\renewcommand{\lstlistlistingname}{Daftar Listing}
 
 \definecolor{praditagreen}{RGB}{37, 113, 71}
 
@@ -465,14 +525,41 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 \makeatother
 
 \begin{document}
+\sloppy
       
 
 	 \include{titlepage}
-	
+
+	 % Bagian awal: halaman hak cipta, daftar isi, daftar gambar, daftar tabel,
+	 % prakata, dan Pendahuluan. Bernomor halaman romawi dan tanpa nomor bab,
+	 % sehingga bab materi tetap bernomor 1 sampai 14. Urutannya mengikuti
+	 % Permendikbudristek 22/2022 Lampiran III Tabel 1.
+	 \frontmatter
+
+	 \include{halamanjudul}
+
 	 % Contents Page
 	 \tableofcontents
-	
+
+	 \cleardoublepage
+	 \phantomsection
+	 \addcontentsline{toc}{chapter}{\listfigurename}
+	 \listoffigures
+
+	 \cleardoublepage
+	 \phantomsection
+	 \addcontentsline{toc}{chapter}{\listtablename}
+	 \listoftables
+
+	 \cleardoublepage
+	 \phantomsection
+	 \addcontentsline{toc}{chapter}{\lstlistlistingname}
+	 \lstlistoflistings
+
+	\include{prakata}
 	\include{pendahuluan}
+
+	\mainmatter
 	\include{chapter01}
 	\include{chapter02}
 	\include{chapter03}
@@ -488,11 +575,21 @@ BoldItalicFont = TitilliumWeb-BoldItalic.ttf
 	\include{chapter13}
 	\include{chapter14}
 
-
-	\cite{020practical}
+	% Bagian akhir: Penutup, glosarium, daftar pustaka, dan riwayat penulis,
+	% seluruhnya tanpa nomor bab. Urutannya mengikuti Permendikbudristek
+	% 22/2022 Lampiran III Tabel 3.
 	\backmatter
+	\include{penutup}
+	\include{glosarium}
 	\addcontentsline{toc}{chapter}{Daftar Pustaka}
 	\bibliographystyle{plain}
 	\bibliography{references}
+
+	\cleardoublepage
+	\phantomsection
+	\addcontentsline{toc}{chapter}{\indexname}
+	\printindex
+
+	\include{riwayat-penulis}
 	
 \end{document}

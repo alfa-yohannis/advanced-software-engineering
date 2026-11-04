@@ -14,13 +14,13 @@ DevSecOps merupakan pendekatan pengembangan sistem yang mengintegrasikan \emph{d
 
 Pendekatan ini berangkat dari kesadaran bahwa sistem modern bersifat kompleks, terdistribusi, dan terus berubah. Dalam konteks tersebut, keamanan tidak dapat lagi diperlakukan sebagai \emph{gate} terakhir sebelum rilis, melainkan sebagai seperangkat kontrol yang hadir sejak desain hingga sistem berjalan di lingkungan produksi.
 
-\subsection{DevSecOps sebagai Integrasi Development, Security, dan Operations}
+\subsection[DevSecOps sebagai Integrasi Development]{DevSecOps sebagai Integrasi Development, Security, dan Operations}
 
 Dalam DevSecOps, security tidak berdiri sebagai domain eksklusif satu tim atau satu peran tertentu. Praktik keamanan terdistribusi di antara pengembang yang menulis kode, operator yang mengelola lingkungan runtime, serta kebijakan organisasi yang mengatur bagaimana sistem boleh dan tidak boleh berperilaku.
 
 Integrasi ini mengubah cara berpikir tentang keamanan. Alih-alih bertanya \emph{“apakah sistem ini sudah diuji keamanannya?”}, DevSecOps mendorong pertanyaan \emph{“kontrol keamanan apa saja yang aktif di setiap tahap siklus sistem?”}. Dengan demikian, security menjadi sifat emergen dari banyak keputusan kecil yang konsisten, bukan hasil dari satu aktivitas tunggal.
 
-\subsection{Mengapa Security Tidak Bisa Dipusatkan di Satu Tahap}
+\subsection[Mengapa Security Tidak Bisa Dipusatkan]{Mengapa Security Tidak Bisa Dipusatkan di Satu Tahap}
 
 Tidak ada satu tahap pun dalam siklus DevOps yang mampu menanggung seluruh beban keamanan sistem. Keputusan desain yang buruk tidak dapat sepenuhnya diperbaiki oleh enkripsi di runtime. Sebaliknya, implementasi yang rapi sekalipun dapat menjadi tidak aman jika konfigurasi deployment salah atau kebijakan operasional diabaikan.
 
@@ -47,7 +47,7 @@ Pada tahap desain, keamanan berfokus pada cara sistem dipahami dan dibatasi seca
 
 \emph{Contoh}, melalui kegiatan \emph{threat modeling}, perancang sistem mengidentifikasi aset penting, alur data kritis, serta potensi ancaman yang mungkin muncul dari aktor tidak berwenang. Dari analisis ini dapat ditentukan bagian sistem mana yang memerlukan kontrol tambahan pada tahap berikutnya.
 
-\emph{Contoh lain}, penentuan \emph{trust boundary} digunakan untuk memisahkan komponen yang dipercaya dan tidak dipercaya. Misalnya, klien eksternal dan broker publik diperlakukan sebagai bagian yang tidak dipercaya, sehingga data yang melewati batas ini harus dianggap berisiko dan memerlukan perlindungan tambahan.
+\emph{Contoh lain}, penentuan \emph{trust boundary} digunakan untuk memisahkan komponen yang dipercaya dan tidak dipercaya. Misalnya, klien eksternal dan broker\index{broker} publik diperlakukan sebagai bagian yang tidak dipercaya, sehingga data yang melewati batas ini harus dianggap berisiko dan memerlukan perlindungan tambahan.
 
 \subsection{Security pada Tahap Implementasi}
 
@@ -63,7 +63,7 @@ Pada tahap build, fokus keamanan bergeser ke artefak yang dihasilkan dari proses
 
 \emph{Contoh}, proses build dapat mencakup pemeriksaan dependensi untuk mendeteksi pustaka yang memiliki kerentanan yang telah diketahui, sehingga artefak yang dihasilkan tidak membawa risiko tersembunyi ke lingkungan produksi.
 
-\emph{Contoh lain}, praktik \emph{image hardening} pada container dilakukan dengan menghilangkan komponen yang tidak diperlukan, sehingga artefak yang dijalankan memiliki permukaan serangan yang lebih kecil.
+\emph{Contoh lain}, praktik \emph{image hardening} pada container\index{container} dilakukan dengan menghilangkan komponen yang tidak diperlukan, sehingga artefak yang dijalankan memiliki permukaan serangan yang lebih kecil.
 
 \subsection{Security pada Tahap Deployment dan Environment}
 
@@ -118,6 +118,7 @@ Arsitektur pada Gambar~\ref{fig:broker-pubsub-runtime-encryption} menggambarkan 
 \begin{figure}[htbp]
 \centering
 \scalebox{0.9}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   font=\small\bfseries,
   node distance=9mm and 12mm,
@@ -184,7 +185,8 @@ Arsitektur pada Gambar~\ref{fig:broker-pubsub-runtime-encryption} menggambarkan 
 \draw[dottedarrow] (web.east) -- (prom);
 \draw[arrow] (prom) -- (grafana);
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Arsitektur sistem publish--subscribe dengan enkripsi payload sebagai kontrol keamanan runtime, di mana proses enkripsi dan dekripsi dilakukan pada node produsen dan konsumen, sementara broker tetap tidak memiliki akses terhadap isi pesan}
 \label{fig:broker-pubsub-runtime-encryption}
@@ -217,9 +219,9 @@ Kontrol enkripsi diimplementasikan menggunakan pustaka \texttt{cryptography} (Fe
 
 Sebelum kontrol enkripsi payload diterapkan pada sistem, diperlukan kunci enkripsi yang akan berfungsi sebagai kebijakan keamanan runtime. Kunci ini tidak dihasilkan oleh aplikasi saat berjalan, melainkan dibuat terlebih dahulu sebagai bagian dari proses persiapan operasional. Dengan pendekatan ini, kebijakan keamanan dipisahkan secara tegas dari logika aplikasi dan dapat dikelola secara independen.
 
-Pada eksperimen ini, kunci enkripsi dihasilkan menggunakan pustaka \texttt{cryptography} dengan mekanisme Fernet. Proses generasi kunci dilakukan satu kali oleh operator atau administrator sistem, kemudian hasilnya didistribusikan ke komponen yang berwenang melalui konfigurasi runtime.
+Pada eksperimen ini, kunci enkripsi dihasilkan menggunakan pustaka \texttt{cryptography} dengan mekanisme Fernet. Proses generasi kunci dilakukan satu kali oleh operator atau administrator sistem, kemudian hasilnya didistribusikan ke komponen yang berwenang melalui konfigurasi runtime. Perintahnya ada pada Listing~\ref{lst:ch03-1}.
 
-\begin{lstlisting}[style=PythonStyle, caption={Generate Fernet key for payload encryption}]
+\begin{lstlisting}[style=PythonStyle, caption={Generate Fernet key for payload encryption}, label={lst:ch03-1}]
 from cryptography.fernet import Fernet
 
 key = Fernet.generate_key()
@@ -233,9 +235,9 @@ Pemisahan tahap generasi kunci dari tahap eksekusi sistem menegaskan bahwa kunci
 
 \subsection*{Konfigurasi Kunci pada \texttt{docker-compose.yml}}
 
-Contoh berikut menunjukkan bahwa setiap layanan yang perlu memproduksi atau mengonsumsi payload diberi variabel \texttt{PAYLOAD\_KEY}. Broker tidak diberi kunci, karena broker diposisikan sebagai komponen netral yang tidak berwenang membaca isi data.
+Contoh berikut menunjukkan bahwa setiap layanan yang perlu memproduksi atau mengonsumsi payload diberi variabel \texttt{PAYLOAD\_KEY}. Broker tidak diberi kunci, karena broker diposisikan sebagai komponen netral yang tidak berwenang membaca isi data. Perintah lengkapnya ada pada Listing~\ref{lst:ch03-2}.
 
-\begin{lstlisting}[language=bash, caption={Inject PAYLOAD\_KEY via docker-compose environment}]
+\begin{lstlisting}[language=bash, caption={Inject PAYLOAD\_KEY via docker-compose environment}, label={lst:ch03-2}]
 services:
   transformer:
     build:
@@ -268,9 +270,9 @@ services:
 
 \subsection*{Dependensi Python pada Dockerfile}
 
-Berikut potongan Dockerfile yang menegaskan bahwa enkripsi adalah bagian dari runtime pipeline (bersama pyzmq, metrics, dll). Contoh ini merefleksikan kebutuhan node seperti capturer/transformer yang menggunakan OpenCV, observability, dan kontrol enkripsi.
+Berikut potongan Dockerfile yang menegaskan bahwa enkripsi adalah bagian dari runtime pipeline\index{pipeline} (bersama pyzmq, metrics, dll). Contoh ini merefleksikan kebutuhan node seperti capturer/transformer yang menggunakan OpenCV, observability, dan kontrol enkripsi. Listing~\ref{lst:ch03-3} memuat perintahnya.
 
-\begin{lstlisting}[language=bash, caption={Install deps including cryptography in Dockerfile}]
+\begin{lstlisting}[language=bash, caption={Install deps including cryptography in Dockerfile}, label={lst:ch03-3}]
 # ---- python deps (capturer needs OpenCV + metrics + encryption)
 RUN pip install --no-cache-dir \
     pyzmq \
@@ -282,9 +284,9 @@ RUN pip install --no-cache-dir \
 
 \subsection*{Fungsi Enkripsi/Dekripsi (Shared Library)}
 
-Agar konsisten lintas layanan, praktik yang umum adalah membuat modul bersama (misalnya \texttt{shared/crypto.py}) yang membaca \texttt{PAYLOAD\_KEY} dari environment dan menyediakan fungsi \texttt{encrypt\_bytes} serta \texttt{decrypt\_bytes}.
+Agar konsisten lintas layanan, praktik yang umum adalah membuat modul bersama (misalnya \texttt{shared/crypto.py}) yang membaca \texttt{PAYLOAD\_KEY} dari environment dan menyediakan fungsi \texttt{encrypt\_bytes} serta \texttt{decrypt\_bytes}. Perintahnya ada pada Listing~\ref{lst:ch03-4}.
 
-\begin{lstlisting}[style=PythonStyle, caption={Shared crypto helpers using PAYLOAD\_KEY}]
+\begin{lstlisting}[style=PythonStyle, caption={Shared crypto helpers using PAYLOAD\_KEY}, label={lst:ch03-4}]
 import os
 from cryptography.fernet import Fernet
 
@@ -300,9 +302,9 @@ def decrypt_bytes(token: bytes) -> bytes:
 
 \subsection*{Integrasi pada Transformer: Decrypt--Process--Encrypt}
 
-Pada node \emph{Transformer}, pesan masuk dari broker berada dalam bentuk terenkripsi. Transformer mendekripsi header dan JPEG, memprosesnya, lalu mengenkripsi kembali output sebelum dipublikasikan. Potongan berikut menegaskan perubahan perilaku runtime yang menjadi inti eksperimen.
+Pada node \emph{Transformer}, pesan masuk dari broker berada dalam bentuk terenkripsi. Transformer mendekripsi header dan JPEG, memprosesnya, lalu mengenkripsi kembali output sebelum dipublikasikan. Potongan berikut menegaskan perubahan perilaku runtime yang menjadi inti eksperimen. Perintah lengkapnya ada pada Listing~\ref{lst:ch03-5}.
 
-\begin{lstlisting}[style=PythonStyle, caption={Transformer decrypts input and encrypts output payload}]
+\begin{lstlisting}[style=PythonStyle, caption={Transformer decrypts input and encrypts output payload}, label={lst:ch03-5}]
 # receive encrypted parts from broker
 enc_header_b, enc_jpeg_in = recv_parts()
 
@@ -323,9 +325,9 @@ send_parts(enc_out_header, enc_jpeg_out)
 
 \subsection*{Kode Uji Lokal: Pastikan Enkripsi Berfungsi dan Kunci Valid}
 
-Pengujian berikut memastikan dua hal: payload terenkripsi tidak sama dengan payload asli, dan dekripsi hanya berhasil jika kunci benar. Ini adalah uji minimum yang membantu mahasiswa melihat konsep \emph{data terlihat tetapi tidak terbaca}.
+Pengujian berikut memastikan dua hal: payload terenkripsi tidak sama dengan payload asli, dan dekripsi hanya berhasil jika kunci benar. Ini adalah uji minimum yang membantu mahasiswa melihat konsep \emph{data terlihat tetapi tidak terbaca}. Listing~\ref{lst:ch03-6} memuat perintahnya.
 
-\begin{lstlisting}[style=PythonStyle, caption={Quick test: encrypt/decrypt roundtrip}]
+\begin{lstlisting}[style=PythonStyle, caption={Quick test: encrypt/decrypt roundtrip}, label={lst:ch03-6}]
 import os
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -352,9 +354,9 @@ print("OK: encryption on, wrong key fails, correct key succeeds.")
 
 Validasi keamanan dilakukan melalui observasi pasif menggunakan sniffer sebagai representasi ancaman. Sniffer diposisikan sebagai pihak yang dapat mengamati lalu lintas pesan (misalnya dari sisi jaringan), tetapi tidak memiliki kunci \texttt{PAYLOAD\_KEY}. Pada kondisi tanpa enkripsi, sniffer akan memperoleh bytes yang bermakna (misalnya header atau potongan JPEG yang dapat dikenali). Setelah enkripsi diterapkan, sniffer tetap melihat payload, namun yang terlihat hanyalah token terenkripsi yang tidak dapat ditafsirkan.
 
-Contoh berikut menunjukkan cara mencetak sebagian bytes payload untuk menegaskan perbedaan \emph{terlihat} versus \emph{terbaca} tanpa melakukan eksploitasi apa pun.
+Contoh berikut menunjukkan cara mencetak sebagian bytes payload untuk menegaskan perbedaan \emph{terlihat} versus \emph{terbaca} tanpa melakukan eksploitasi apa pun. Perintahnya ada pada Listing~\ref{lst:ch03-7}.
 
-\begin{lstlisting}[style=PythonStyle, caption={Sniffer view: visible bytes, unreadable without key}]
+\begin{lstlisting}[style=PythonStyle, caption={Sniffer view: visible bytes, unreadable without key}, label={lst:ch03-7}]
 def hexdump(b: bytes, n: int = 32) -> str:
     return b[:n].hex()
 
@@ -370,7 +372,7 @@ except InvalidToken:
     print("Unreadable: decrypt failed without the correct key.")
 \end{lstlisting}
 
-Dengan rangkaian eksperimen ini, bukti perubahan perilaku runtime menjadi jelas: aliran data tetap terjadi, broker tetap berfungsi sebagai perantara, dan observabilitas sistem tetap berjalan, tetapi keterbacaan payload bagi pihak tidak berwenang dibatasi secara nyata. Hasil ini menegaskan bahwa kontrol keamanan runtime dapat diuji dan diverifikasi secara empiris melalui observasi, serta bahwa kunci enkripsi berperan sebagai kebijakan operasional yang menghubungkan DevSecOps dengan praktik operasi sehari-hari.
+Dengan rangkaian eksperimen ini, bukti perubahan perilaku runtime menjadi jelas: aliran data tetap terjadi, broker tetap berfungsi sebagai perantara, dan observabilitas\index{observabilitas} sistem tetap berjalan, tetapi keterbacaan payload bagi pihak tidak berwenang dibatasi secara nyata. Hasil ini menegaskan bahwa kontrol keamanan runtime dapat diuji dan diverifikasi secara empiris melalui observasi, serta bahwa kunci enkripsi berperan sebagai kebijakan operasional yang menghubungkan DevSecOps dengan praktik operasi sehari-hari.
 
 
 
@@ -383,7 +385,7 @@ Satu kontrol keamanan jarang sekali cukup. Ia dapat mengurangi satu jenis risiko
 Fokus pada satu lapisan dapat membuat kelemahan pada lapisan lain terabaikan. Sistem yang terenkripsi dengan baik tetap dapat disalahgunakan jika tidak memiliki kontrol akses, pemantauan, atau kebijakan operasional yang memadai. Pendekatan berlapis diperlukan untuk mencegah kegagalan pada satu titik berdampak besar terhadap keseluruhan sistem.
 
 \textbf{Bagaimana observabilitas membantu menilai efektivitas keamanan?}  
-Observabilitas memungkinkan keamanan dievaluasi berdasarkan perilaku sistem yang nyata, bukan hanya berdasarkan klaim desain atau konfigurasi. Melalui observasi, perbedaan antara data yang terlihat dan data yang terbaca dapat dibuktikan secara empiris. Dengan demikian, observabilitas menjembatani keamanan sebagai konsep teoretis dengan keamanan sebagai praktik yang dapat diuji dan ditingkatkan secara berkelanjutan.
+Observabilitas\index{observabilitas} memungkinkan keamanan dievaluasi berdasarkan perilaku sistem yang nyata, bukan hanya berdasarkan klaim desain atau konfigurasi. Melalui observasi, perbedaan antara data yang terlihat dan data yang terbaca dapat dibuktikan secara empiris. Dengan demikian, observabilitas menjembatani keamanan sebagai konsep teoretis dengan keamanan sebagai praktik yang dapat diuji dan ditingkatkan secara berkelanjutan.
 
 
 
@@ -393,3 +395,25 @@ Bab ini menegaskan bahwa security dalam DevSecOps bersifat berlapis dan tidak da
 
 Melalui eksperimen dan validasi observasional, ditunjukkan bahwa penerapan enkripsi payload mengubah perilaku runtime tanpa mengubah arsitektur dasar sistem: produsen mengenkripsi sebelum publish, konsumen mendekripsi setelah subscribe, sementara broker tetap tidak memiliki kunci. Kunci enkripsi diposisikan sebagai kebijakan runtime yang dikelola secara operasional melalui konfigurasi environment, mencerminkan pemisahan kode, konfigurasi, dan rahasia dalam DevSecOps. Dengan dukungan observabilitas, efektivitas kontrol keamanan dapat dinilai secara empiris dan ditingkatkan secara berkelanjutan.
 
+\section{Latihan}
+
+Kerjakan latihan berikut dengan studi kasus kontrol keamanan runtime.
+
+\begin{enumerate}
+  \item Jalankan sistem tanpa enkripsi, tangkap lalu lintas dengan sniffer, dan catat apa yang terbaca dari payload.
+  \item Aktifkan enkripsi payload, ulangi penangkapan yang sama, dan bandingkan hasilnya dengan percobaan sebelumnya.
+  \item Jalankan konsumen dengan kunci yang salah, lalu catat pesan kesalahan yang muncul dan jelaskan mengapa kegagalan itu justru perlu terlihat.
+  \item Periksa di mana kunci enkripsi disimpan pada studi kasus ini, lalu usulkan cara pengelolaan kunci yang lebih aman untuk lingkungan produksi.
+  \item Susun daftar kontrol keamanan tambahan pada lapisan lain, yaitu desain, implementasi, build, dan deployment, beserta risiko yang ditangani masing-masing.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{OWASP Top 10} \cite{owasp-top10}: daftar risiko keamanan aplikasi yang paling sering ditemui.
+  \item \textit{NIST SP 800-190, Application Container Security Guide} \cite{nist80190}: risiko dan kontrol keamanan khusus lingkungan container.
+  \item \textit{Docker Engine Security} \cite{doc-docker-security}: mekanisme isolasi dan pembatasan hak pada runtime container.
+  \item \textit{Fernet (symmetric encryption)} \cite{doc-fernet}: enkripsi simetris yang dipakai pada studi kasus payload.
+\end{itemize}

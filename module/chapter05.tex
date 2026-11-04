@@ -7,7 +7,7 @@ Setelah mempelajari bab ini, capaian pembelajaran yang diharapkan adalah sebagai
 \begin{enumerate}
     \item Memahami konsep \textit{Infrastructure as Code (IaC)} sebagai pendekatan deklaratif dalam pengelolaan infrastruktur, serta menjelaskan urgensinya dalam sistem modern yang bersifat terdistribusi dan multi-environment.
     
-    \item Menjelaskan perbedaan peran dan ruang lingkup tanggung jawab antara Terraform dan Docker Compose dalam konteks provisioning infrastruktur dan orkestrasi container.
+    \item Menjelaskan perbedaan peran dan ruang lingkup tanggung jawab antara Terraform dan Docker Compose\index{Docker Compose} dalam konteks provisioning infrastruktur dan orkestrasi container.
     
     \item Menganalisis penerapan IaC pada studi kasus TTS microservice stack untuk mendukung deployment multi-environment (development, staging, production) secara konsisten, terstruktur, dan dapat direproduksi.
 \end{enumerate}
@@ -18,7 +18,7 @@ Setelah mempelajari bab ini, capaian pembelajaran yang diharapkan adalah sebagai
 
 Perkembangan arsitektur perangkat lunak modern membawa perubahan signifikan dalam cara infrastruktur dikelola. Aplikasi tidak lagi berdiri sebagai satu proses tunggal pada satu server, melainkan terdiri dari banyak komponen yang saling terhubung: API service, worker asinkron, message queue, object storage, reverse proxy, serta berbagai mekanisme observability dan keamanan. Kompleksitas ini menuntut pendekatan pengelolaan infrastruktur yang sistematis, konsisten, dan dapat direproduksi.
 
-Dalam konteks arsitektur berbasis container dan cloud-native, pengelolaan manual tidak lagi memadai. Pembuatan network secara manual, konfigurasi port melalui perintah terminal, serta pengaturan kredensial yang tersebar di berbagai tempat meningkatkan risiko kesalahan dan inkonsistensi. Selain itu, ketika aplikasi berkembang menjadi multi-environment (development, staging, production), perbedaan konfigurasi kecil dapat menyebabkan perilaku sistem yang tidak terduga.
+Dalam konteks arsitektur berbasis container\index{container} dan cloud-native, pengelolaan manual tidak lagi memadai. Pembuatan network secara manual, konfigurasi port melalui perintah terminal, serta pengaturan kredensial yang tersebar di berbagai tempat meningkatkan risiko kesalahan dan inkonsistensi. Selain itu, ketika aplikasi berkembang menjadi multi-environment (development, staging, production), perbedaan konfigurasi kecil dapat menyebabkan perilaku sistem yang tidak terduga.
 
 Transisi menuju pendekatan deklaratif menjadi respons terhadap tantangan tersebut. Dalam pendekatan deklaratif, kondisi akhir infrastruktur dideskripsikan dalam bentuk kode. Sistem IaC kemudian memastikan bahwa kondisi aktual sesuai dengan deskripsi tersebut. Infrastruktur tidak lagi dikonfigurasi melalui langkah-langkah prosedural yang sulit dilacak, tetapi melalui file konfigurasi yang terstruktur, terversi, dan dapat diaudit.
 
@@ -32,9 +32,9 @@ Bab ini menggunakan TTS microservice stack sebagai studi kasus berjalan. Stack t
 \textbf{Worker} service untuk proses sintesis suara (Piper),  
 \textbf{Nginx gateway} sebagai reverse proxy.  
 
-Arsitektur ini merepresentasikan pola umum sistem terdistribusi skala kecil-menengah. Terdapat komunikasi antar service melalui network internal Docker, penggunaan variabel environment untuk konfigurasi, serta kebutuhan scaling worker secara horizontal.
+Arsitektur ini merepresentasikan pola umum sistem terdistribusi skala kecil-menengah. Terdapat komunikasi antar service melalui network internal Docker\index{Docker}, penggunaan variabel environment untuk konfigurasi, serta kebutuhan scaling worker secara horizontal.
 
-Melalui studi kasus ini, akan dibahas bagaimana pendekatan Infrastructure as Code -- khususnya menggunakan Terraform -- memungkinkan:
+Melalui studi kasus ini, akan dibahas bagaimana pendekatan Infrastructure as Code\index{Infrastructure as Code} -- khususnya menggunakan Terraform -- memungkinkan:
 (1) Konsistensi antar environment (dev, staging, production),  
 (2) Provisioning otomatis dan deklaratif,  
 (3) Skalabilitas horizontal yang terkontrol,  
@@ -54,9 +54,9 @@ Pendekatan ini menjadikan infrastruktur sebagai bagian dari siklus hidup perangk
 
 Secara formal, IaC dapat didefinisikan sebagai pendekatan deklaratif untuk mendeskripsikan dan memprovision infrastruktur melalui bahasa konfigurasi yang dapat diproses mesin. Dalam model ini, kondisi akhir sistem (\textit{desired state}) dideklarasikan dalam bentuk kode.
 
-Contoh deklarasi infrastruktur dengan Terraform:
+Contoh deklarasi infrastruktur dengan Terraform\index{Terraform} (Listing~\ref{lst:ch05-1}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Definisi IaC}, label={lst:ch05-1}]
 resource "docker_network" "net" {
   name = "tts-production"
 }
@@ -80,16 +80,16 @@ Dengan demikian, infrastruktur memiliki \textit{single source of truth} yang eks
 
 IaC modern (misalnya Terraform) menggunakan pendekatan deklaratif. Dalam pendekatan ini, konfigurasi tidak menjelaskan langkah-langkah prosedural, tetapi mendeskripsikan kondisi akhir yang diinginkan.
 
-Pendekatan imperatif (misalnya skrip shell) akan berisi urutan perintah seperti:
+Pendekatan imperatif (misalnya skrip shell) akan berisi urutan perintah seperti (Listing~\ref{lst:ch05-2}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Deklaratif vs Imperatif}, label={lst:ch05-2}]
 docker network create tts-prod
 docker run -d redis:7-alpine
 \end{lstlisting}
 
-Sebaliknya, pendekatan deklaratif hanya menyatakan kondisi akhir:
+Sebaliknya, pendekatan deklaratif hanya menyatakan kondisi akhir (Listing~\ref{lst:ch05-3}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Deklaratif vs Imperatif (2)}, label={lst:ch05-3}]
 resource "docker_container" "redis" {
   image = "redis:7-alpine"
 }
@@ -101,9 +101,9 @@ Mesin IaC yang menentukan langkah-langkah teknis untuk mencapai kondisi tersebut
 
 Idempotency berarti menjalankan konfigurasi yang sama berkali-kali akan menghasilkan kondisi akhir yang sama tanpa efek samping tambahan.
 
-Jika konfigurasi menyatakan bahwa harus ada 4 worker:
+Jika konfigurasi menyatakan bahwa harus ada 4 worker (Listing~\ref{lst:ch05-4}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Idempotency}, label={lst:ch05-4}]
 variable "worker_replicas" {
   default = 4
 }
@@ -115,9 +115,9 @@ Idempotency sangat penting untuk menjaga konsistensi dan menghindari duplikasi r
 
 \subsubsection*{Reproducibility}
 
-Reproducibility mengacu pada kemampuan membangun ulang environment dengan konfigurasi yang identik.
+Reproducibility mengacu pada kemampuan membangun ulang environment dengan konfigurasi yang identik. Kodenya ada pada Listing~\ref{lst:ch05-5}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Reproducibility}, label={lst:ch05-5}]
 terraform destroy
 terraform apply
 \end{lstlisting}
@@ -151,9 +151,9 @@ Komponen pertama dalam IaC adalah definisi resource. Resource dapat berupa:
 \item Database
 \end{itemize}
 
-Contoh definisi resource container:
+Contoh definisi resource container (Listing~\ref{lst:ch05-6}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Resource Definition}, label={lst:ch05-6}]
 resource "docker_container" "api" {
   image = "session05-api:production"
 }
@@ -165,9 +165,9 @@ Setiap resource memiliki tipe dan nama lokal, yang membentuk identitas unik dala
 
 IaC engine membangun dependency graph berdasarkan referensi antar resource. Jika sebuah container bergantung pada network, maka network akan dibuat terlebih dahulu.
 
-Contoh implicit dependency:
+Contoh implicit dependency (Listing~\ref{lst:ch05-7}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Dependency Graph}, label={lst:ch05-7}]
 resource "docker_container" "api" {
   networks_advanced {
     name = docker_network.net.name
@@ -244,9 +244,9 @@ Tanpa definisi infrastruktur dalam bentuk kode, tidak ada sumber kebenaran tungg
 
 Dengan IaC, environment didefinisikan dalam file konfigurasi yang sama. Perbedaan hanya berada pada parameter atau variabel.
 
-Contoh pola konfigurasi:
+Contoh pola konfigurasi (Listing~\ref{lst:ch05-8}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Konsistensi Antar Environment}, label={lst:ch05-8}]
 module "tts" {
   env = "staging"
 }
@@ -256,9 +256,9 @@ Pendekatan ini memastikan arsitektur tetap identik, sehingga meningkatkan enviro
 
 \subsubsection*{Otomatisasi Provisioning}
 
-IaC memungkinkan provisioning dilakukan secara otomatis melalui satu perintah.
+IaC memungkinkan provisioning dilakukan secara otomatis melalui satu perintah. Potongan kodenya ada pada Listing~\ref{lst:ch05-9}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Otomatisasi Provisioning}, label={lst:ch05-9}]
 terraform apply -var-file=production.tfvars
 \end{lstlisting}
 
@@ -266,9 +266,9 @@ Proses yang sebelumnya memerlukan konfigurasi manual berulang kini menjadi terst
 
 \subsubsection*{Review dan Diff Perubahan}
 
-IaC memungkinkan perubahan infrastruktur ditinjau seperti perubahan kode. Pada Terraform, perintah \texttt{plan} menampilkan diff sebelum perubahan diterapkan.
+IaC memungkinkan perubahan infrastruktur ditinjau seperti perubahan kode. Pada Terraform, perintah \texttt{plan} menampilkan diff sebelum perubahan diterapkan. Listing~\ref{lst:ch05-10} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Review dan Diff Perubahan}, label={lst:ch05-10}]
 terraform plan -var-file=staging.tfvars
 \end{lstlisting}
 
@@ -292,11 +292,11 @@ IaC merupakan pilar penting dalam praktik DevOps modern karena memungkinkan inte
 
 \subsubsection*{Integrasi dengan CI/CD}
 
-Pipeline CI/CD dapat menjalankan provisioning otomatis sebelum pengujian integrasi atau deployment.
+Pipeline CI/CD\index{CI/CD} dapat menjalankan provisioning otomatis sebelum pengujian integrasi atau deployment.
 
-Contoh integrasi:
+Contoh integrasi (Listing~\ref{lst:ch05-11}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Integrasi dengan CI/CD}, label={lst:ch05-11}]
 terraform init
 terraform apply -var-file=dev.tfvars
 pytest tests/integration
@@ -307,15 +307,15 @@ Dengan pola ini, environment pengujian dapat dibuat secara dinamis dan dihancurk
 
 \subsubsection*{Infrastruktur sebagai Bagian dari Pipeline Delivery}
 
-Dalam pendekatan tradisional, infrastruktur sering dianggap sebagai tanggung jawab terpisah dari tim pengembangan. IaC mengubah paradigma ini dengan menjadikan infrastruktur sebagai bagian dari pipeline delivery.
+Dalam pendekatan tradisional, infrastruktur sering dianggap sebagai tanggung jawab terpisah dari tim pengembangan. IaC mengubah paradigma ini dengan menjadikan infrastruktur sebagai bagian dari pipeline\index{pipeline} delivery.
 
 Setiap perubahan fitur yang memerlukan perubahan infrastruktur dapat dikemas dalam commit yang sama, diverifikasi melalui pipeline yang sama, dan dilacak dalam repositori yang sama.
 
 \subsubsection*{Meningkatkan Reliability dan Repeatability}
 
-Reliability meningkat karena konfigurasi infrastruktur tidak lagi bergantung pada langkah manual. Repeatability terjamin karena konfigurasi dapat dijalankan ulang pada waktu dan tempat yang berbeda dengan hasil yang konsisten.
+Reliability meningkat karena konfigurasi infrastruktur tidak lagi bergantung pada langkah manual. Repeatability terjamin karena konfigurasi dapat dijalankan ulang pada waktu dan tempat yang berbeda dengan hasil yang konsisten. Kodenya ada pada Listing~\ref{lst:ch05-12}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Meningkatkan Reliability dan Repeatability}, label={lst:ch05-12}]
 terraform destroy
 terraform apply
 \end{lstlisting}
@@ -343,9 +343,9 @@ Terraform memungkinkan definisi infrastruktur seperti container, network, storag
 
 Terraform bersifat deklaratif. Konfigurasi tidak menjelaskan langkah-langkah prosedural untuk mencapai suatu kondisi, tetapi langsung mendefinisikan kondisi akhir yang diinginkan.
 
-Contoh deklarasi sederhana:
+Contoh deklarasi sederhana (Listing~\ref{lst:ch05-13}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Gambaran Umum Terraform}, label={lst:ch05-13}]
 resource "docker_network" "net" {
   name = "tts-dev"
 }
@@ -368,9 +368,9 @@ Dengan mekanisme ini, perubahan infrastruktur tidak terjadi secara langsung tanp
 
 Provider adalah plugin yang memungkinkan Terraform berinteraksi dengan sistem eksternal. Contohnya termasuk Docker, AWS, Azure, GCP, dan banyak lainnya.
 
-Contoh deklarasi provider Docker:
+Contoh deklarasi provider Docker (Listing~\ref{lst:ch05-14}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Providers}, label={lst:ch05-14}]
 terraform {
   required_providers {
     docker = {
@@ -387,9 +387,9 @@ Provider menentukan API apa yang dapat dipanggil oleh Terraform untuk membuat at
 
 Resource adalah unit dasar infrastruktur yang dikelola Terraform. Setiap resource merepresentasikan objek nyata, seperti container, network, VM, atau bucket.
 
-Contoh resource container:
+Contoh resource container (Listing~\ref{lst:ch05-15}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Resources}, label={lst:ch05-15}]
 resource "docker_container" "api" {
   image = "session05-api:dev"
 }
@@ -401,9 +401,9 @@ Resource selalu memiliki tipe dan nama lokal. Kombinasi keduanya menjadi identif
 
 Module adalah sekumpulan resource yang dikelompokkan untuk tujuan reuse dan abstraksi. Dengan modul, arsitektur yang sama dapat digunakan ulang untuk berbagai environment.
 
-Contoh pemanggilan modul:
+Contoh pemanggilan modul (Listing~\ref{lst:ch05-16}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Modules}, label={lst:ch05-16}]
 module "tts" {
   source = "../modules/tts_stack"
   env    = "dev"
@@ -414,18 +414,18 @@ Pendekatan modular meningkatkan konsistensi dan mengurangi duplikasi kode.
 
 \subsubsection*{Variables dan Outputs}
 
-Variables memungkinkan konfigurasi menjadi fleksibel dan dapat disesuaikan antar environment.
+Variables memungkinkan konfigurasi menjadi fleksibel dan dapat disesuaikan antar environment. Potongan kodenya ada pada Listing~\ref{lst:ch05-17}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Variables dan Outputs}, label={lst:ch05-17}]
 variable "worker_replicas" {
   type    = number
   default = 1
 }
 \end{lstlisting}
 
-Outputs digunakan untuk mengekspose informasi setelah provisioning, misalnya URL layanan.
+Outputs digunakan untuk mengekspose informasi setelah provisioning, misalnya URL layanan. Listing~\ref{lst:ch05-18} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Variables dan Outputs (2)}, label={lst:ch05-18}]
 output "gateway_url" {
   value = "http://localhost:8088"
 }
@@ -453,17 +453,17 @@ Terraform dijalankan melalui serangkaian perintah CLI.
 
 \subsubsection*{\texttt{terraform init}}
 
-Perintah ini menginisialisasi direktori kerja, mengunduh provider yang diperlukan, dan menyiapkan backend state.
+Perintah ini menginisialisasi direktori kerja, mengunduh provider yang diperlukan, dan menyiapkan backend state. Kodenya ada pada Listing~\ref{lst:ch05-19}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada terraform init}, label={lst:ch05-19}]
 terraform init
 \end{lstlisting}
 
 \subsubsection*{\texttt{terraform plan}}
 
-Perintah ini menganalisis konfigurasi dan state saat ini untuk menghasilkan rencana perubahan.
+Perintah ini menganalisis konfigurasi dan state saat ini untuk menghasilkan rencana perubahan. Potongan kodenya ada pada Listing~\ref{lst:ch05-20}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada terraform plan}, label={lst:ch05-20}]
 terraform plan -var-file=dev.tfvars
 \end{lstlisting}
 
@@ -471,9 +471,9 @@ Output dari \texttt{plan} menunjukkan resource yang akan dibuat, diubah, atau di
 
 \subsubsection*{\texttt{terraform apply}}
 
-Perintah ini mengeksekusi rencana perubahan yang telah dihitung.
+Perintah ini mengeksekusi rencana perubahan yang telah dihitung. Listing~\ref{lst:ch05-21} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada terraform apply}, label={lst:ch05-21}]
 terraform apply -var-file=dev.tfvars
 \end{lstlisting}
 
@@ -481,9 +481,9 @@ Setelah \texttt{apply}, state file akan diperbarui agar mencerminkan kondisi akt
 
 \subsubsection*{\texttt{terraform destroy}}
 
-Perintah ini menghancurkan seluruh resource yang dikelola oleh konfigurasi saat ini.
+Perintah ini menghancurkan seluruh resource yang dikelola oleh konfigurasi saat ini. Kodenya ada pada Listing~\ref{lst:ch05-22}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada terraform destroy}, label={lst:ch05-22}]
 terraform destroy -var-file=dev.tfvars
 \end{lstlisting}
 
@@ -494,9 +494,9 @@ Kemampuan untuk menghancurkan dan membangun ulang infrastruktur secara konsisten
 Terraform adalah alat IaC deklaratif berbasis HCL yang memungkinkan definisi, provisioning, dan manajemen infrastruktur secara terstruktur. Dengan konsep provider, resource, module, variable, output, dan state file, Terraform menyediakan mekanisme pengelolaan infrastruktur yang dapat direproduksi, diaudit, dan diskalakan secara konsisten di berbagai environment.
 
 
-\section{Apa yang Membuat Terraform Berbeda dari Docker Compose?}
+\section[Apa yang Membuat Terraform Berbeda]{Apa yang Membuat Terraform Berbeda dari Docker Compose?}
 
-Terraform dan Docker Compose sama-sama dapat digunakan untuk menjalankan aplikasi berbasis container. Namun keduanya berada pada level abstraksi dan ruang lingkup tanggung jawab yang berbeda. Docker Compose berfokus pada orkestrasi container di dalam satu host Docker, sedangkan Terraform beroperasi pada level infrastruktur yang lebih luas melalui pendekatan \textit{Infrastructure as Code}.
+Terraform dan Docker Compose sama-sama dapat digunakan untuk menjalankan aplikasi berbasis container. Namun keduanya berada pada level abstraksi dan ruang lingkup tanggung jawab yang berbeda. Docker Compose berfokus pada orkestrasi\index{orkestrasi} container di dalam satu host Docker, sedangkan Terraform beroperasi pada level infrastruktur yang lebih luas melalui pendekatan \textit{Infrastructure as Code}.
 
 Perbedaan ini menjadi penting ketika sistem berkembang dari sekadar eksperimen lokal menjadi arsitektur multi-environment yang membutuhkan reproducibility, skalabilitas, dan kontrol perubahan terstruktur.
 
@@ -504,9 +504,9 @@ Perbedaan ini menjadi penting ketika sistem berkembang dari sekadar eksperimen l
 
 Docker Compose bekerja pada level container runtime. File \texttt{docker-compose.yml} mendeskripsikan service, network, dan volume yang akan dijalankan di atas Docker Engine yang sudah tersedia. Fokusnya adalah menjalankan sekumpulan container sebagai satu aplikasi.
 
-Contoh deklarasi sederhana di Compose:
+Contoh deklarasi sederhana di Compose (Listing~\ref{lst:ch05-23}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Level Abstraksi}, label={lst:ch05-23}]
 services:
   api:
     build: ./services/api
@@ -514,11 +514,11 @@ services:
       - "8000:8000"
 \end{lstlisting}
 
-Sebaliknya, Terraform bekerja pada level infrastruktur. Provider yang digunakan bisa berupa Docker, cloud provider (AWS, Azure, GCP), atau bahkan sistem DNS dan IAM. Terraform tidak hanya membuat container, tetapi juga dapat membuat network, storage, load balancer, hingga VM atau cluster Kubernetes.
+Sebaliknya, Terraform bekerja pada level infrastruktur. Provider yang digunakan bisa berupa Docker, cloud provider (AWS, Azure, GCP), atau bahkan sistem DNS dan IAM. Terraform tidak hanya membuat container, tetapi juga dapat membuat network, storage, load balancer, hingga VM atau cluster Kubernetes\index{Kubernetes}.
 
-Contoh deklarasi resource Docker dalam Terraform:
+Contoh deklarasi resource Docker dalam Terraform (Listing~\ref{lst:ch05-24}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Level Abstraksi (2)}, label={lst:ch05-24}]
 resource "docker_container" "api" {
   image = docker_image.api.name
   ports {
@@ -555,9 +555,9 @@ Docker Compose tidak memiliki konsep state global yang tersimpan secara eksplisi
 
 \subsection{Multi-Environment Management}
 
-Pengelolaan multi-environment pada Compose biasanya dilakukan dengan file override seperti:
+Pengelolaan multi-environment pada Compose biasanya dilakukan dengan file override seperti (Listing~\ref{lst:ch05-25}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Multi-Environment Management}, label={lst:ch05-25}]
 docker-compose.yml
 docker-compose.override.yml
 docker-compose.prod.yml
@@ -570,9 +570,9 @@ Terraform mendukung pendekatan modular dan berbasis variabel. Satu modul infrast
 
 
 
-Contoh pemanggilan modul untuk environment berbeda:
+Contoh pemanggilan modul untuk environment berbeda (Listing~\ref{lst:ch05-26}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Multi-Environment Management (2)}, label={lst:ch05-26}]
 module "tts" {
   source = "../modules/tts_stack"
   env    = "production"
@@ -611,7 +611,7 @@ Dalam konteks arsitektur TTS, Docker Compose cocok untuk prototyping cepat di de
 
 Studi kasus dalam bab ini menggunakan sebuah sistem \textit{Text-to-Speech (TTS)} berbasis arsitektur \textit{microservices}. Sistem ini dirancang untuk menerima teks dari pengguna, memprosesnya menjadi suara, menyimpannya dalam bentuk berkas audio, dan menyediakan akses unduhan melalui endpoint HTTP. Arsitektur yang digunakan bersifat terdistribusi dan memisahkan tanggung jawab setiap komponen agar sistem dapat diskalakan dan dikelola secara fleksibel pada berbagai environment.
 
-Komponen pertama adalah \textit{API service} yang dibangun menggunakan FastAPI. Layanan ini bertindak sebagai pintu masuk sistem (\textit{entry point}) dan menerima permintaan dari klien melalui protokol HTTP. API melakukan validasi terhadap input teks, menghasilkan identitas pekerjaan, dan memasukkan permintaan tersebut ke dalam antrian pesan. Selain itu, API juga menyediakan endpoint untuk \textit{health check} dan observabilitas, sehingga memudahkan pemantauan kondisi sistem dalam deployment multi-environment.
+Komponen pertama adalah \textit{API service} yang dibangun menggunakan FastAPI. Layanan ini bertindak sebagai pintu masuk sistem (\textit{entry point}) dan menerima permintaan dari klien melalui protokol HTTP. API melakukan validasi terhadap input teks, menghasilkan identitas pekerjaan, dan memasukkan permintaan tersebut ke dalam antrian pesan. Selain itu, API juga menyediakan endpoint untuk \textit{health check} dan observabilitas\index{observabilitas}, sehingga memudahkan pemantauan kondisi sistem dalam deployment multi-environment.
 
 Proses komputasi utama dilakukan oleh \textit{worker service}. Worker bertanggung jawab mengambil pesan dari antrian, menjalankan proses sintesis suara menggunakan model TTS (misalnya model berbasis Piper), kemudian menghasilkan berkas audio dalam format MP3. Setelah proses sintesis selesai, berkas hasil akan diunggah ke sistem penyimpanan objek. Karena worker terpisah dari API, jumlahnya dapat ditambah atau dikurangi sesuai kebutuhan beban sistem tanpa memengaruhi komponen lain.
 
@@ -627,6 +627,7 @@ Secara keseluruhan, arsitektur TTS ini memisahkan komputasi, penyimpanan, dan ak
 
 \begin{figure}[h]
 \centering
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   scale=0.9,
   transform shape, 
@@ -689,7 +690,8 @@ Secara keseluruhan, arsitektur TTS ini memisahkan komputasi, penyimpanan, dan ak
 \node[grp, fit=(stg)(stgstack)] (gstg) {};
 \node[grp, fit=(prod)(prdstack)] (gprd) {};
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Dari kode dan modul IaC yang sama, sistem dapat dideploy ke banyak environment melalui konfigurasi \texttt{*.tfvars} yang berbeda.}
 \label{fig:workflow_terraform}
 \end{figure}
@@ -721,10 +723,10 @@ Direktori \texttt{compose} memuat berkas \texttt{docker-compose.yml} yang diguna
 
 Selanjutnya, direktori \texttt{iac/terraform} memisahkan konfigurasi Infrastructure as Code dari kode aplikasi. Di dalamnya terdapat struktur environment seperti \texttt{dev}, \texttt{staging}, dan \texttt{prod}, masing-masing memiliki \texttt{main.tf} dan berkas variabel tersendiri. Pendekatan ini memungkinkan setiap environment menggunakan module yang sama tetapi dengan parameter berbeda, sehingga konsistensi arsitektur tetap terjaga. Subdirektori \texttt{modules/tts\_stack} merepresentasikan abstraksi deployment utama yang dapat digunakan ulang lintas environment.
 
-Dengan struktur proyek seperti ini, batas antara kode aplikasi, orkestrasi container, dan definisi infrastruktur menjadi jelas. Pemisahan tersebut mendukung praktik DevOps modern, di mana aplikasi dan infrastruktur dikelola sebagai artefak yang terpisah namun tetap terdokumentasi dan terversi secara konsisten dalam satu repositori.
+Dengan struktur proyek seperti ini, batas antara kode aplikasi, orkestrasi container, dan definisi infrastruktur menjadi jelas. Pemisahan tersebut mendukung praktik DevOps modern, di mana aplikasi dan infrastruktur dikelola sebagai artefak yang terpisah namun tetap terdokumentasi dan terversi secara konsisten dalam satu repositori. Strukturnya ada pada Listing~\ref{lst:ch05-27}.
 
 
-\begin{lstlisting}[language=bash, caption={Struktur proyek menggunakan Terraform}]
+\begin{lstlisting}[language=bash, caption={Struktur proyek menggunakan Terraform}, label={lst:ch05-27}]
 .
 |- app
 |  |- client
@@ -778,13 +780,13 @@ Dengan struktur proyek seperti ini, batas antara kode aplikasi, orkestrasi conta
          |- staging.tfvars
 \end{lstlisting}
 
-\subsection{\texttt{main.tf}, \texttt{outputs.tf}, dan \texttt{variables.tf} dalam \texttt{modules/tts\_stack}}
+\subsection[main.tf, outputs.tf, dan variables.tf]{\texttt{main.tf}, \texttt{outputs.tf}, dan \texttt{variables.tf} dalam \texttt{modules/tts\_stack}}
 
 Modul \texttt{tts\_stack} mengenkapsulasi seluruh resource Docker untuk satu environment (\texttt{dev}/\texttt{staging}/\texttt{prod}). Intinya: penamaan resource dibuat unik per environment, DNS internal stabil melalui network alias, port host dibedakan dari \texttt{*.tfvars}, dan worker dapat diskalakan lewat \texttt{count}.
 
-\subsubsection{Struktur Modul}
+\subsubsection{Struktur Modul} Listing~\ref{lst:ch05-28} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Struktur Modul}, label={lst:ch05-28}]
 modules/tts_stack/
   main.tf
   variables.tf
@@ -793,16 +795,16 @@ modules/tts_stack/
 
 \subsubsection{\texttt{variables.tf}: Kontrak Input Modul}
 
-\texttt{env} dipakai untuk suffix penamaan resource (mis.\ \texttt{tts-dev-*}), sedangkan \texttt{project\_root} memastikan path build context bersifat absolut/stabil.
+\texttt{env} dipakai untuk suffix penamaan resource (mis.\ \texttt{tts-dev-*}), sedangkan \texttt{project\_root} memastikan path build context bersifat absolut/stabil. Kodenya ada pada Listing~\ref{lst:ch05-29}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada variables.tf}, label={lst:ch05-29}]
 variable "env"          { type = string }
 variable "project_root" { type = string }
 \end{lstlisting}
 
-Port host dikemas sebagai \texttt{object} supaya per-environment cukup beda di \texttt{*.tfvars} tanpa menyentuh modul.
+Port host dikemas sebagai \texttt{object} supaya per-environment cukup beda di \texttt{*.tfvars} tanpa menyentuh modul. Potongan kodenya ada pada Listing~\ref{lst:ch05-30}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada variables.tf (2)}, label={lst:ch05-30}]
 variable "ports" {
   type = object({
     redis         = number
@@ -815,18 +817,18 @@ variable "ports" {
 }
 \end{lstlisting}
 
-Skalabilitas worker dan opsi mount folder model disediakan sebagai variabel terpisah.
+Skalabilitas worker dan opsi mount folder model disediakan sebagai variabel terpisah. Listing~\ref{lst:ch05-31} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada variables.tf (3)}, label={lst:ch05-31}]
 variable "worker_replicas" { type = number, default = 1 }
 variable "mount_models"    { type = bool,   default = false }
 \end{lstlisting}
 
 \subsubsection{\texttt{main.tf}: Implementasi Resource}
 
-Bagian \texttt{locals} merangkum prefix penamaan dan endpoint internal. Prefix berbasis \texttt{env} mencegah konflik container saat beberapa environment berjalan di host yang sama.
+Bagian \texttt{locals} merangkum prefix penamaan dan endpoint internal. Prefix berbasis \texttt{env} mencegah konflik container saat beberapa environment berjalan di host yang sama. Kodenya ada pada Listing~\ref{lst:ch05-32}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf}, label={lst:ch05-32}]
 locals {
   prefix    = "tts-${var.env}"
   redis_url = "redis://redis:6379/0"
@@ -834,9 +836,9 @@ locals {
 }
 \end{lstlisting}
 
-Network dibuat per environment agar isolasi layanan terjaga. Volume MinIO juga dibuat per environment agar data tidak tercampur.
+Network dibuat per environment agar isolasi layanan terjaga. Volume MinIO juga dibuat per environment agar data tidak tercampur. Potongan kodenya ada pada Listing~\ref{lst:ch05-33}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (2)}, label={lst:ch05-33}]
 resource "docker_network" "net" { name = local.prefix }
 
 resource "docker_volume" "minio_data" {
@@ -844,18 +846,18 @@ resource "docker_volume" "minio_data" {
 }
 \end{lstlisting}
 
-Image dibangun dan ditag per environment sehingga \texttt{dev/staging/prod} bisa coexist.
+Image dibangun dan ditag per environment sehingga \texttt{dev/staging/prod} bisa coexist. Listing~\ref{lst:ch05-34} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (3)}, label={lst:ch05-34}]
 resource "docker_image" "api" {
   name = "session05-api:${var.env}"
   build { context = "${var.project_root}/app/services/api" }
 }
 \end{lstlisting}
 
-Service discovery dibuat stabil dengan network alias, misalnya \texttt{aliases = ["api"]}. Dengan ini, komponen lain selalu memanggil \texttt{http://api:8000} di network internal, walaupun nama container sebenarnya \texttt{tts-dev-api} atau \texttt{tts-prod-api}.
+Service discovery dibuat stabil dengan network alias, misalnya \texttt{aliases = ["api"]}. Dengan ini, komponen lain selalu memanggil \texttt{http://api:8000} di network internal, walaupun nama container sebenarnya \texttt{tts-dev-api} atau \texttt{tts-prod-api}. Kodenya ada pada Listing~\ref{lst:ch05-35}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (4)}, label={lst:ch05-35}]
 resource "docker_container" "api" {
   name  = "${local.prefix}-api"
   image = docker_image.api.name
@@ -867,9 +869,9 @@ resource "docker_container" "api" {
 }
 \end{lstlisting}
 
-Worker diskalakan melalui \texttt{count}. Saat \texttt{worker\_replicas = 3}, Terraform akan menghasilkan \texttt{tts-dev-worker-0}, \texttt{tts-dev-worker-1}, dan \texttt{tts-dev-worker-2}.
+Worker diskalakan melalui \texttt{count}. Saat \texttt{worker\_replicas = 3}, Terraform akan menghasilkan \texttt{tts-dev-worker-0}, \texttt{tts-dev-worker-1}, dan \texttt{tts-dev-worker-2}. Potongan kodenya ada pada Listing~\ref{lst:ch05-36}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (5)}, label={lst:ch05-36}]
 resource "docker_container" "worker" {
   count = var.worker_replicas
   name  = "${local.prefix}-worker-${count.index}"
@@ -877,9 +879,9 @@ resource "docker_container" "worker" {
 }
 \end{lstlisting}
 
-Mount folder \texttt{/models} dibuat kondisional menggunakan \texttt{dynamic "volumes"}, sehingga environment tertentu (mis.\ \texttt{prod}) bisa memakai model host, sementara \texttt{dev} tidak perlu.
+Mount folder \texttt{/models} dibuat kondisional menggunakan \texttt{dynamic "volumes"}, sehingga environment tertentu (mis.\ \texttt{prod}) bisa memakai model host, sementara \texttt{dev} tidak perlu. Listing~\ref{lst:ch05-37} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (6)}, label={lst:ch05-37}]
 dynamic "volumes" {
   for_each = var.mount_models ? [1] : []
   content {
@@ -892,9 +894,9 @@ dynamic "volumes" {
 
 \subsubsection{\texttt{outputs.tf}: Informasi Setelah Apply}
 
-Output diekspos agar endpoint layanan langsung terlihat setelah \texttt{terraform apply}, tanpa inspeksi manual ke Docker.
+Output diekspos agar endpoint layanan langsung terlihat setelah \texttt{terraform apply}, tanpa inspeksi manual ke Docker. Kodenya ada pada Listing~\ref{lst:ch05-38}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada outputs.tf}, label={lst:ch05-38}]
 output "urls" {
   value = {
     gateway = "http://localhost:${var.ports.gateway}"
@@ -907,9 +909,9 @@ output "urls" {
 
 \subsubsection{Pemanggilan Modul dari Root Module}
 
-Root module di \texttt{dev/staging/prod} cukup memanggil modul yang sama dan mengirim variabel. Perbedaan environment umumnya hanya pada \texttt{env}, \texttt{ports}, serta \texttt{worker\_replicas}/\texttt{mount\_models}.
+Root module di \texttt{dev/staging/prod} cukup memanggil modul yang sama dan mengirim variabel. Perbedaan environment umumnya hanya pada \texttt{env}, \texttt{ports}, serta \texttt{worker\_replicas}/\texttt{mount\_models}. Potongan kodenya ada pada Listing~\ref{lst:ch05-39}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Pemanggilan Modul dari Root Module}, label={lst:ch05-39}]
 module "tts_stack" {
   source       = "../../modules/tts_stack"
   env          = var.env
@@ -927,16 +929,16 @@ Folder \texttt{dev} berperan sebagai \textit{root module} untuk environment deve
 
 \subsubsection{\texttt{main.tf}: Root Module yang Memanggil \texttt{modules/tts\_stack}}
 
-Bagian awal biasanya mendefinisikan variabel yang akan diisi dari \texttt{dev.tfvars}. Dua variabel yang paling penting untuk studi kasus ini adalah \texttt{mp3\_bucket} (nama bucket MinIO untuk output MP3) dan \texttt{internal\_token} (token otorisasi internal antarkomponen API--worker).
+Bagian awal biasanya mendefinisikan variabel yang akan diisi dari \texttt{dev.tfvars}. Dua variabel yang paling penting untuk studi kasus ini adalah \texttt{mp3\_bucket} (nama bucket MinIO untuk output MP3) dan \texttt{internal\_token} (token otorisasi internal antarkomponen API--worker). Listing~\ref{lst:ch05-40} memuat isi berkasnya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars}, label={lst:ch05-40}]
 variable "mp3_bucket"     { type = string }
 variable "internal_token" { type = string }
 \end{lstlisting}
 
-Agar worker bisa diskalakan, \texttt{worker\_replicas} disediakan sebagai variabel numerik. Opsi \texttt{mount\_models} dipakai untuk menentukan apakah folder model ONNX di host akan dimount read-only ke container worker (berguna saat model disimpan di host dan ingin dipakai lintas container tanpa rebuild image).
+Agar worker bisa diskalakan, \texttt{worker\_replicas} disediakan sebagai variabel numerik. Opsi \texttt{mount\_models} dipakai untuk menentukan apakah folder model ONNX di host akan dimount read-only ke container worker (berguna saat model disimpan di host dan ingin dipakai lintas container tanpa rebuild image). Kodenya ada pada Listing~\ref{lst:ch05-41}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (7)}, label={lst:ch05-41}]
 variable "worker_replicas" {
   type    = number
   default = 1
@@ -948,9 +950,9 @@ variable "mount_models" {
 }
 \end{lstlisting}
 
-Inti \texttt{main.tf} adalah pemanggilan modul \texttt{tts}. Parameter \texttt{env = "dev"} membuat semua resource akan diprefix \texttt{tts-dev-*}. Parameter \texttt{project\_root} dihitung dengan \texttt{abspath(...)} agar selalu menjadi path absolut ke root proyek, sehingga build context Docker (API/Web/Worker) dan file mount (\texttt{nginx.conf}, \texttt{models/}) dapat ditemukan secara konsisten terlepas dari lokasi eksekusi Terraform.
+Inti \texttt{main.tf} adalah pemanggilan modul \texttt{tts}. Parameter \texttt{env = "dev"} membuat semua resource akan diprefix \texttt{tts-dev-*}. Parameter \texttt{project\_root} dihitung dengan \texttt{abspath(...)} agar selalu menjadi path absolut ke root proyek, sehingga build context Docker (API/Web/Worker) dan file mount (\texttt{nginx.conf}, \texttt{models/}) dapat ditemukan secara konsisten terlepas dari lokasi eksekusi Terraform. Isi berkasnya ada pada Listing~\ref{lst:ch05-42}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas main.tf}, label={lst:ch05-42}]
 module "tts" {
   source = "../modules/tts_stack"
 
@@ -959,9 +961,9 @@ module "tts" {
 }
 \end{lstlisting}
 
-Blok \texttt{ports} menentukan pemetaan port host-side untuk dev. Karena ini environment dev, port yang dipilih biasanya ``default'' dan mudah diingat (Redis 6379, MinIO 9000/9001, API 8000, Web 8080, Gateway 8088). Inilah mekanisme utama agar beberapa environment dapat coexist: environment lain cukup memakai port host yang berbeda.
+Blok \texttt{ports} menentukan pemetaan port host-side untuk dev. Karena ini environment dev, port yang dipilih biasanya ``default'' dan mudah diingat (Redis 6379, MinIO 9000/9001, API 8000, Web 8080, Gateway 8088). Inilah mekanisme utama agar beberapa environment dapat coexist: environment lain cukup memakai port host yang berbeda. Listing~\ref{lst:ch05-43} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (8)}, label={lst:ch05-43}]
 ports = {
   redis         = 6379
   minio_api     = 9000
@@ -972,37 +974,37 @@ ports = {
 }
 \end{lstlisting}
 
-Kemudian, \texttt{mp3\_bucket} dan \texttt{internal\_token} diteruskan dari variabel root module (\texttt{var.*}) sehingga nilainya bisa dikontrol dari \texttt{dev.tfvars}. Pola ini penting karena token dan nama bucket biasanya berbeda antar environment.
+Kemudian, \texttt{mp3\_bucket} dan \texttt{internal\_token} diteruskan dari variabel root module (\texttt{var.*}) sehingga nilainya bisa dikontrol dari \texttt{dev.tfvars}. Pola ini penting karena token dan nama bucket biasanya berbeda antar environment. Isinya ada pada Listing~\ref{lst:ch05-44}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (2)}, label={lst:ch05-44}]
 mp3_bucket     = var.mp3_bucket
 internal_token = var.internal_token
 \end{lstlisting}
 
-Kredensial MinIO dituliskan eksplisit agar perilakunya identik dengan \texttt{docker-compose.yml} (sering kali \texttt{minioadmin/minioadmin} di dev). Walaupun modul sudah punya default, menuliskan eksplisit di root module membantu pembaca (mahasiswa) melihat bahwa nilai ini adalah bagian dari konfigurasi environment.
+Kredensial MinIO dituliskan eksplisit agar perilakunya identik dengan \texttt{docker-compose.yml} (sering kali \texttt{minioadmin/minioadmin} di dev). Walaupun modul sudah punya default, menuliskan eksplisit di root module membantu pembaca (mahasiswa) melihat bahwa nilai ini adalah bagian dari konfigurasi environment. Isi berkasnya ada pada Listing~\ref{lst:ch05-45}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas docker-compose.yml}, label={lst:ch05-45}]
 minio_root_user     = "minioadmin"
 minio_root_password = "minioadmin"
 \end{lstlisting}
 
-Konfigurasi Piper diisi sesuai lokasi file config di dalam container (\texttt{/models/...json}) dan parameter \texttt{length\_scale}. Di dev, nilainya biasanya default untuk menjaga eksperimen mudah direproduksi.
+Konfigurasi Piper diisi sesuai lokasi file config di dalam container (\texttt{/models/...json}) dan parameter \texttt{length\_scale}. Di dev, nilainya biasanya default untuk menjaga eksperimen mudah direproduksi. Listing~\ref{lst:ch05-46} memuat isi berkasnya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas /models/...json}, label={lst:ch05-46}]
 piper_model_config_path = "/models/en_GB-alan-medium.onnx.json"
 piper_length_scale      = "1.0"
 \end{lstlisting}
 
-Terakhir, parameter untuk scaling dan mount model diteruskan dari variabel root module agar dapat dioverride lewat \texttt{dev.tfvars} tanpa menyentuh kode.
+Terakhir, parameter untuk scaling dan mount model diteruskan dari variabel root module agar dapat dioverride lewat \texttt{dev.tfvars} tanpa menyentuh kode. Isinya ada pada Listing~\ref{lst:ch05-47}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (3)}, label={lst:ch05-47}]
 worker_replicas = var.worker_replicas
 mount_models    = var.mount_models
 \end{lstlisting}
 
-Setelah modul dipanggil, \texttt{output} di root module biasanya hanya meneruskan output dari modul untuk memudahkan akses URL.
+Setelah modul dipanggil, \texttt{output} di root module biasanya hanya meneruskan output dari modul untuk memudahkan akses URL. Potongan kodenya ada pada Listing~\ref{lst:ch05-48}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (9)}, label={lst:ch05-48}]
 output "urls" {
   value = module.tts.urls
 }
@@ -1010,9 +1012,9 @@ output "urls" {
 
 \subsubsection{\texttt{dev.tfvars}: Nilai Spesifik Environment Dev}
 
-File \texttt{dev.tfvars} menyimpan nilai variabel untuk environment dev. Ini memisahkan \textit{konfigurasi} dari \textit{kode}, sehingga \texttt{main.tf} tetap generik dan bersih.
+File \texttt{dev.tfvars} menyimpan nilai variabel untuk environment dev. Ini memisahkan \textit{konfigurasi} dari \textit{kode}, sehingga \texttt{main.tf} tetap generik dan bersih. Listing~\ref{lst:ch05-49} memuat isi berkasnya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (4)}, label={lst:ch05-49}]
 mp3_bucket     = "tts-dev"
 internal_token = "changeme-dev"
 
@@ -1024,9 +1026,9 @@ Dengan konfigurasi ini, output audio akan masuk ke bucket \texttt{tts-dev}, komu
 
 \subsubsection{Cara Menjalankan Environment Dev}
 
-Praktik yang umum adalah menjalankan Terraform dari folder \texttt{dev} sambil menunjuk \texttt{dev.tfvars}, sehingga root module membaca nilai-nilai environment dev dan menerapkan resource Docker via provider \texttt{kreuzwerker/docker}.
+Praktik yang umum adalah menjalankan Terraform dari folder \texttt{dev} sambil menunjuk \texttt{dev.tfvars}, sehingga root module membaca nilai-nilai environment dev dan menerapkan resource Docker via provider \texttt{kreuzwerker/docker}. Isinya ada pada Listing~\ref{lst:ch05-50}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (5)}, label={lst:ch05-50}]
 # dijalankan dari iac/terraform/dev
 terraform init
 terraform apply -var-file=dev.tfvars
@@ -1040,16 +1042,16 @@ Folder \texttt{staging} adalah root module untuk environment staging. Polanya sa
 
 \subsubsection{\texttt{main.tf}: Root Module untuk Staging}
 
-Di staging, \texttt{mp3\_bucket} dan \texttt{internal\_token} tetap didefinisikan sebagai variabel root module supaya nilainya dapat dipasok dari \texttt{staging.tfvars}. Ini membuat \texttt{main.tf} bersih dan reusable.
+Di staging, \texttt{mp3\_bucket} dan \texttt{internal\_token} tetap didefinisikan sebagai variabel root module supaya nilainya dapat dipasok dari \texttt{staging.tfvars}. Ini membuat \texttt{main.tf} bersih dan reusable. Isi berkasnya ada pada Listing~\ref{lst:ch05-51}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas staging.tfvars}, label={lst:ch05-51}]
 variable "mp3_bucket"     { type = string }
 variable "internal_token" { type = string }
 \end{lstlisting}
 
-Berbeda dari dev, default \texttt{worker\_replicas} diset ke 2 dan \texttt{mount\_models} menjadi \texttt{true}. Pilihan ini umum pada staging: kita ingin menguji perilaku sistem saat ada lebih dari satu worker, serta memastikan runtime memakai folder model yang dimount dari host (lebih cepat untuk iterasi model tanpa rebuild image).
+Berbeda dari dev, default \texttt{worker\_replicas} diset ke 2 dan \texttt{mount\_models} menjadi \texttt{true}. Pilihan ini umum pada staging: kita ingin menguji perilaku sistem saat ada lebih dari satu worker, serta memastikan runtime memakai folder model yang dimount dari host (lebih cepat untuk iterasi model tanpa rebuild image). Listing~\ref{lst:ch05-52} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (10)}, label={lst:ch05-52}]
 variable "worker_replicas" {
   type    = number
   default = 2
@@ -1061,9 +1063,9 @@ variable "mount_models" {
 }
 \end{lstlisting}
 
-Pemanggilan modul dilakukan melalui \texttt{module "tts"}. Parameter \texttt{env = "staging"} akan mempengaruhi prefix penamaan resource (\texttt{tts-staging-*}) dan nama network (\texttt{tts-staging}). Parameter \texttt{project\_root} memakai \texttt{abspath(...)} agar build context Docker (API/Web/Worker) dan path mount (nginx.conf, models) dapat di-resolve dengan benar.
+Pemanggilan modul dilakukan melalui \texttt{module "tts"}. Parameter \texttt{env = "staging"} akan mempengaruhi prefix penamaan resource (\texttt{tts-staging-*}) dan nama network (\texttt{tts-staging}). Parameter \texttt{project\_root} memakai \texttt{abspath(...)} agar build context Docker (API/Web/Worker) dan path mount (nginx.conf, models) dapat di-resolve dengan benar. Isinya ada pada Listing~\ref{lst:ch05-53}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas nginx.conf}, label={lst:ch05-53}]
 module "tts" {
   source       = "../modules/tts_stack"
   env          = "staging"
@@ -1071,9 +1073,9 @@ module "tts" {
 }
 \end{lstlisting}
 
-Bagian paling penting untuk coexistence adalah \texttt{ports}. Di staging, seluruh port host digeser (mis.\ Redis menjadi 16379, API menjadi 18000, gateway menjadi 18088) supaya tidak ada collision dengan port dev yang biasanya menggunakan angka ``default''.
+Bagian paling penting untuk coexistence adalah \texttt{ports}. Di staging, seluruh port host digeser (mis.\ Redis menjadi 16379, API menjadi 18000, gateway menjadi 18088) supaya tidak ada collision dengan port dev yang biasanya menggunakan angka ``default''. Potongan kodenya ada pada Listing~\ref{lst:ch05-54}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (11)}, label={lst:ch05-54}]
 ports = {
   redis         = 16379
   minio_api     = 19000
@@ -1084,37 +1086,37 @@ ports = {
 }
 \end{lstlisting}
 
-Nilai \texttt{mp3\_bucket} dan \texttt{internal\_token} diteruskan dari variabel root module. Dengan ini, staging dapat memakai bucket berbeda (\texttt{tts-staging}) dan token berbeda (\texttt{changeme-staging}) tanpa mengubah modul.
+Nilai \texttt{mp3\_bucket} dan \texttt{internal\_token} diteruskan dari variabel root module. Dengan ini, staging dapat memakai bucket berbeda (\texttt{tts-staging}) dan token berbeda (\texttt{changeme-staging}) tanpa mengubah modul. Listing~\ref{lst:ch05-55} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (12)}, label={lst:ch05-55}]
 mp3_bucket     = var.mp3_bucket
 internal_token = var.internal_token
 \end{lstlisting}
 
-Kredensial MinIO ditulis eksplisit agar konsisten dengan Compose (dan agar pembaca tidak perlu menebak apakah modul memakai default). Walaupun staging sering dianggap lebih ``serius'', untuk lab/kelas biasanya tetap memakai kredensial dev-default.
+Kredensial MinIO ditulis eksplisit agar konsisten dengan Compose (dan agar pembaca tidak perlu menebak apakah modul memakai default). Walaupun staging sering dianggap lebih ``serius'', untuk lab/kelas biasanya tetap memakai kredensial dev-default. Kodenya ada pada Listing~\ref{lst:ch05-56}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (13)}, label={lst:ch05-56}]
 minio_root_user     = "minioadmin"
 minio_root_password = "minioadmin"
 \end{lstlisting}
 
-Konfigurasi Piper tetap mengarah ke file config di \texttt{/models}. Karena \texttt{mount\_models = true}, folder \texttt{app/models} di host akan dimount ke \texttt{/models} di container worker. Artinya, file \texttt{en\_GB-alan-medium.onnx.json} harus benar-benar ada di host pada path proyek.
+Konfigurasi Piper tetap mengarah ke file config di \texttt{/models}. Karena \texttt{mount\_models = true}, folder \texttt{app/models} di host akan dimount ke \texttt{/models} di container worker. Artinya, file \texttt{en\_GB-alan-medium.onnx.json} harus benar-benar ada di host pada path proyek. Isi berkasnya ada pada Listing~\ref{lst:ch05-57}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas \_GB-alan-medium.onnx.json}, label={lst:ch05-57}]
 piper_model_config_path = "/models/en_GB-alan-medium.onnx.json"
 piper_length_scale      = "1.0"
 \end{lstlisting}
 
-Terakhir, skala worker dan mount model diteruskan ke modul dari variabel root module. Untuk staging, kombinasi default-nya adalah 2 replika worker dan mount model aktif.
+Terakhir, skala worker dan mount model diteruskan ke modul dari variabel root module. Untuk staging, kombinasi default-nya adalah 2 replika worker dan mount model aktif. Listing~\ref{lst:ch05-58} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (14)}, label={lst:ch05-58}]
 worker_replicas = var.worker_replicas
 mount_models    = var.mount_models
 \end{lstlisting}
 
-Output di root module meneruskan \texttt{module.tts.urls} agar setelah \texttt{apply} kita langsung mendapatkan endpoint yang bisa diakses dari host, termasuk gateway staging di port 18088.
+Output di root module meneruskan \texttt{module.tts.urls} agar setelah \texttt{apply} kita langsung mendapatkan endpoint yang bisa diakses dari host, termasuk gateway staging di port 18088. Kodenya ada pada Listing~\ref{lst:ch05-59}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (15)}, label={lst:ch05-59}]
 output "urls" {
   value = module.tts.urls
 }
@@ -1122,9 +1124,9 @@ output "urls" {
 
 \subsubsection{\texttt{staging.tfvars}: Nilai Konfigurasi untuk Staging}
 
-File \texttt{staging.tfvars} memuat nilai variabel khusus staging. Bucket dipisahkan dari dev agar artefak (MP3) tidak tercampur, token dibedakan agar trafik antar environment tidak saling ``terpercaya'' secara tidak sengaja, dan worker dinaikkan menjadi 2 untuk menguji concurrency.
+File \texttt{staging.tfvars} memuat nilai variabel khusus staging. Bucket dipisahkan dari dev agar artefak (MP3) tidak tercampur, token dibedakan agar trafik antar environment tidak saling ``terpercaya'' secara tidak sengaja, dan worker dinaikkan menjadi 2 untuk menguji concurrency. Isi berkasnya ada pada Listing~\ref{lst:ch05-60}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas staging.tfvars (2)}, label={lst:ch05-60}]
 mp3_bucket     = "tts-staging"
 internal_token = "changeme-staging"
 
@@ -1136,9 +1138,9 @@ Karena \texttt{mount\_models = true}, staging cocok untuk eksperimen ``ganti mod
 
 \subsubsection{Cara Menjalankan Environment Staging}
 
-Terraform dijalankan dari folder \texttt{staging} menggunakan file var khusus staging.
+Terraform dijalankan dari folder \texttt{staging} menggunakan file var khusus staging. Listing~\ref{lst:ch05-61} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Cara Menjalankan Environment Staging}, label={lst:ch05-61}]
 # dijalankan dari iac/terraform/staging
 terraform init
 terraform apply -var-file=staging.tfvars
@@ -1153,9 +1155,9 @@ Folder \texttt{prod} adalah root module untuk environment production. Seperti \t
 
 \subsubsection{\texttt{main.tf}: Root Module untuk Production}
 
-Dua variabel dasar, \texttt{mp3\_bucket} dan \texttt{internal\_token}, tetap didefinisikan sebagai input root module. Bedanya, \texttt{internal\_token} diberi atribut \texttt{sensitive = true} agar tidak mudah tercetak pada output/log Terraform.
+Dua variabel dasar, \texttt{mp3\_bucket} dan \texttt{internal\_token}, tetap didefinisikan sebagai input root module. Bedanya, \texttt{internal\_token} diberi atribut \texttt{sensitive = true} agar tidak mudah tercetak pada output/log Terraform. Kodenya ada pada Listing~\ref{lst:ch05-62}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (16)}, label={lst:ch05-62}]
 variable "mp3_bucket" { type = string }
 
 variable "internal_token" {
@@ -1164,9 +1166,9 @@ variable "internal_token" {
 }
 \end{lstlisting}
 
-Produksi menaikkan concurrency dengan default \texttt{worker\_replicas = 4}. Di sisi lain, \texttt{mount\_models} umumnya \texttt{false} karena model sebaiknya dibundel (baked) ke image worker demi konsistensi deploy dan menghindari ketergantungan ke filesystem host.
+Produksi menaikkan concurrency dengan default \texttt{worker\_replicas = 4}. Di sisi lain, \texttt{mount\_models} umumnya \texttt{false} karena model sebaiknya dibundel (baked) ke image worker demi konsistensi deploy dan menghindari ketergantungan ke filesystem host. Potongan kodenya ada pada Listing~\ref{lst:ch05-63}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (17)}, label={lst:ch05-63}]
 variable "worker_replicas" {
   type    = number
   default = 4
@@ -1178,9 +1180,9 @@ variable "mount_models" {
 }
 \end{lstlisting}
 
-Kredensial MinIO dibuat sebagai variabel terpisah dan juga ditandai \texttt{sensitive}. Praktiknya, nilai ini diisi melalui \texttt{production.tfvars} (atau lewat mekanisme secret management di CI/CD), bukan disisipkan langsung di kode.
+Kredensial MinIO dibuat sebagai variabel terpisah dan juga ditandai \texttt{sensitive}. Praktiknya, nilai ini diisi melalui \texttt{production.tfvars} (atau lewat mekanisme secret management di CI/CD), bukan disisipkan langsung di kode. Listing~\ref{lst:ch05-64} memuat isi berkasnya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas production.tfvars}, label={lst:ch05-64}]
 variable "minio_root_user" {
   type      = string
   sensitive = true
@@ -1192,9 +1194,9 @@ variable "minio_root_password" {
 }
 \end{lstlisting}
 
-Pemanggilan modul menggunakan \texttt{env = "production"} yang akan memprefix resource menjadi \texttt{tts-production-*} dan membuat network bernama \texttt{tts-production}. \texttt{project\_root} tetap dihitung dengan \texttt{abspath(...)} agar semua path build context dan mount dapat di-resolve secara stabil.
+Pemanggilan modul menggunakan \texttt{env = "production"} yang akan memprefix resource menjadi \texttt{tts-production-*} dan membuat network bernama \texttt{tts-production}. \texttt{project\_root} tetap dihitung dengan \texttt{abspath(...)} agar semua path build context dan mount dapat di-resolve secara stabil. Kodenya ada pada Listing~\ref{lst:ch05-65}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (18)}, label={lst:ch05-65}]
 module "tts" {
   source       = "../modules/tts_stack"
   env          = "production"
@@ -1202,9 +1204,9 @@ module "tts" {
 }
 \end{lstlisting}
 
-Port production sengaja didedikasikan dan digeser lebih jauh (mis.\ gateway 28088) untuk memastikan tidak ada collision dengan dev/staging. Ini penting bila ketiga environment dijalankan paralel pada host yang sama (mis.\ untuk demo kelas atau uji banding performa).
+Port production sengaja didedikasikan dan digeser lebih jauh (mis.\ gateway 28088) untuk memastikan tidak ada collision dengan dev/staging. Ini penting bila ketiga environment dijalankan paralel pada host yang sama (mis.\ untuk demo kelas atau uji banding performa). Potongan kodenya ada pada Listing~\ref{lst:ch05-66}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (19)}, label={lst:ch05-66}]
 ports = {
   redis         = 26379
   minio_api     = 29000
@@ -1215,37 +1217,37 @@ ports = {
 }
 \end{lstlisting}
 
-Nilai \texttt{mp3\_bucket} dan \texttt{internal\_token} diteruskan dari variabel root module agar environment production punya bucket terpisah (\texttt{tts-prod}) dan token yang berbeda dari environment lain.
+Nilai \texttt{mp3\_bucket} dan \texttt{internal\_token} diteruskan dari variabel root module agar environment production punya bucket terpisah (\texttt{tts-prod}) dan token yang berbeda dari environment lain. Listing~\ref{lst:ch05-67} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (20)}, label={lst:ch05-67}]
 mp3_bucket     = var.mp3_bucket
 internal_token = var.internal_token
 \end{lstlisting}
 
-Berbeda dari dev/staging yang boleh eksplisit, production menegaskan praktik yang lebih aman: kredensial MinIO diambil dari variabel (bukan hardcode). Catatan ``DO NOT hardcode'' di sini adalah sinyal pedagogis bahwa pola hardcode hanya boleh untuk lab/demo.
+Berbeda dari dev/staging yang boleh eksplisit, production menegaskan praktik yang lebih aman: kredensial MinIO diambil dari variabel (bukan hardcode). Catatan ``DO NOT hardcode'' di sini adalah sinyal pedagogis bahwa pola hardcode hanya boleh untuk lab/demo. Kodenya ada pada Listing~\ref{lst:ch05-68}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (21)}, label={lst:ch05-68}]
 minio_root_user     = var.minio_root_user
 minio_root_password = var.minio_root_password
 \end{lstlisting}
 
-Konfigurasi Piper tetap menunjuk file config di \texttt{/models}. Karena \texttt{mount\_models} biasanya \texttt{false} pada production, maka file model dan config idealnya sudah termasuk di dalam image worker (atau dipasang lewat mekanisme deployment yang terkontrol, bukan mount host).
+Konfigurasi Piper tetap menunjuk file config di \texttt{/models}. Karena \texttt{mount\_models} biasanya \texttt{false} pada production, maka file model dan config idealnya sudah termasuk di dalam image worker (atau dipasang lewat mekanisme deployment yang terkontrol, bukan mount host). Potongan kodenya ada pada Listing~\ref{lst:ch05-69}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (22)}, label={lst:ch05-69}]
 piper_model_config_path = "/models/en_GB-alan-medium.onnx.json"
 piper_length_scale      = "1.0"
 \end{lstlisting}
 
-Concurrency production dinaikkan dengan meneruskan \texttt{worker\_replicas} (default 4). Ini akan membuat beberapa container worker paralel, yang semuanya menarik job dari Redis queue yang sama untuk environment \texttt{production}.
+Concurrency production dinaikkan dengan meneruskan \texttt{worker\_replicas} (default 4). Ini akan membuat beberapa container worker paralel, yang semuanya menarik job dari Redis queue yang sama untuk environment \texttt{production}. Listing~\ref{lst:ch05-70} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (23)}, label={lst:ch05-70}]
 worker_replicas = var.worker_replicas
 mount_models    = var.mount_models
 \end{lstlisting}
 
-Output \texttt{urls} meneruskan output modul untuk memudahkan akses endpoint. Namun untuk production sungguhan, Anda biasanya tidak mengekspose semuanya ke localhost, melainkan lewat reverse proxy/ingress yang lebih aman. Pada konteks lab ini, output tetap berguna untuk verifikasi cepat.
+Output \texttt{urls} meneruskan output modul untuk memudahkan akses endpoint. Namun untuk production sungguhan, Anda biasanya tidak mengekspose semuanya ke localhost, melainkan lewat reverse proxy/ingress yang lebih aman. Pada konteks lab ini, output tetap berguna untuk verifikasi cepat. Kodenya ada pada Listing~\ref{lst:ch05-71}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (24)}, label={lst:ch05-71}]
 output "urls" {
   value = module.tts.urls
 }
@@ -1253,9 +1255,9 @@ output "urls" {
 
 \subsubsection{\texttt{production.tfvars}: Nilai Konfigurasi untuk Production}
 
-File \texttt{production.tfvars} menyimpan nilai variabel khusus production. Bucket dipisahkan menjadi \texttt{tts-prod} agar artefak MP3 tidak tercampur dengan environment lain. Token internal dibedakan dan dianggap rahasia. Pada contoh ini, user MinIO tetap default, dan password disebut ``sama dengan username'' (default MinIO) untuk kebutuhan demo, tetapi seharusnya diubah pada produksi nyata.
+File \texttt{production.tfvars} menyimpan nilai variabel khusus production. Bucket dipisahkan menjadi \texttt{tts-prod} agar artefak MP3 tidak tercampur dengan environment lain. Token internal dibedakan dan dianggap rahasia. Pada contoh ini, user MinIO tetap default, dan password disebut ``sama dengan username'' (default MinIO) untuk kebutuhan demo, tetapi seharusnya diubah pada produksi nyata. Isi berkasnya ada pada Listing~\ref{lst:ch05-72}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Isi berkas production.tfvars (2)}, label={lst:ch05-72}]
 mp3_bucket     = "tts-prod"
 internal_token = "changeme-production"
 
@@ -1270,9 +1272,9 @@ Konfigurasi ini menghasilkan empat worker paralel dan tidak melakukan mount mode
 
 \subsubsection{Menjalankan Production (Untuk Lab/Demo)}
 
-Perintah dijalankan dari folder \texttt{prod} dan menunjuk file var production.
+Perintah dijalankan dari folder \texttt{prod} dan menunjuk file var production. Listing~\ref{lst:ch05-73} memuat kodenya.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Menjalankan Production (Untuk Lab/Demo)}, label={lst:ch05-73}]
 # dijalankan dari iac/terraform/prod
 terraform init
 terraform apply -var-file=production.tfvars
@@ -1296,23 +1298,27 @@ Permasalahan umum dalam rekayasa perangkat lunak adalah ketidakkonsistenan antar
 
 Dengan Terraform, arsitektur dasar tetap identik di semua environment karena modul yang sama digunakan ulang. Perbedaan hanya terletak pada nilai variabel.
 
-Contoh konfigurasi yang berbeda antar environment:
+Contoh konfigurasi yang berbeda antar environment (Listing~\ref{lst:ch05-74}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Environment Parity}, label={lst:ch05-74}]
 # dev
 worker_replicas = 1
 mount_models    = false
 gateway         = 8088
 \end{lstlisting}
 
-\begin{lstlisting}[language=terraform]
+
+Listing~\ref{lst:ch05-75} menampilkan potongan kode Terraform pada Environment Parity (2).
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Environment Parity (2)}, label={lst:ch05-75}]
 # staging
 worker_replicas = 2
 mount_models    = true
 gateway         = 18088
 \end{lstlisting}
 
-\begin{lstlisting}[language=terraform]
+
+Listing~\ref{lst:ch05-76} menampilkan potongan kode Terraform pada Environment Parity (3).
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Environment Parity (3)}, label={lst:ch05-76}]
 # production
 worker_replicas = 4
 mount_models    = false
@@ -1325,9 +1331,9 @@ Struktur infrastrukturnya tetap sama; hanya parameter konfigurasi yang berubah. 
 
 Terraform menggunakan model deklaratif. Resource tidak dibuat melalui perintah imperatif seperti \texttt{docker run}, tetapi melalui deklarasi kondisi akhir yang diinginkan.
 
-Contoh scaling worker secara deklaratif:
+Contoh scaling worker secara deklaratif (Listing~\ref{lst:ch05-77}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Infrastructure Provisioning Deklaratif}, label={lst:ch05-77}]
 resource "docker_container" "worker" {
   count = var.worker_replicas
 }
@@ -1335,9 +1341,9 @@ resource "docker_container" "worker" {
 
 Jika nilai \texttt{worker\_replicas} berubah dari 2 menjadi 4, Terraform menghitung perbedaan (diff) antara state saat ini dan state yang diinginkan. Dua container tambahan akan direncanakan untuk dibuat.
 
-Alur kerja umum:
+Alur kerja umum (Listing~\ref{lst:ch05-78}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Infrastructure Provisioning Deklaratif (2)}, label={lst:ch05-78}]
 terraform init
 terraform plan  -var-file=production.tfvars
 terraform apply -var-file=production.tfvars
@@ -1347,9 +1353,9 @@ Perintah \texttt{plan} menampilkan rencana perubahan sebelum eksekusi. Mekanisme
 
 \subsection*{Skalabilitas Horizontal yang Terkontrol}
 
-Skalabilitas horizontal dicapai dengan mengubah satu variabel numerik:
+Skalabilitas horizontal dicapai dengan mengubah satu variabel numerik (Listing~\ref{lst:ch05-79}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Skalabilitas Horizontal yang Terkontrol}, label={lst:ch05-79}]
 variable "worker_replicas" {
   type    = number
   default = 1
@@ -1364,9 +1370,9 @@ Rollback juga bersifat deklaratif. Jika nilai replika dikurangi, Terraform akan 
 
 Terraform menyimpan state yang merepresentasikan infrastruktur aktual. Setiap perubahan pada file \texttt{.tf} atau \texttt{*.tfvars} menghasilkan rencana perubahan eksplisit.
 
-Contoh perubahan port gateway:
+Contoh perubahan port gateway (Listing~\ref{lst:ch05-80}):
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Kontrol Perubahan yang Terstruktur}, label={lst:ch05-80}]
 gateway = 28088
 # diubah menjadi
 gateway = 38088
@@ -1384,9 +1390,9 @@ Infrastruktur menjadi bagian integral dari siklus hidup perangkat lunak.
 
 \subsection*{Reproducibility sebagai Fondasi Eksperimen}
 
-Reproducibility merupakan aspek penting dalam eksperimen performa dan pengujian sistem. Dengan Terraform, environment dapat dihancurkan dan dibangun ulang dengan konfigurasi yang identik.
+Reproducibility merupakan aspek penting dalam eksperimen performa dan pengujian sistem. Dengan Terraform, environment dapat dihancurkan dan dibangun ulang dengan konfigurasi yang identik. Kodenya ada pada Listing~\ref{lst:ch05-81}.
 
-\begin{lstlisting}[language=terraform]
+\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Reproducibility sebagai Fondasi Eksperimen}, label={lst:ch05-81}]
 terraform destroy -var-file=dev.tfvars
 terraform apply   -var-file=dev.tfvars
 \end{lstlisting}
@@ -1416,3 +1422,25 @@ Melalui pendekatan ini, infrastruktur menjadi terstruktur, terdokumentasi, dapat
 Infrastructure as Code (IaC) menempatkan infrastruktur sebagai artefak yang didefinisikan secara deklaratif, terversi, dan dapat diaudit. Pada sistem modern yang tersusun dari banyak komponen—seperti Redis, MinIO, API, web frontend, worker, dan gateway—pendekatan manual cenderung menghasilkan inkonsistensi, \textit{environment drift}, serta konfigurasi yang sulit direproduksi. Melalui IaC, definisi infrastruktur menjadi \textit{single source of truth} yang memungkinkan penyusunan environment yang konsisten antar \texttt{dev}, \texttt{staging}, dan \texttt{production}, serta mendukung eksperimen terkontrol seperti perubahan jumlah worker, pergeseran port, dan pemisahan bucket penyimpanan.
 
 Terraform menyediakan mekanisme yang sesuai untuk kebutuhan tersebut melalui konsep provider, resource, module, variable, output, dan state file. Kombinasi \texttt{plan}/\texttt{apply} memberikan kontrol perubahan yang terstruktur, sedangkan state memungkinkan deteksi drift dan perhitungan diff sebelum eksekusi. Di sisi lain, Docker Compose tetap relevan sebagai alat orkestrasi lokal yang cepat untuk prototyping dan pengembangan, terutama ketika fokusnya adalah menjalankan stack pada satu host. Dalam studi kasus TTS stack, Compose dapat berperan sebagai titik awal eksperimen, sementara Terraform mengangkat konfigurasi menuju praktik multi-environment yang reproducible, scalable, dan lebih dekat dengan kebutuhan production-ready; kedua alat tersebut saling melengkapi dalam evolusi sistem dari tahap pengembangan hingga tahap deployment yang lebih terkontrol.
+
+\section{Latihan}
+
+Kerjakan latihan berikut pada direktori \texttt{iac/terraform} proyek session-05.
+
+\begin{enumerate}
+  \item Jalankan \texttt{terraform init}, \texttt{plan}, dan \texttt{apply} untuk lingkungan \texttt{dev}. Catat jumlah sumber daya yang dibuat dan isi keluaran \texttt{urls}.
+  \item Ubah \texttt{worker\_replicas} pada \texttt{dev.tfvars} menjadi 3. Jalankan \texttt{plan} lebih dahulu, tentukan sumber daya mana yang ditambah dan mana yang tidak tersentuh, baru jalankan \texttt{apply} dan periksa dugaan Anda.
+  \item Jalankan lingkungan \texttt{staging} bersamaan dengan \texttt{dev}. Jelaskan mekanisme apa saja yang membuat keduanya dapat hidup berdampingan, mulai dari nama container, port, jaringan, sampai volume.
+  \item Hapus satu container secara manual dengan \texttt{docker rm -f}, lalu jalankan \texttt{terraform plan}. Jelaskan apa yang dilaporkan Terraform dan dari mana ia mengetahui perbedaan tersebut.
+  \item Bandingkan berkas Compose dan konfigurasi Terraform untuk sistem yang sama. Sebutkan dua hal yang menjadi lebih mudah dan dua hal yang menjadi lebih rumit setelah berpindah ke Terraform.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Terraform Overview} \cite{doc-terraform}: bahasa konfigurasi, state, serta alur plan dan apply.
+  \item \textit{Docker Provider for Terraform} \cite{doc-tf-docker}: sumber daya Docker yang dipakai pada studi kasus.
+  \item \textit{Infrastructure as Code} \cite{morris2021iac}: prinsip infrastruktur deklaratif dan pengelolaan lintas lingkungan.
+\end{itemize}

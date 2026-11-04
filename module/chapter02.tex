@@ -4,9 +4,9 @@
 
 Setelah mengikuti sesi ini, peserta diharapkan mampu:
 \begin{itemize}
-  \item Memahami observabilitas sebagai pendekatan untuk mengenali dan menalar perilaku sistem berdasarkan data runtime, tanpa bergantung pada struktur internal atau kode sumber sistem.
-  \item Mengidentifikasi dan menafsirkan metrik, log, dan trace sebagai representasi perilaku sistem terdistribusi yang melibatkan broker, capturer, transformer, dan web server.
-  \item Mengaitkan visualisasi observabilitas pada Prometheus dan Grafana dengan kondisi runtime, beban sistem, serta pengalaman pengguna.
+  \item Memahami observabilitas\index{observabilitas} sebagai pendekatan untuk mengenali dan menalar perilaku sistem berdasarkan data runtime, tanpa bergantung pada struktur internal atau kode sumber sistem.
+  \item Mengidentifikasi dan menafsirkan metrik\index{metrik}, log, dan trace sebagai representasi perilaku sistem terdistribusi yang melibatkan broker, capturer, transformer, dan web server.
+  \item Mengaitkan visualisasi observabilitas pada Prometheus\index{Prometheus} dan Grafana dengan kondisi runtime, beban sistem, serta pengalaman pengguna.
 \end{itemize}
 
 
@@ -16,11 +16,11 @@ Setelah mengikuti sesi ini, peserta diharapkan mampu:
 
 Monitoring dan observabilitas sering digunakan secara bergantian, namun keduanya merepresentasikan pendekatan yang berbeda dalam memahami perilaku sistem. Monitoring berfokus pada pengawasan kondisi yang telah diketahui sebelumnya, biasanya melalui sekumpulan metrik atau ambang batas yang telah ditentukan. Pendekatan ini menjawab pertanyaan apakah sistem berada dalam kondisi normal atau tidak.
 
-Observabilitas, di sisi lain, berfokus pada kemampuan untuk menalar kondisi internal sistem berdasarkan sinyal eksternal yang dihasilkan selama sistem berjalan. Tujuannya bukan hanya mendeteksi bahwa terjadi masalah, tetapi juga memahami mengapa dan bagaimana masalah tersebut muncul, termasuk dalam situasi yang sebelumnya tidak diprediksi.
+Observabilitas\index{observabilitas}, di sisi lain, berfokus pada kemampuan untuk menalar kondisi internal sistem berdasarkan sinyal eksternal yang dihasilkan selama sistem berjalan. Tujuannya bukan hanya mendeteksi bahwa terjadi masalah, tetapi juga memahami mengapa dan bagaimana masalah tersebut muncul, termasuk dalam situasi yang sebelumnya tidak diprediksi.
 
-Dalam konteks sistem terdistribusi yang terdiri dari broker, capturer, transformer, dan web server, monitoring umumnya menampilkan indikator terpisah pada setiap komponen, seperti penggunaan sumber daya atau status layanan. Pendekatan ini berguna untuk mendeteksi gangguan lokal, namun sering kali tidak cukup untuk menjelaskan perilaku sistem secara menyeluruh ketika terjadi keterlambatan, penumpukan data, atau kegagalan parsial.
+Dalam konteks sistem terdistribusi yang terdiri dari broker\index{broker}, capturer, transformer, dan web server, monitoring umumnya menampilkan indikator terpisah pada setiap komponen, seperti penggunaan sumber daya atau status layanan. Pendekatan ini berguna untuk mendeteksi gangguan lokal, namun sering kali tidak cukup untuk menjelaskan perilaku sistem secara menyeluruh ketika terjadi keterlambatan, penumpukan data, atau kegagalan parsial.
 
-Observabilitas memungkinkan pengamatan perilaku lintas komponen dengan mengaitkan metrik, log, dan trace sebagai satu kesatuan. Melalui korelasi data runtime yang dikumpulkan oleh Prometheus dan divisualisasikan melalui Grafana, peserta dapat menelusuri aliran peristiwa dari satu komponen ke komponen lain, serta memahami dampaknya terhadap respons sistem secara keseluruhan.
+Observabilitas memungkinkan pengamatan perilaku lintas komponen dengan mengaitkan metrik, log, dan trace sebagai satu kesatuan. Melalui korelasi data runtime yang dikumpulkan oleh Prometheus dan divisualisasikan melalui Grafana\index{Grafana}, peserta dapat menelusuri aliran peristiwa dari satu komponen ke komponen lain, serta memahami dampaknya terhadap respons sistem secara keseluruhan.
 
 Dengan demikian, monitoring dapat dipandang sebagai alat untuk menjawab pertanyaan \emph{``apa yang salah''}, sedangkan observabilitas berperan untuk menjawab \emph{``mengapa hal tersebut terjadi''}. Pendekatan observabilitas menjadi penting dalam sistem modern yang bersifat dinamis, terdistribusi, dan sulit dipahami hanya melalui inspeksi statis atau asumsi desain awal.
 
@@ -60,6 +60,7 @@ Dengan menempatkan data runtime sebagai sumber utama pengetahuan, observabilitas
 \begin{figure}[htbp]
 \centering
 \scalebox{0.9}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   font=\small\bfseries,
   node distance=9mm and 12mm,
@@ -105,7 +106,8 @@ Dengan menempatkan data runtime sebagai sumber utama pengetahuan, observabilitas
 \draw[dottedarrow] (web.east) -- (prom);
 \draw[arrow] (prom) -- (grafana);
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Arsitektur aliran data menggunakan komunikasi publish--subscribe berbasis broker, dengan layanan Prometheus tertanam pada setiap node serta Prometheus dan Grafana sebagai komponen observabilitas eksternal}
 \label{fig:broker-pubsub-observability}
@@ -140,11 +142,11 @@ Metrik yang dikumpulkan disimpan dalam bentuk \emph{time-series data}, sehingga 
 
 Pada demo ini, Prometheus tidak diinstal secara manual pada sistem operasi host. Prometheus dijalankan sebagai \emph{container} menggunakan \emph{Docker image} resmi yang di-\emph{pull} dari repositori. Pendekatan ini memberikan lingkungan runtime yang konsisten, mudah direproduksi, dan terisolasi dari node aplikasi.
 
-Dengan menjalankan Prometheus sebagai container, konfigurasi scraping dan penyimpanan metrik dapat dikelola secara terpisah dari kode aplikasi. Selain itu, Prometheus dapat dengan mudah dijalankan, dihentikan, atau dikonfigurasi ulang tanpa memengaruhi proses utama sistem studi kasus.
+Dengan menjalankan Prometheus sebagai container\index{container}, konfigurasi scraping dan penyimpanan metrik dapat dikelola secara terpisah dari kode aplikasi. Selain itu, Prometheus dapat dengan mudah dijalankan, dihentikan, atau dikonfigurasi ulang tanpa memengaruhi proses utama sistem studi kasus.
 
-Untuk mendukung ekspor metrik dari aplikasi berbasis Python, digunakan library \texttt{prometheus-client}. Library ini memungkinkan setiap node menyediakan endpoint metrik yang dapat diakses oleh Prometheus eksternal.
+Untuk mendukung ekspor metrik dari aplikasi berbasis Python, digunakan library \texttt{prometheus-client}. Library ini memungkinkan setiap node menyediakan endpoint metrik yang dapat diakses oleh Prometheus eksternal. Perintahnya ada pada Listing~\ref{lst:ch02-1}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memasang dependensi Python}, label={lst:ch02-1}]
 pip install prometheus-client
 \end{lstlisting}
 
@@ -191,7 +193,7 @@ Bagian ini menjelaskan eksperimen observabilitas yang dilakukan menggunakan sist
 
 \noindent\url{https://github.com/alfa-yohannis/advanced-software-engineering/tree/main/projects/session-02/python}
 
-Eksperimen ini bertujuan untuk memperlihatkan bagaimana perilaku sistem terdistribusi dapat diamati melalui data runtime, tanpa harus melakukan analisis kode atau desain secara langsung. Fokus utama eksperimen adalah integrasi metrik, orkestrasi layanan observabilitas, serta interpretasi hasil pengamatan.
+Eksperimen ini bertujuan untuk memperlihatkan bagaimana perilaku sistem terdistribusi dapat diamati melalui data runtime, tanpa harus melakukan analisis kode atau desain secara langsung. Fokus utama eksperimen adalah integrasi metrik, orkestrasi\index{orkestrasi} layanan observabilitas, serta interpretasi hasil pengamatan.
 
 \subsection{Tahapan Eksperimen}
 
@@ -202,15 +204,15 @@ Eksperimen observabilitas dilakukan melalui beberapa tahapan berikut:
 
 Prometheus ditambahkan sebagai komponen observabilitas eksternal yang bertugas mengumpulkan metrik runtime dari seluruh node aplikasi. Prometheus dijalankan sebagai container dan dikonfigurasi untuk melakukan \emph{scraping} terhadap endpoint metrik yang diekspor oleh masing-masing node.
 
-Untuk memungkinkan setiap node aplikasi berbasis Python mengekspor metrik, digunakan library \texttt{prometheus-client}. Library ini dipasang pada seluruh node aplikasi, baik Capturer, Broker, Transformer, maupun Web Server.
+Untuk memungkinkan setiap node aplikasi berbasis Python mengekspor metrik, digunakan library \texttt{prometheus-client}. Library ini dipasang pada seluruh node aplikasi, baik Capturer, Broker, Transformer, maupun Web Server. Perintah lengkapnya ada pada Listing~\ref{lst:ch02-2}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memasang dependensi Python (2)}, label={lst:ch02-2}]
 pip install prometheus-client
 \end{lstlisting}
 
 Setelah library terpasang, setiap node menyediakan endpoint \texttt{/metrics} yang berisi metrik runtime dan dapat diakses oleh Prometheus eksternal. Endpoint ini tidak memengaruhi alur data utama sistem dan hanya berfungsi sebagai sumber observasi.
 
-Prometheus dijalankan sebagai layanan terpisah menggunakan Docker. Konfigurasi ini memungkinkan Prometheus mengumpulkan metrik dari seluruh node tanpa harus diinstal langsung pada host sistem.
+Prometheus dijalankan sebagai layanan terpisah menggunakan Docker\index{Docker}. Konfigurasi ini memungkinkan Prometheus mengumpulkan metrik dari seluruh node tanpa harus diinstal langsung pada host sistem.
 
 
 Pendekatan ini memastikan bahwa mekanisme observabilitas terisolasi dari alur data utama aplikasi, namun tetap mampu merekam perilaku sistem secara menyeluruh untuk keperluan analisis dan eksperimen observabilitas.
@@ -222,9 +224,9 @@ Kode pada node Capturer, Broker, Transformer, dan Web Server diperbarui untuk me
 
 Selain itu, ditambahkan \emph{shared library} metrik untuk memastikan konsistensi definisi metrik antar node, misalnya konsistensi penamaan metrik, label yang digunakan, serta tipe metrik (\texttt{Counter}, \texttt{Gauge}, \texttt{Histogram}). Shared library ini bertujuan mencegah duplikasi definisi metrik dan mengurangi risiko inkonsistensi antar node.
 
-Berikut contoh struktur minimal shared library metrik (misal: \texttt{shared/observability.py}):
+Berikut contoh struktur minimal shared library metrik (misal: \texttt{shared/observability.py}) (Listing~\ref{lst:ch02-3}):
 
-\begin{lstlisting}[style=PythonStyle]
+\begin{lstlisting}[style=PythonStyle, caption={Isi berkas shared/observability.py}, label={lst:ch02-3}]
 # shared/observability.py
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -256,9 +258,9 @@ processing_seconds = Histogram(
 )
 \end{lstlisting}
 
-Setiap node kemudian mengimpor shared library ini dan menjalankan server metrik. Contoh berikut menunjukkan pola umum yang dapat digunakan pada seluruh node:
+Setiap node kemudian mengimpor shared library ini dan menjalankan server metrik. Contoh berikut menunjukkan pola umum yang dapat digunakan pada seluruh node (Listing~\ref{lst:ch02-4}):
 
-\begin{lstlisting}[style=PythonStyle]
+\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen}, label={lst:ch02-4}]
 # contoh potongan umum pada node (capturer/broker/transformer/web)
 from prometheus_client import start_http_server
 from shared.metrics2 import frames_in_total, frames_out_total, processing_seconds
@@ -283,7 +285,9 @@ Berikut contoh penambahan metrik pada masing-masing node (cuplikan minimal):
 
 \begin{enumerate}
   \item \textbf{Capturer (Node A):} menghitung frame yang dihasilkan dan waktu akuisisi/publish.
-\begin{lstlisting}[style=PythonStyle]
+
+Listing~\ref{lst:ch02-5} menampilkan potongan kode pada Tahapan Eksperimen (2).
+\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (2)}, label={lst:ch02-5}]
 # di loop utama capturer
 from time import time
 from shared.metrics2 import frames_out_total, processing_seconds
@@ -296,7 +300,9 @@ processing_seconds.labels(service="capturer", stage="capture_publish").observe(t
 \end{lstlisting}
 
   \item \textbf{Broker:} menghitung pesan yang diteruskan (raw/processed) dan (opsional) ukuran antrean internal jika ada.
-\begin{lstlisting}[style=PythonStyle]
+
+Listing~\ref{lst:ch02-6} menampilkan potongan kode pada Tahapan Eksperimen (3).
+\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (3)}, label={lst:ch02-6}]
 from shared.metrics2 import frames_in_total, frames_out_total
 
 # saat menerima raw dari capturer
@@ -307,7 +313,9 @@ frames_out_total.labels(service="broker").inc()
 \end{lstlisting}
 
   \item \textbf{Transformer (Node B):} menghitung frame yang dikonsumsi dan yang diproduksi, serta latensi pemrosesan transformasi.
-\begin{lstlisting}[style=PythonStyle]
+
+Listing~\ref{lst:ch02-7} menampilkan potongan kode pada Tahapan Eksperimen (4).
+\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (4)}, label={lst:ch02-7}]
 from time import time
 from shared.metrics2 import frames_in_total, frames_out_total, processing_seconds
 
@@ -321,7 +329,9 @@ processing_seconds.labels(service="transformer", stage="transform").observe(time
 \end{lstlisting}
 
   \item \textbf{Web Server (Node C):} menghitung frame yang disajikan dan (opsional) latensi penyajian/streaming.
-\begin{lstlisting}[style=PythonStyle]
+
+Listing~\ref{lst:ch02-8} menampilkan potongan kode pada Tahapan Eksperimen (5).
+\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (5)}, label={lst:ch02-8}]
 from shared.metrics2 import frames_in_total, frames_out_total
 
 # saat menerima processed dari broker
@@ -342,9 +352,9 @@ Dua node baru ditambahkan ke dalam arsitektur sistem, yaitu \textbf{Prometheus} 
 Berkas \texttt{docker-compose.yml} diperbarui untuk menyertakan layanan Prometheus dan Grafana, serta mendefinisikan relasi jaringan antar seluruh container. Dengan pendekatan ini, seluruh sistem (node aplikasi + observabilitas) dapat dijalankan secara terorkestrasi melalui satu perintah.
 
 
-Berikut cuplikan konfigurasi layanan \texttt{prometheus} dan \texttt{grafana} pada \texttt{docker-compose.yml}. Prometheus memuat konfigurasi \texttt{prometheus.yml} melalui \emph{volume mount}, sedangkan Grafana disiapkan untuk berjalan sebagai container visualisasi.
+Berikut cuplikan konfigurasi layanan \texttt{prometheus} dan \texttt{grafana} pada \texttt{docker-compose.yml}. Prometheus memuat konfigurasi \texttt{prometheus.yml} melalui \emph{volume mount}, sedangkan Grafana disiapkan untuk berjalan sebagai container visualisasi. Listing~\ref{lst:ch02-9} memuat isi berkasnya.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Isi berkas docker-compose.yml}, label={lst:ch02-9}]
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -373,9 +383,9 @@ services:
 Konfigurasi di atas mengasumsikan node aplikasi (capturer, broker, transformer, web\_server) telah didefinisikan sebagai layanan lain dalam file \texttt{docker-compose.yml} yang sama, serta setiap node telah mengekspor endpoint \texttt{/metrics} pada port masing-masing.
 
 
-Berkas \texttt{prometheus.yml} mendefinisikan interval scraping serta daftar target endpoint metrik dari seluruh node aplikasi. Karena Prometheus berjalan di dalam jaringan Docker Compose, target diakses menggunakan \textbf{nama service} (bukan \texttt{localhost}).
+Berkas \texttt{prometheus.yml} mendefinisikan interval scraping serta daftar target endpoint metrik dari seluruh node aplikasi. Karena Prometheus berjalan di dalam jaringan Docker Compose\index{Docker Compose}, target diakses menggunakan \textbf{nama service} (bukan \texttt{localhost}). Isinya ada pada Listing~\ref{lst:ch02-10}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Isi berkas prometheus.yml}, label={lst:ch02-10}]
 global:
   scrape_interval: 5s
   evaluation_interval: 5s
@@ -453,7 +463,7 @@ Melalui eksperimen ini, peserta dapat mengamati bagaimana perubahan beban, alur 
 
 \section{Hasil Eksperimen}
 
-Bagian ini menyajikan hasil eksperimen observabilitas yang diperoleh dari sistem studi kasus berbasis pipeline Capturer--Broker--Transformer--Web Server. Hasil eksperimen dirangkum dalam dua tabel utama yang merepresentasikan karakteristik komponen pipeline dan dampak peningkatan jumlah klien pada sisi penyajian data.
+Bagian ini menyajikan hasil eksperimen observabilitas yang diperoleh dari sistem studi kasus berbasis pipeline\index{pipeline} Capturer--Broker--Transformer--Web Server. Hasil eksperimen dirangkum dalam dua tabel utama yang merepresentasikan karakteristik komponen pipeline dan dampak peningkatan jumlah klien pada sisi penyajian data.
 
 \subsection*{Analisis Komponen Pipeline}
 
@@ -462,6 +472,7 @@ Bagian ini menyajikan hasil eksperimen observabilitas yang diperoleh dari sistem
 \centering
 \caption{Ringkasan Peran dan Beban Kerja Setiap Komponen Sistem}
 \label{tab:pipeline-comparison-simple}
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|
 p{0.14\linewidth}|
 p{0.25\linewidth}|
@@ -500,7 +511,8 @@ Menyajikan hasil akhir ke pengguna melalui web &
 Sangat rendah (\textasciitilde 0\%) &
 Tinggi (\textasciitilde 193 MB) \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 
@@ -523,6 +535,7 @@ Secara keseluruhan, tabel ini menunjukkan bahwa observabilitas memungkinkan peme
 \centering
 \caption{Performa Web Server saat Jumlah Pengguna Bertambah}
 \label{tab:webserver_clients_simple}
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|
 p{0.25\linewidth}|
 p{0.15\linewidth}|
@@ -580,7 +593,8 @@ Jumlah koneksi/file yang terbuka &
 23 &
 Naik 5 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 
@@ -620,4 +634,25 @@ Bab ini memperkenalkan observabilitas sebagai pendekatan untuk memahami sistem t
 
 Studi kasus yang digunakan adalah pipeline terdistribusi berbasis broker dengan komponen Capturer, Broker, Transformer, dan Web Server, yang dilengkapi layanan Prometheus tertanam pada setiap node. Prometheus eksternal mengumpulkan metrik melalui scraping dan Grafana memvisualisasikannya melalui dashboard. Eksperimen menunjukkan bahwa tiap komponen memiliki karakteristik beban kerja berbeda sesuai fungsinya, serta peningkatan jumlah pengguna MJPEG dapat diamati melalui perubahan penggunaan sumber daya tanpa perubahan signifikan pada latensi. Melalui diskusi dan refleksi, peserta diajak mengaitkan observabilitas dengan prinsip-prinsip MDE, terutama gagasan bahwa dashboard dan metrik dapat dipandang sebagai model tingkat tinggi yang membantu menjembatani implementasi, eksekusi, dan perbaikan sistem secara iteratif.
 
+\section{Latihan}
 
+Kerjakan latihan berikut dengan tumpukan observabilitas pada proyek session-02.
+
+\begin{enumerate}
+  \item Jalankan sistem beserta Prometheus dan Grafana, lalu buka satu dasbor dan jelaskan perilaku sistem yang terlihat dengan bahasa Anda sendiri.
+  \item Pilih satu metrik yang menurut Anda paling penting bagi pengguna akhir, lalu jelaskan alasannya dari sisi pengalaman pengguna.
+  \item Bandingkan kondisi sistem dengan satu klien dan dengan enam klien MJPEG. Catat nilai yang berubah dan nilai yang tetap, lalu periksa apakah perbedaan itu berasal dari beban atau dari lama pengamatan.
+  \item Tambahkan satu metrik baru pada salah satu node, misalnya penghitung frame yang gagal diproses, lalu tampilkan pada dasbor.
+  \item Rancang metrik apa saja yang perlu ditambahkan bila sebuah node baru, misalnya \textit{filter}, dimasukkan ke dalam pipeline.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Prometheus Overview} \cite{doc-prometheus}: model data metrik, scraping, dan kueri PromQL.
+  \item \textit{Grafana Documentation} \cite{doc-grafana}: penyusunan dasbor dan sumber data.
+  \item \textit{What is OpenTelemetry?} \cite{doc-otel}: kerangka pengumpulan metrik, log, dan trace lintas bahasa.
+  \item \textit{Monitoring Distributed Systems} \cite{sre-monitoring}: pemilihan sinyal yang layak dipantau pada sistem terdistribusi.
+\end{itemize}

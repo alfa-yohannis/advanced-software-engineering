@@ -1,4 +1,4 @@
-\chapter{Pendekatan Berbasis Model untuk Otomasi Infrastruktur}\label{chap:mde-otomasi}
+\chapter[Pendekatan Berbasis Model untuk Otomasi]{Pendekatan Berbasis Model untuk Otomasi Infrastruktur}\label{chap:mde-otomasi}
 
 \section*{Tujuan Pembelajaran}
 
@@ -7,14 +7,14 @@ Setelah mempelajari bab ini, capaian pembelajaran yang diharapkan adalah sebagai
 \begin{enumerate}
     \item Memahami konsep \textit{Model-Driven Engineering} (MDE) dalam konteks otomasi infrastruktur perangkat lunak.
     \item Menjelaskan peran model, aturan transformasi, dan template dalam menghasilkan artefak \textit{Infrastructure as Code} (IaC) yang konsisten antar environment.
-    \item Menganalisis penerapan pendekatan berbasis model pada studi kasus proyek ini, mulai dari model input hingga artefak deployment Terraform dan Kubernetes.
+    \item Menganalisis penerapan pendekatan berbasis model pada studi kasus proyek ini, mulai dari model input hingga artefak deployment Terraform dan Kubernetes\index{Kubernetes}.
 \end{enumerate}
 
 \section{Pendahuluan}\label{sec:mde-pendahuluan}
 
 Pada bab sebelumnya, infrastruktur dibahas sebagai kode melalui pendekatan \textit{Infrastructure as Code} (IaC). Pendekatan tersebut memungkinkan definisi infrastruktur secara deklaratif dan terversi. Ketika jumlah environment bertambah serta variasi konfigurasi meningkat, pengelolaan langsung pada level berkas IaC masih berpotensi menimbulkan duplikasi, deviasi konfigurasi, dan beban pemeliharaan jangka panjang.
 
-Pendekatan berbasis model memperkenalkan tingkat abstraksi yang lebih tinggi. Fokus utama berada pada model konfigurasi inti, kemudian artefak teknis seperti Terraform dan Kubernetes dihasilkan melalui transformasi otomatis. Pola ini mendukung standardisasi lintas environment, ketertelusuran perubahan, dan efisiensi proses evolusi sistem.
+Pendekatan berbasis model memperkenalkan tingkat abstraksi yang lebih tinggi. Fokus utama berada pada model konfigurasi inti, kemudian artefak teknis seperti Terraform\index{Terraform} dan Kubernetes dihasilkan melalui transformasi otomatis. Pola ini mendukung standardisasi lintas environment, ketertelusuran perubahan, dan efisiensi proses evolusi sistem.
 
 \section{Latar Belakang dan Motivasi}\label{sec:mde-latar-belakang}
 
@@ -24,13 +24,14 @@ MDE menjawab persoalan tersebut melalui tiga elemen yang saling terkait. Pertama
 
 \section{Konsep Model-Driven Engineering}\label{sec:mde-konsep}
 
-\subsection{Metamodel, Model, dan Instance}\label{subsec:mde-metamodel-model-instance}
+\subsection[Metamodel, Model, dan Instancesubsec]{Metamodel, Model, dan Instance}\label{subsec:mde-metamodel-model-instance}
 
 Metamodel mendefinisikan bentuk valid dari model, termasuk atribut wajib, tipe data, dan relasi yang diizinkan. Model menyatakan konfigurasi pada tingkat abstraksi domain, misalnya parameter environment dan aturan variasi. Instance merupakan hasil konkret dari model setelah transformasi dieksekusi, misalnya berkas Terraform dan Kubernetes untuk environment tertentu. Relasi ketiga tingkat abstraksi tersebut ditunjukkan pada Gambar~\ref{fig:mde-metamodel-model-instance}.
 
 \begin{figure}[htbp]
 \centering
 \scalebox{0.7}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   font=\small,
   >=latex,
@@ -56,7 +57,8 @@ Metamodel mendefinisikan bentuk valid dari model, termasuk atribut wajib, tipe d
   \draw[->] (metamodel.east) -- (model.west) node[midway, above, lbl] {conformance};
   \draw[->] (model.east) -- (instance.west) node[midway, above, lbl] {transformasi};
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }%
 \caption{Relasi metamodel, model, dan instance pada pendekatan MDE untuk otomasi infrastruktur.}
 \label{fig:mde-metamodel-model-instance}
@@ -68,15 +70,15 @@ Diagram pada Gambar~\ref{fig:mde-metamodel-model-instance} menegaskan dua alur u
 
 \textbf{Contoh 2.} Pada manufaktur berbasis 3D printer, metamodel mendefinisikan struktur desain, misalnya objek harus memiliki dimensi, ketebalan minimum, dan format berkas tertentu. Model adalah rancangan komponen elektronik, misalnya casing sensor, yang telah sesuai aturan desain. Instance adalah hasil cetak nyata dari 3D printer berupa satu komponen fisik yang siap dipasang pada perangkat elektronik.
 
-\subsection{Pemodelan Tekstual untuk Infrastruktur}\label{subsec:mde-pemodelan-tekstual}
+\subsection[Pemodelan Tekstual untuk Infrastruktursubsec]{Pemodelan Tekstual untuk Infrastruktur}\label{subsec:mde-pemodelan-tekstual}
 
-Pemodelan tekstual menggunakan format yang mudah dibaca manusia dan mudah diproses mesin, misalnya YAML. Pilihan ini mendukung \textit{version control}, \textit{code review}, dan validasi otomatis. Integrasi dengan pipeline CI/CD juga lebih langsung karena tidak membutuhkan tooling visual khusus.
+Pemodelan tekstual menggunakan format yang mudah dibaca manusia dan mudah diproses mesin, misalnya YAML. Pilihan ini mendukung \textit{version control}, \textit{code review}, dan validasi otomatis. Integrasi dengan pipeline\index{pipeline} CI/CD juga lebih langsung karena tidak membutuhkan tooling visual khusus.
 
-\subsection{Generasi Kode dalam Alur Kerja DevOps}\label{subsec:mde-generasi-kode}
+\subsection[Generasi Kode dalam Alur Kerja DevOpssubsec]{Generasi Kode dalam Alur Kerja DevOps}\label{subsec:mde-generasi-kode}
 
 Generasi kode ditempatkan setelah pembaruan model dan sebelum provisioning/deployment. Urutan proses dimulai dari pembaruan model environment, dilanjutkan eksekusi generator berbasis template, verifikasi artefak hasil generasi, kemudian penerapan artefak ke environment target. Pemisahan antara \textit{what to configure} dan \textit{how to materialize} membuat perubahan lebih terkontrol.
 
-\section{Keuntungan dan Kerugian Umum Pendekatan MDE}\label{sec:mde-keuntungan-kerugian-umum}
+\section[Keuntungan dan Kerugian Umum Pendekatan]{Keuntungan dan Kerugian Umum Pendekatan MDE}\label{sec:mde-keuntungan-kerugian-umum}
 
 Secara umum, MDE menawarkan efisiensi tinggi pada pengelolaan sistem yang memiliki banyak variasi konfigurasi, tetapi membutuhkan investasi awal pada desain model dan pipeline transformasi.
 
@@ -88,11 +90,11 @@ Keuntungan umum yang paling sering diperoleh dari pendekatan MDE meliputi konsis
 
 Kerugian umum MDE berada pada biaya adopsi awal, terutama saat merancang metamodel, struktur template, dan pengujian generator. Kompleksitas debugging juga dapat meningkat karena sumber masalah bisa muncul pada beberapa lapisan sekaligus, yaitu model, transformasi, atau template. Risiko lain adalah \textit{over-engineering} jika domain masalah sebenarnya sederhana, sehingga biaya pemeliharaan kerangka MDE tidak sebanding dengan manfaat yang diperoleh.
 
-\section{Contoh Aplikasi MDE di Dunia Industri}\label{sec:mde-industri}
+\section[Contoh Aplikasi MDE di Dunia Industrisec]{Contoh Aplikasi MDE di Dunia Industri}\label{sec:mde-industri}
 
 Penerapan MDE di dunia industri umumnya muncul pada domain dengan kompleksitas sistem tinggi, regulasi ketat, dan kebutuhan variasi produk yang besar. Pada kondisi tersebut, pendekatan berbasis model membantu menjaga konsistensi desain sekaligus mempercepat proses turunan produk.
 
-\subsection{Sektor dan Pola Penggunaan}\label{subsec:mde-sektor-penggunaan}
+\subsection[Sektor dan Pola Penggunaansubsec]{Sektor dan Pola Penggunaan}\label{subsec:mde-sektor-penggunaan}
 
 Pada industri otomotif, MDE banyak dipakai untuk rekayasa perangkat lunak kendaraan, arsitektur ECU, dan integrasi sistem berbasis standar seperti AUTOSAR. Pada industri aviasi dan pertahanan, pola penggunaan berfokus pada \textit{model-based systems engineering} untuk desain sistem lintas disiplin, analisis dependensi, dan ketertelusuran kebutuhan hingga implementasi. Pada industri manufaktur dan otomasi, MDE sering dipakai untuk \textit{digital twin}, desain lini produksi, serta rekayasa konfigurasi sistem kontrol.
 
@@ -100,33 +102,34 @@ Pada industri otomotif, MDE banyak dipakai untuk rekayasa perangkat lunak kendar
 
 Perusahaan yang sering diasosiasikan dengan praktik berbasis model meliputi Siemens, Bosch, BMW Group, Mercedes-Benz, Volkswagen Group, Airbus, Boeing, ABB, dan Schneider Electric. Bentuk implementasi di tiap perusahaan dapat berbeda, mulai dari level pemodelan arsitektur, generasi konfigurasi, hingga otomasi artefak implementasi dan validasi.
 
-\subsection{Relevansi untuk Proyek Ini}\label{subsec:mde-relevansi-proyek}
+\subsection[Relevansi untuk Proyek Inisubsec]{Relevansi untuk Proyek Ini}\label{subsec:mde-relevansi-proyek}
 
 Relevansi terhadap proyek ini terletak pada prinsip yang sama: variasi konfigurasi dikelola pada level model, kemudian diturunkan menjadi instance deployment secara otomatis. Meskipun skala proyek berbeda dari skala industri besar, pola \textit{single source of truth}, transformasi terstruktur, dan generasi artefak konsisten tetap sejalan dengan praktik industrial MDE.
 
-\section{Potensi Pendekatan MDE dalam Praktik DevOps}\label{sec:mde-devops-potensi}
+\section[Potensi Pendekatan MDE dalam Praktik]{Potensi Pendekatan MDE dalam Praktik DevOps}\label{sec:mde-devops-potensi}
 
-Potensi utama MDE dalam DevOps berada pada kemampuan menyatukan desain konfigurasi, otomasi pipeline, dan kontrol kualitas dalam satu alur yang konsisten. Ketika model dipakai sebagai sumber kebenaran, proses CI/CD tidak hanya menjalankan \textit{build-test-deploy}, tetapi juga menegakkan aturan validasi konfigurasi sebelum artefak deployment dibentuk.
+Potensi utama MDE dalam DevOps berada pada kemampuan menyatukan desain konfigurasi, otomasi pipeline, dan kontrol kualitas dalam satu alur yang konsisten. Ketika model dipakai sebagai sumber kebenaran, proses CI/CD\index{CI/CD} tidak hanya menjalankan \textit{build-test-deploy}, tetapi juga menegakkan aturan validasi konfigurasi sebelum artefak deployment dibentuk.
 
-\subsection{Integrasi dengan Pipeline CI/CD}\label{subsec:mde-devops-cicd}
+\subsection[Integrasi dengan Pipeline CI/CDsubsec]{Integrasi dengan Pipeline CI/CD}\label{subsec:mde-devops-cicd}
 
 Dalam pipeline DevOps, tahap awal dapat memvalidasi model dan metamodel, tahap tengah dapat menjalankan transformasi model ke artefak IaC, dan tahap akhir dapat menjalankan verifikasi sintaks serta kebijakan keamanan sebelum deployment. Pola ini mengurangi kegagalan yang biasanya baru terlihat pada fase runtime, karena banyak kesalahan sudah dicegah di fase model.
 
-\subsection{Dukungan untuk Governance dan Compliance}\label{subsec:mde-devops-governance}
+\subsection[Dukungan untuk Governance]{Dukungan untuk Governance dan Compliance}\label{subsec:mde-devops-governance}
 
 MDE juga berpotensi memperkuat governance karena aturan organisasi dapat ditanamkan pada metamodel dan template. Dengan cara ini, kebijakan seperti standar penamaan resource, batasan konfigurasi sensitif, atau kewajiban komponen keamanan dapat diterapkan otomatis pada seluruh environment tanpa inspeksi manual berulang.
 
-\subsection{Skalabilitas Operasional Multi-Environment}\label{subsec:mde-devops-multienv}
+\subsection[Skalabilitas Operasional]{Skalabilitas Operasional Multi-Environment}\label{subsec:mde-devops-multienv}
 
 Pada organisasi dengan banyak environment dan banyak tim, MDE membantu menjaga ritme perubahan tetap cepat tanpa mengorbankan konsistensi. Penambahan environment baru dapat dilakukan lewat perubahan model yang terbatas, lalu dipropagasikan melalui pipeline ke artefak instance yang seragam. Pendekatan ini sangat relevan untuk DevOps modern yang menuntut frekuensi rilis tinggi dan reliabilitas konfigurasi yang stabil.
 
-\section{Pendekatan Berbasis Model yang Diusulkan}\label{sec:mde-pendekatan}
+\section[Pendekatan Berbasis Model yang Diusulkansec]{Pendekatan Berbasis Model yang Diusulkan}\label{sec:mde-pendekatan}
 
 Pendekatan pada proyek ini menempatkan model dan template sebagai dua input utama bagi mesin transformasi. Model menyediakan data dan variasi environment, sedangkan template menyediakan struktur artefak target. Komponen utama serta alur kerja antar komponen dirangkum pada Gambar~\ref{fig:mde-pendekatan-arsitektur}.
 
 \begin{figure}[htbp]
 \centering
 \scalebox{0.6}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   font=\small,
   >=latex,
@@ -164,7 +167,8 @@ Pendekatan pada proyek ini menempatkan model dan template sebagai dua input utam
   };
 
   \draw[->, dashed] (transformers.south) -- (mekanisme.north);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }%
 \caption{Pendekatan berbasis model dengan dua input ke mesin transformasi: models dan templates.}
 \label{fig:mde-pendekatan-arsitektur}
@@ -180,19 +184,19 @@ Model sumber pada proyek ini berada di \texttt{mde/models}. Berkas \texttt{envir
 
 Aturan transformasi diimplementasikan pada \texttt{mde/transformers/generate.py}. Proses dimulai dari pemuatan model YAML, penggabungan \textit{defaults} dengan override environment, pembentukan atribut turunan, evaluasi kondisi \texttt{when} untuk artefak opsional, lalu rendering template Jinja2 ke direktori keluaran. Struktur ini menjaga model tetap ringkas namun tetap mampu menghasilkan artefak deployment lengkap.
 
-\subsection{Generasi Artefak Berbasis Template}\label{subsec:mde-template}
+\subsection[Generasi Artefak Berbasis Templatesubsec]{Generasi Artefak Berbasis Template}\label{subsec:mde-template}
 
 Template berada di \texttt{mde/templates} dan dipisahkan ke template inti serta template spesifik environment. Template inti dipakai untuk artefak bersama lintas environment, sedangkan template environment menggunakan context model untuk menyisipkan variasi nilai. Pendekatan ini menekan duplikasi dan menjaga konsistensi struktur berkas hasil generasi.
 
-\subsection{Ketertelusuran dari Model ke Artefak Deployment}\label{subsec:mde-traceability}
+\subsection[Ketertelusuran dari Model ke Artefak]{Ketertelusuran dari Model ke Artefak Deployment}\label{subsec:mde-traceability}
 
 Ketertelusuran dijaga melalui rantai model $\rightarrow$ aturan transformasi $\rightarrow$ template $\rightarrow$ artefak akhir. Ketika perubahan perilaku deployment terjadi, sumber perubahan dapat ditelusuri ke level model, logika generator, atau template. Pemisahan tanggung jawab tersebut memperkuat auditabilitas dan mengurangi risiko perubahan tidak terkontrol.
 
-\section{Pendalaman Komponen Folder \texttt{mde}}\label{sec:mde-komponen-folder}
+\section[Pendalaman Komponen Folder mdesec]{Pendalaman Komponen Folder \texttt{mde}}\label{sec:mde-komponen-folder}
 
-Folder \texttt{mde} berperan sebagai inti otomasi berbasis model. Komponen \texttt{models} mendefinisikan konfigurasi dan variasi environment. Komponen \texttt{transformers} menjalankan aturan transformasi. Komponen \texttt{templates} mematerialisasi konteks model menjadi sintaks Terraform dan Kubernetes.
+Folder \texttt{mde} berperan sebagai inti otomasi berbasis model. Komponen \texttt{models} mendefinisikan konfigurasi dan variasi environment. Komponen \texttt{transformers} menjalankan aturan transformasi. Komponen \texttt{templates} mematerialisasi konteks model menjadi sintaks Terraform dan Kubernetes. Perintahnya ada pada Listing~\ref{lst:ch07-1}.
 
-\begin{lstlisting}[language=bash,caption={Listing: Struktur komponen utama folder mde}]
+\begin{lstlisting}[language=bash,caption={Listing: Struktur komponen utama folder mde}, label={lst:ch07-1}]
 mde/
 |-- README.md
 |-- models/
@@ -209,13 +213,16 @@ mde/
     `-- kubernetes/overlay/*.j2
 \end{lstlisting}
 
-\subsection{Komponen \texttt{models}: Definisi Variasi Environment}\label{subsec:mde-models}
+\subsection[Komponen models]{Komponen \texttt{models}: Definisi Variasi Environment}\label{subsec:mde-models}
 
 Direktori \texttt{models} menyimpan model deklaratif sistem melalui \texttt{environments.yaml} dan \texttt{files.yaml}. Berkas pertama memuat \textit{defaults} dan daftar environment, sedangkan berkas kedua mendefinisikan aturan render dari template ke berkas output. Struktur ini membuat variasi environment terlihat eksplisit pada level model.
 
+
+Gambar~\ref{fig:mde-models-inheritance} menampilkan model variasi environment dengan pola inheritance: setiap environment mewarisi defaults dan hanya mengisi nilai override yang diperlukan..
 \begin{figure}[htbp]
 \centering
 \scalebox{0.85}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   classbox/.style={draw, rounded corners=2pt, align=left, font=\scriptsize, inner sep=4pt},
   basebox/.style={classbox, fill=blue!8, text width=3.4cm},
@@ -256,13 +263,16 @@ Direktori \texttt{models} menyimpan model deklaratif sistem melalui \texttt{envi
 \draw[inh] (dev.north) -- (base.south) node[midway, left, xshift=-1mm] {\scriptsize inherits};
 \draw[inh] (stg.north) -- (base.south) node[midway, right, xshift=1mm] {\scriptsize inherits};
 \draw[inh] (prod.north) -- (base.south) node[midway, right, xshift=1mm] {\scriptsize inherits};
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }%
 \caption{Model variasi environment dengan pola inheritance: setiap environment mewarisi \textit{defaults} dan hanya mengisi nilai override yang diperlukan.}
 \label{fig:mde-models-inheritance}
 \end{figure}
 
-\begin{lstlisting}[language=bash,caption={Listing: Cuplikan model environment (mde/models/environments.yaml)}]
+
+Listing~\ref{lst:ch07-2} menampilkan potongan kode pada Komponen models.
+\begin{lstlisting}[language=bash,caption={Listing: Cuplikan model environment (mde/models/environments.yaml)}, label={lst:ch07-2}]
 defaults:
   worker_replicas: 1
   include_replicas_patch: false
@@ -280,9 +290,9 @@ environments:
     include_pdb: true
 \end{lstlisting}
 
-Relasi model-ke-artefak pada \texttt{files.yaml} menggunakan atribut \texttt{when} untuk mengatur berkas opsional. Pendekatan ini mengikat keputusan desain ke model sehingga alasan keberadaan suatu berkas dapat ditelusuri secara langsung.
+Relasi model-ke-artefak pada \texttt{files.yaml} menggunakan atribut \texttt{when} untuk mengatur berkas opsional. Pendekatan ini mengikat keputusan desain ke model sehingga alasan keberadaan suatu berkas dapat ditelusuri secara langsung. Perintah lengkapnya ada pada Listing~\ref{lst:ch07-3}.
 
-\begin{lstlisting}[language=bash,caption={Listing: Cuplikan aturan render file (mde/models/files.yaml)}]
+\begin{lstlisting}[language=bash,caption={Listing: Cuplikan aturan render file (mde/models/files.yaml)}, label={lst:ch07-3}]
 env_files:
   - template: terraform/env/tfvars.j2
     output: terraform/{{ name }}/{{ tfvars_filename }}
@@ -296,11 +306,11 @@ env_files:
     when: include_pdb
 \end{lstlisting}
 
-\subsection{Komponen \texttt{transformers}: Mesin Eksekusi Aturan}\label{subsec:mde-transformers}
+\subsection[Komponen transformers]{Komponen \texttt{transformers}: Mesin Eksekusi Aturan}\label{subsec:mde-transformers}
 
-Direktori \texttt{transformers} berisi logika transformasi pada \texttt{generate.py}. Fungsi pembentuk context memperlihatkan penggunaan \textit{derived attributes} agar model tetap ringkas tetapi context render tetap lengkap dan konsisten.
+Direktori \texttt{transformers} berisi logika transformasi pada \texttt{generate.py}. Fungsi pembentuk context memperlihatkan penggunaan \textit{derived attributes} agar model tetap ringkas tetapi context render tetap lengkap dan konsisten. Listing~\ref{lst:ch07-4} memuat perintahnya.
 
-\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan fungsi pembentuk context (mde/transformers/generate.py)}]
+\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan fungsi pembentuk context (mde/transformers/generate.py)}, label={lst:ch07-4}]
 def enrich_environment_context(defaults, env_cfg, output_root):
     context = merge_dicts(defaults, env_cfg)
 
@@ -315,9 +325,9 @@ def enrich_environment_context(defaults, env_cfg, output_root):
     return context
 \end{lstlisting}
 
-Fungsi evaluasi kondisi berikut memperlihatkan bahwa keputusan render berkas opsional ditentukan oleh nilai context hasil model.
+Fungsi evaluasi kondisi berikut memperlihatkan bahwa keputusan render berkas opsional ditentukan oleh nilai context hasil model. Perintahnya ada pada Listing~\ref{lst:ch07-5}.
 
-\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan evaluasi kondisi file opsional (mde/transformers/generate.py)}]
+\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan evaluasi kondisi file opsional (mde/transformers/generate.py)}, label={lst:ch07-5}]
 def should_render(record, context):
     condition = record.get("when")
     if not condition:
@@ -325,11 +335,11 @@ def should_render(record, context):
     return bool(context.get(condition, False))
 \end{lstlisting}
 
-\subsection{Komponen \texttt{templates}: Materialisasi ke Artefak IaC}\label{subsec:mde-templates}
+\subsection[Komponen templates]{Komponen \texttt{templates}: Materialisasi ke Artefak IaC}\label{subsec:mde-templates}
 
-Direktori \texttt{templates} memuat representasi target deployment dalam format Jinja2. Template Terraform menghasilkan \texttt{main.tf} dan \texttt{*.tfvars}, sedangkan template Kubernetes menghasilkan \texttt{kustomization.yaml}, patch, ingress, dan berkas opsional lain sesuai context.
+Direktori \texttt{templates} memuat representasi target deployment dalam format Jinja2. Template Terraform menghasilkan \texttt{main.tf} dan \texttt{*.tfvars}, sedangkan template Kubernetes menghasilkan \texttt{kustomization.yaml}, patch, ingress, dan berkas opsional lain sesuai context. Perintah lengkapnya ada pada Listing~\ref{lst:ch07-6}.
 
-\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan template tfvars (mde/templates/terraform/env/tfvars.j2)}]
+\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan template tfvars (mde/templates/terraform/env/tfvars.j2)}, label={lst:ch07-6}]
 mp3_bucket     = "{{ mp3_bucket }}"
 internal_token = "{{ internal_token }}"
 
@@ -340,7 +350,9 @@ minio_root_user = "{{ minio_root_user }}"
 worker_replicas = {{ worker_replicas }}
 \end{lstlisting}
 
-\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan template overlay (mde/templates/kubernetes/overlay/kustomization.yaml.j2)}]
+
+Listing~\ref{lst:ch07-7} menampilkan potongan kode pada Komponen templates.
+\begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan template overlay (mde/templates/kubernetes/overlay/kustomization.yaml.j2)}, label={lst:ch07-7}]
 resources:
   - ../../base
   - ingress-api.yaml
@@ -366,35 +378,35 @@ Alur komponen \texttt{mde} dimulai dari definisi parameter pada \texttt{models},
 
 \subsection{Gambaran Umum Proyek}\label{subsec:mde-gambaran-proyek}
 
-Proyek ini membangun stack layanan \textit{text-to-speech} berbasis microservices. Domain Terraform digunakan untuk provisioning komponen infrastruktur, sedangkan domain Kubernetes dengan Kustomize digunakan untuk orkestrasi layanan aplikasi. Folder \texttt{mde} berfungsi sebagai generator artefak IaC, dan folder \texttt{iac} merepresentasikan artefak deployment untuk environment \texttt{dev}, \texttt{staging}, dan \texttt{prod}.
+Proyek ini membangun stack layanan \textit{text-to-speech} berbasis microservices. Domain Terraform digunakan untuk provisioning komponen infrastruktur, sedangkan domain Kubernetes dengan Kustomize digunakan untuk orkestrasi\index{orkestrasi} layanan aplikasi. Folder \texttt{mde} berfungsi sebagai generator artefak IaC, dan folder \texttt{iac} merepresentasikan artefak deployment untuk environment \texttt{dev}, \texttt{staging}, dan \texttt{prod}.
 
-\subsection{Model Input (\texttt{mde/models/environments.yaml}, \texttt{mde/models/files.yaml})}\label{subsec:mde-model-input}
+\subsection[Model Input]{Model Input (\texttt{mde/models/environments.yaml}, \texttt{mde/models/files.yaml})}\label{subsec:mde-model-input}
 
 Berkas \texttt{environments.yaml} memungkinkan override konfigurasi per environment di atas nilai default. Contoh pada repository menunjukkan \texttt{staging} menggunakan \texttt{worker\_replicas = 2}, sedangkan \texttt{prod} menggunakan \texttt{worker\_replicas = 4} dengan \texttt{include\_pdb} aktif. Berkas \texttt{files.yaml} membagi transformasi ke \texttt{core\_files} dan \texttt{env\_files}, sehingga struktur output konsisten dengan variasi parameter yang tetap terkontrol.
 
-\subsection{Mesin Transformasi (\texttt{mde/transformers/generate.py})}\label{subsec:mde-mesin-transformasi}
+\subsection[Mesin Transformasi]{Mesin Transformasi (\texttt{mde/transformers/generate.py})}\label{subsec:mde-mesin-transformasi}
 
 Generator berjalan secara deterministik: membaca model, menyiapkan context environment, merender template berdasarkan kondisi \texttt{when}, lalu menulis artefak ke direktori target dengan default \texttt{outputs/}. Proses regenerasi dapat diulang dengan hasil struktur yang stabil untuk area yang dikelola generator.
 
-\subsection{Kumpulan Template (Jinja untuk Terraform dan Kubernetes)}\label{subsec:mde-kumpulan-template}
+\subsection[Kumpulan Template]{Kumpulan Template (Jinja untuk Terraform dan Kubernetes)}\label{subsec:mde-kumpulan-template}
 
 Template environment Terraform menghasilkan \texttt{main.tf} dan \texttt{*.tfvars}. Template overlay Kubernetes menghasilkan \texttt{kustomization.yaml}, patch image, patch HPA, patch replika opsional, ingress, serta PDB opsional. Satu template dapat dipakai lintas environment karena variasi dikendalikan oleh context model.
 
-\subsection{Output Hasil Generasi (\texttt{outputs/terraform}, \texttt{outputs/kubernetes})}\label{subsec:mde-output-generasi}
+\subsection[Output Hasil Generasi]{Output Hasil Generasi (\texttt{outputs/terraform}, \texttt{outputs/kubernetes})}\label{subsec:mde-output-generasi}
 
 Secara desain, keluaran generasi ditempatkan di \texttt{outputs}. Pada repository ini, bentuk target yang setara terlihat pada \texttt{iac/terraform/*} dan \texttt{iac/kubernetes/*}. Pemisahan area pemodelan dan area konsumsi deployment membuat alur kerja lebih terstruktur dan mudah ditelusuri.
 
-\subsection{Skenario Contoh: Menambahkan Environment Baru (mis. \texttt{qa})}\label{subsec:mde-skenario-qa}
+\subsection[Skenario Contoh]{Skenario Contoh: Menambahkan Environment Baru (mis. \texttt{qa})}\label{subsec:mde-skenario-qa}
 
 Penambahan environment baru dilakukan dengan menambahkan entri \texttt{qa} pada \texttt{environments.yaml}, menetapkan override yang diperlukan, menjalankan generator, lalu meninjau artefak Terraform dan Kubernetes hasil generasi. Pendekatan ini menghindari penyalinan folder manual dan menjaga konvensi struktur secara konsisten.
 
-\subsection{Artefak Deployment yang Dihasilkan dan Variasi Environment}\label{subsec:mde-variasi-environment}
+\subsection[Artefak Deployment yang Dihasilkan]{Artefak Deployment yang Dihasilkan dan Variasi Environment}\label{subsec:mde-variasi-environment}
 
 Variasi environment dapat diamati pada perbedaan artefak \texttt{dev} dan \texttt{prod}. Konfigurasi \texttt{dev} cenderung minimal, sedangkan \texttt{prod} memuat replika lebih tinggi, patch replika aktif, dan resource PDB pada overlay Kubernetes. Perbedaan ini menunjukkan fungsi MDE sebagai mekanisme formal pengelolaan variasi environment.
 
 \section{Evaluasi}\label{sec:mde-evaluasi}
 
-\subsection{Dampak Kualitatif Pendekatan}\label{subsec:mde-dampak-kualitatif}
+\subsection[Dampak Kualitatif Pendekatansubsec]{Dampak Kualitatif Pendekatan}\label{subsec:mde-dampak-kualitatif}
 
 Dampak utama pendekatan berbasis model pada studi kasus ini dapat dirangkum sebagai berikut:
 \begin{itemize}
@@ -406,7 +418,7 @@ Dampak utama pendekatan berbasis model pada studi kasus ini dapat dirangkum seba
     \item Proses review lebih ringkas, waktu diagnosis lebih pendek, dan \textit{rework} pasca-deployment berkurang karena artefak dibentuk secara deterministik.
 \end{itemize}
 
-\subsection{Kerangka Pengukuran Kuantitatif}\label{subsec:mde-pengukuran-kuantitatif}
+\subsection[Kerangka Pengukuran Kuantitatifsubsec]{Kerangka Pengukuran Kuantitatif}\label{subsec:mde-pengukuran-kuantitatif}
 
 Pengukuran manfaat dapat dilakukan dengan rancangan \textit{before-after} pada periode yang sama. Langkah pengukuran yang direkomendasikan adalah:
 \begin{enumerate}
@@ -418,7 +430,7 @@ Pengukuran manfaat dapat dilakukan dengan rancangan \textit{before-after} pada p
     \item Ukur perbandingan \textit{Lines of Code} (LoC) antara model dan instance untuk melihat leverage pendekatan berbasis model.
 \end{enumerate}
 
-Untuk metrik LoC, gunakan tiga indikator: \textit{Model LoC} (total baris sumber model seperti \texttt{environments.yaml} dan \texttt{files.yaml}), \textit{Instance LoC} (total baris artefak hasil generasi Terraform dan Kubernetes), dan \textit{LoC Compression Ratio} dengan rumus:
+Untuk metrik\index{metrik} LoC, gunakan tiga indikator: \textit{Model LoC} (total baris sumber model seperti \texttt{environments.yaml} dan \texttt{files.yaml}), \textit{Instance LoC} (total baris artefak hasil generasi Terraform dan Kubernetes), dan \textit{LoC Compression Ratio} dengan rumus:
 $$
 \text{Compression Ratio} = \frac{\text{Instance LoC}}{\text{Model LoC}}
 $$
@@ -430,8 +442,30 @@ $$
 \frac{\text{nilai awal} - \text{nilai sesudah}}{\text{nilai awal}} \times 100\%
 $$
 
-\section{Kesimpulan dan Pekerjaan Lanjutan}\label{sec:mde-kesimpulan}
+\section[Kesimpulan dan Pekerjaan Lanjutansec]{Kesimpulan dan Pekerjaan Lanjutan}\label{sec:mde-kesimpulan}
 
 MDE menyediakan pendekatan sistematis untuk mengelola kompleksitas infrastruktur multi-environment. Pada studi kasus proyek ini, model YAML, generator Python, dan template Jinja2 membentuk rantai transformasi yang jelas dari abstraksi konfigurasi ke artefak deployment.
 
 Pendekatan ini menjaga konsistensi, mengurangi duplikasi, dan mempermudah ekspansi environment. Pekerjaan lanjutan dapat diarahkan pada validasi skema model, pengujian otomatis artefak hasil generasi, dan integrasi pipeline CI agar regenerasi serta verifikasi berjalan pada setiap perubahan model.
+
+\section{Latihan}
+
+Kerjakan latihan berikut pada folder \texttt{mde} proyek session-07.
+
+\begin{enumerate}
+  \item Tambahkan satu lingkungan baru, misalnya \texttt{qa}, pada \texttt{environments.yaml}. Jalankan generator, lalu daftarkan berkas apa saja yang muncul dan berkas mana yang berubah.
+  \item Ubah satu templat Jinja2, jalankan generator, lalu hitung berapa banyak berkas keluaran yang ikut berubah oleh satu perubahan tersebut.
+  \item Bandingkan jumlah baris yang harus Anda ubah untuk menambah satu variabel lingkungan pada tiga lingkungan, dengan generator dan tanpa generator.
+  \item Isi satu nilai yang salah tipe pada model, jalankan generator, dan catat pada tahap mana kesalahan itu terdeteksi. Usulkan cara agar kesalahan serupa tertangkap lebih awal.
+  \item Tentukan batas kelayakan pendekatan berbasis model. Pada ukuran sistem dan jumlah lingkungan seperti apa menulis berkas secara langsung masih lebih murah?
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Jinja Documentation} \cite{doc-jinja}: sintaks templat yang dipakai generator infrastruktur.
+  \item \textit{Model-Driven Engineering} \cite{schmidt2006mde}: gagasan menaikkan tingkat abstraksi melalui model.
+  \item \textit{Model-Driven Software Engineering in Practice} \cite{brambilla2017mdse}: peran model, metamodel, dan transformasi dalam praktik.
+\end{itemize}

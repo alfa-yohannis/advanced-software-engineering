@@ -84,7 +84,7 @@ bab-bab berikutnya.
 \section{Gambaran Umum Sistem Perangkat Lunak Contoh}
 
 Sistem perangkat lunak contoh yang digunakan dalam bab ini merupakan sebuah
-pipeline runtime terdistribusi berskala kecil yang terdiri dari beberapa node
+pipeline\index{pipeline} runtime terdistribusi berskala kecil yang terdiri dari beberapa node
 yang saling bekerja sama. Setiap node dijalankan sebagai proses independen dan
 berkomunikasi dengan node lain pada saat runtime. Sistem ini dirancang secara
 sengaja agar mudah diamati, mudah dikonfigurasi, dan mudah dijalankan, namun tetap
@@ -92,7 +92,8 @@ mewakili sistem perangkat lunak multi-komponen yang realistis.
 
 \begin{figure}[htbp]
 \centering
-\scalebox{1.1}{
+\adjustbox{max width=\textwidth}{%
+{
 \begin{tikzpicture}[
   font=\small\bfseries,
   node distance=9mm and 12mm,
@@ -123,7 +124,8 @@ mewakili sistem perangkat lunak multi-komponen yang realistis.
 \draw[arrow] (broker.south) -- node[right,xshift=3mm]{SUB \texttt{processed}} (web.north);
 \draw[arrow] (web.west) -- node[above]{HTTP MJPEG} (browser.east);
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Data flow architecture using broker-based publish--subscribe communication}
 \label{fig:broker-pubsub-architecture}
@@ -161,7 +163,7 @@ ke web server menggunakan topik \texttt{processed}. Setiap node bereaksi secara
 mandiri terhadap pesan yang diterima, dan perilaku keseluruhan sistem muncul dari
 interaksi runtime, bukan dari kontrol terpusat.
 
-Eksekusi sistem dikelola menggunakan container, sehingga setiap node beroperasi
+Eksekusi sistem dikelola menggunakan container\index{container}, sehingga setiap node beroperasi
 dalam lingkungan terisolasi dengan konfigurasi masing-masing. Perilaku sistem
 dikendalikan melalui environment variable, termasuk endpoint koneksi, laju
 publikasi, dan parameter pemrosesan. Perubahan parameter tersebut mengubah
@@ -186,7 +188,7 @@ lingkungan eksekusi yang konsisten pada berbagai sistem operasi dan mengurangi
 pengaruh perbedaan platform terhadap perilaku runtime.
 
 Platform eksekusi utama yang digunakan adalah teknologi container, khususnya
-Docker. Docker memungkinkan sistem contoh dikemas bersama seluruh dependensi yang
+Docker\index{Docker}. Docker memungkinkan sistem contoh dikemas bersama seluruh dependensi yang
 dibutuhkan dan dijalankan secara seragam pada berbagai mesin. Melalui
 containerization, sistem yang sama dapat dijalankan pada Windows, macOS, maupun
 Linux tanpa memerlukan konfigurasi sistem tingkat rendah yang rumit.
@@ -288,9 +290,9 @@ Proses instalasi meliputi langkah-langkah berikut:
 \end{itemize}
 
 Setelah instalasi selesai, verifikasi dilakukan dengan membuka Command Prompt dan
-menjalankan perintah berikut:
+menjalankan perintah berikut (Listing~\ref{lst:ch01-1}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa versi Python}, label={lst:ch01-1}]
 python --version
 \end{lstlisting}
 
@@ -312,7 +314,9 @@ Prosedur instalasi meliputi langkah-langkah berikut:
   \item Perbarui indeks paket:
 \end{itemize}
 
-\begin{lstlisting}[language=bash]
+
+Listing~\ref{lst:ch01-2} menampilkan memperbarui indeks paket.
+\begin{lstlisting}[language=bash, caption={Memperbarui indeks paket}, label={lst:ch01-2}]
 sudo apt update
 \end{lstlisting}
 
@@ -320,13 +324,15 @@ sudo apt update
   \item Instal Python~3.12 beserta alat pendukungnya:
 \end{itemize}
 
-\begin{lstlisting}[language=bash]
+
+Listing~\ref{lst:ch01-3} menampilkan memasang paket python3.12 python3.12-venv python3.12-dev.
+\begin{lstlisting}[language=bash, caption={Memasang paket python3.12 python3.12-venv python3.12-dev}, label={lst:ch01-3}]
 sudo apt install python3.12 python3.12-venv python3.12-dev
 \end{lstlisting}
 
-Setelah instalasi selesai, lakukan verifikasi dengan menjalankan:
+Setelah instalasi selesai, lakukan verifikasi dengan menjalankan (Listing~\ref{lst:ch01-4}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa versi Python (2)}, label={lst:ch01-4}]
 python3.12 --version
 \end{lstlisting}
 
@@ -374,16 +380,16 @@ sudah terinstal dan dapat diakses, sebagaimana dijelaskan pada subbagian
 sebelumnya. Virtual environment sebaiknya dibuat di direktori akar proyek agar
 asosiasi antara environment dan codebase tetap jelas.
 
-Pada Windows, virtual environment dapat dibuat dengan perintah berikut:
+Pada Windows, virtual environment dapat dibuat dengan perintah berikut (Listing~\ref{lst:ch01-5}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Membuat virtual environment}, label={lst:ch01-5}]
 python -m venv .venv
 \end{lstlisting}
 
 Pada Ubuntu Linux, disarankan memanggil versi Python yang dibutuhkan secara
-eksplisit:
+eksplisit (Listing~\ref{lst:ch01-6}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Membuat virtual environment (2)}, label={lst:ch01-6}]
 python3.12 -m venv .venv
 \end{lstlisting}
 
@@ -398,15 +404,15 @@ dependensi terisolasi dapat digunakan. Aktivasi akan memodifikasi environment
 shell saat ini sehingga perintah Python dan manajemen paket mengarah ke virtual
 environment, bukan ke instalasi sistem.
 
-Pada Windows:
+Pada Windows (Listing~\ref{lst:ch01-7}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengaktifkan virtual environment}, label={lst:ch01-7}]
 .venv\Scripts\activate
 \end{lstlisting}
 
-Pada Ubuntu Linux:
+Pada Ubuntu Linux (Listing~\ref{lst:ch01-8}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengaktifkan virtual environment di Ubuntu}, label={lst:ch01-8}]
 source .venv/bin/activate
 \end{lstlisting}
 
@@ -418,9 +424,9 @@ penanda. Seluruh perintah berikutnya akan dieksekusi dalam konteks terisolasi in
 Saat virtual environment aktif, paket Python yang diperlukan dapat diinstal
 secara lokal menggunakan package manager. Instalasi dependensi pada tahap ini
 memastikan seluruh pustaka yang dibutuhkan tersedia tanpa mengubah environment
-Python pada tingkat sistem.
+Python pada tingkat sistem. Perintahnya ada pada Listing~\ref{lst:ch01-9}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memasang dependensi Python}, label={lst:ch01-9}]
 pip install --upgrade pip
 pip install pyzmq pillow bottle waitress opencv-python-headless
 \end{lstlisting}
@@ -440,9 +446,9 @@ secara penuh.
 \subsubsection{Menonaktifkan Virtual Environment}
 
 Setelah eksekusi lokal atau eksperimen selesai, virtual environment dapat
-dinonaktifkan untuk mengembalikan shell ke kondisi semula.
+dinonaktifkan untuk mengembalikan shell ke kondisi semula. Perintah lengkapnya ada pada Listing~\ref{lst:ch01-10}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengaktifkan virtual environment (2)}, label={lst:ch01-10}]
 deactivate
 \end{lstlisting}
 
@@ -488,26 +494,26 @@ Pada Windows, instalasi dilakukan sebagai berikut:
 \end{itemize}
 
 Setelah terinstal, Visual Studio Code dapat dijalankan melalui Start Menu atau
-melalui command line dengan:
+melalui command line dengan (Listing~\ref{lst:ch01-11}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah code}, label={lst:ch01-11}]
 code
 \end{lstlisting}
 
 \paragraph{Instalasi pada Ubuntu Linux}
 
 Pada Ubuntu, Visual Studio Code dapat diinstal menggunakan repository paket resmi.
-Jalankan perintah berikut di terminal:
+Jalankan perintah berikut di terminal (Listing~\ref{lst:ch01-12}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memperbarui indeks paket (2)}, label={lst:ch01-12}]
 sudo apt update
 sudo apt install code
 \end{lstlisting}
 
 Setelah terinstal, editor dapat dijalankan dari menu aplikasi atau langsung dari
-terminal:
+terminal (Listing~\ref{lst:ch01-13}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah code (2)}, label={lst:ch01-13}]
 code
 \end{lstlisting}
 
@@ -559,7 +565,7 @@ formal.
 Docker digunakan sebagai platform utama untuk mengeksekusi sistem perangkat lunak
 contoh secara konsisten dan dapat direproduksi. Melalui containerization, seluruh
 komponen sistem dapat dijalankan beserta dependensi yang diperlukan, sehingga
-perbedaan sistem operasi host menjadi kurang berpengaruh. Docker Compose digunakan
+perbedaan sistem operasi host menjadi kurang berpengaruh. Docker Compose\index{Docker Compose} digunakan
 untuk mengoordinasikan eksekusi beberapa container yang bersama-sama membentuk
 sistem runtime.
 
@@ -579,9 +585,9 @@ Proses instalasi meliputi langkah-langkah berikut:
 
 Setelah instalasi, Docker Desktop harus dijalankan dan dibiarkan menyelesaikan
 setup awal. Verifikasi instalasi dapat dilakukan dengan membuka Command Prompt
-atau PowerShell dan menjalankan:
+atau PowerShell dan menjalankan (Listing~\ref{lst:ch01-14}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa versi Docker}, label={lst:ch01-14}]
 docker --version
 docker compose version
 \end{lstlisting}
@@ -592,23 +598,23 @@ Compose telah tersedia.
 \subsubsection{Instalasi Docker pada Ubuntu Linux}
 
 Pada Ubuntu, Docker dapat diinstal menggunakan repository paket Docker. Jalankan
-perintah berikut di terminal:
+perintah berikut di terminal (Listing~\ref{lst:ch01-15}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memperbarui indeks paket (3)}, label={lst:ch01-15}]
 sudo apt update
 sudo apt install docker.io docker-compose-plugin
 \end{lstlisting}
 
-Setelah instalasi, layanan Docker perlu dijalankan dan diaktifkan:
+Setelah instalasi, layanan Docker perlu dijalankan dan diaktifkan (Listing~\ref{lst:ch01-16}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah sudo systemctl enable docker}, label={lst:ch01-16}]
 sudo systemctl enable docker
 sudo systemctl start docker
 \end{lstlisting}
 
-Verifikasi instalasi dapat dilakukan dengan menjalankan:
+Verifikasi instalasi dapat dilakukan dengan menjalankan (Listing~\ref{lst:ch01-17}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa versi Docker (2)}, label={lst:ch01-17}]
 docker --version
 docker compose version
 \end{lstlisting}
@@ -617,9 +623,9 @@ docker compose version
 
 Pada Ubuntu, perintah Docker secara bawaan memerlukan hak akses elevated
 (\texttt{sudo}). Agar Docker dapat digunakan tanpa awalan \texttt{sudo}, pengguna
-aktif dapat ditambahkan ke grup \texttt{docker}:
+aktif dapat ditambahkan ke grup \texttt{docker} (Listing~\ref{lst:ch01-18}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah sudo usermod -aG docker \$USER}, label={lst:ch01-18}]
 sudo usermod -aG docker $USER
 \end{lstlisting}
 
@@ -644,7 +650,7 @@ melalui eksekusi dan observasi, bukan melalui artefak desain.
 \section{Alur Pengembangan dan Eksekusi}
 
 Bagian ini menjelaskan alur pengembangan dan eksekusi yang digunakan pada bab
-ini, yang bergerak dari eksekusi langsung pada level kode menuju orkestrasi
+ini, yang bergerak dari eksekusi langsung pada level kode menuju orkestrasi\index{orkestrasi}
 sistem berbasis container yang sepenuhnya otomatis. Urutan ini merefleksikan
 transisi bertahap dari kontrol manual ke eksekusi yang reprodusibel dan mudah
 diskalakan, sekaligus menyoroti tantangan praktis yang muncul pada tiap tahap
@@ -652,6 +658,7 @@ diskalakan, sekaligus menyoroti tantangan praktis yang muncul pada tiap tahap
 
 \begin{figure}[htbp]
 \centering
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   font=\small,
   node distance=8mm,
@@ -676,7 +683,8 @@ diskalakan, sekaligus menyoroti tantangan praktis yang muncul pada tiap tahap
 \draw[arrow] (config) -- node[right]{masalah dependensi} (docker);
 \draw[arrow] (docker) -- node[right]{eksekusi manual} (compose);
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Alur pengembangan dan eksekusi dari level kode hingga orkestrasi container}
 \label{fig:development-execution-flow}
 \end{figure}
@@ -705,7 +713,7 @@ operasional ikut meningkat. Diperlukan banyak terminal, urutan startup harus
 dikelola secara eksplisit, dan eksekusi menjadi lebih rentan error seiring
 bertambahnya jumlah komponen.
 
-\subsection{Memusatkan Konfigurasi untuk Eksekusi yang Lebih Otomatis}
+\subsection[Memusatkan Konfigurasi untuk Eksekusi]{Memusatkan Konfigurasi untuk Eksekusi yang Lebih Otomatis}
 
 Untuk mengurangi beban manual, nilai konfigurasi seperti port, topik, dan alamat
 host dieksternalisasi ke berkas konfigurasi atau definisi environment variable.
@@ -717,7 +725,7 @@ mesin lain. Perbedaan sistem operasi, pustaka yang terpasang, dan lingkungan
 runtime dapat menyebabkan perilaku yang tidak konsisten, meskipun berkas
 konfigurasi tidak berubah.
 
-\subsection{Membungkus Node dalam Container untuk Konsistensi Eksekusi}
+\subsection[Membungkus Node dalam Container]{Membungkus Node dalam Container untuk Konsistensi Eksekusi}
 
 Untuk mengatasi ketidakkonsistenan lingkungan, setiap node dikemas ke dalam
 container Docker. \emph{Image} container mengenkapsulasi kode aplikasi beserta
@@ -761,9 +769,9 @@ menekan tombol \texttt{Code} pada halaman repositori dan memilih opsi
 perlu diekstrak ke direktori kerja lokal.
 
 Alternatifnya, repositori dapat di-\emph{clone} menggunakan Git. Dari terminal,
-jalankan perintah berikut untuk mengambil seluruh isi repositori:
+jalankan perintah berikut untuk mengambil seluruh isi repositori (Listing~\ref{lst:ch01-19}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menyalin repositori}, label={lst:ch01-19}]
 git clone https://github.com/alfa-yohannis/advanced-software-engineering.git
 \end{lstlisting}
 
@@ -784,9 +792,9 @@ dan terkonfigurasi sebagaimana dijelaskan pada
 Bagian~\ref{sec:installation_and_environment_preparation}.
 
 Untuk menjalankan sistem menggunakan konfigurasi container yang tersedia, masuk
-ke direktori proyek lalu jalankan perintah berikut:
+ke direktori proyek lalu jalankan perintah berikut (Listing~\ref{lst:ch01-20}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Berpindah ke direktori proyek}, label={lst:ch01-20}]
 cd advanced-software-engineering/projects/session-01/python
 docker compose up
 \end{lstlisting}
@@ -816,9 +824,9 @@ terjalin, dan keluaran yang dapat diamati muncul sebagaimana diharapkan.
 \subsubsection{Memeriksa Status Container}
 
 Langkah verifikasi pertama adalah memeriksa apakah seluruh container yang
-dibutuhkan sedang berjalan. Dari direktori proyek, jalankan perintah berikut:
+dibutuhkan sedang berjalan. Dari direktori proyek, jalankan perintah berikut (Listing~\ref{lst:ch01-21}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa container yang berjalan}, label={lst:ch01-21}]
 docker compose ps
 \end{lstlisting}
 
@@ -833,9 +841,9 @@ atau konfigurasi yang harus diselesaikan sebelum melanjutkan.
 Log runtime memberikan informasi langsung tentang perilaku tiap komponen sistem.
 Log dari seluruh container akan tampil otomatis ketika sistem dijalankan dengan
 \texttt{docker compose up}. Jika sistem dijalankan dalam mode \emph{detached},
-log dapat diperiksa dengan:
+log dapat diperiksa dengan (Listing~\ref{lst:ch01-22}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memeriksa container yang berjalan (2)}, label={lst:ch01-22}]
 docker compose logs
 \end{lstlisting}
 
@@ -876,7 +884,7 @@ untuk eksperimen lanjutan, perubahan konfigurasi, atau pengamatan perilaku runti
 
 \section{Refleksi}
 
-\subsection{Aktivitas Kelompok: Mengamati dan Menalar Sistem yang Berjalan}
+\subsection[Aktivitas Kelompok]{Aktivitas Kelompok: Mengamati dan Menalar Sistem yang Berjalan}
 
 Berdasarkan hasil pengamatan dan diskusi dalam kelompok, jawablah lima
 pertanyaan berikut. Pertanyaan-pertanyaan ini dirancang untuk mengarahkan refleksi
@@ -917,3 +925,26 @@ hasil yang terlihat dan log. Keterbatasan ini memotivasi transisi menuju penalar
 pada level desain di bab-bab berikutnya, di mana perilaku runtime yang telah
 diamati dapat dipetakan secara bertahap ke struktur arsitektur, model formal, dan
 prinsip desain yang sistematis, sehingga sistem dapat dijelaskan dan diprediksi.
+
+\section{Latihan}
+
+Kerjakan latihan berikut dengan sistem contoh pada \texttt{projects/session-01}.
+
+\begin{enumerate}
+  \item Jalankan seluruh node dengan \texttt{docker compose up}, lalu catat urutan pesan startup setiap container. Jelaskan mengapa broker perlu hidup lebih dahulu daripada node lain.
+  \item Ubah nilai \texttt{JPEG\_QUALITY\_OUT} pada transformer menjadi 10, lalu menjadi 95. Catat perbedaan ketajaman gambar pada peramban dan perkirakan pengaruhnya terhadap kebutuhan bandwidth.
+  \item Jalankan dua instans web server pada dua port berbeda. Jelaskan mengapa keduanya menerima aliran data yang sama tanpa saling mengganggu.
+  \item Hentikan container transformer ketika sistem sedang berjalan. Catat yang terlihat pada peramban, lalu hidupkan kembali dan catat berapa lama tampilan pulih.
+  \item Susun tabel perbandingan tiga cara menjalankan sistem, yaitu proses Python langsung, perintah \texttt{docker run} satu per satu, dan \texttt{docker compose}. Bandingkan jumlah langkah, berkas yang dibutuhkan, dan hal yang paling mudah salah pada masing-masing cara.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Docker Overview} \cite{doc-docker}: konsep container, image, dan daemon yang menjadi dasar eksekusi sistem contoh.
+  \item \textit{Docker Compose} \cite{doc-compose}: mendefinisikan dan menjalankan sistem multi-container dari satu berkas.
+  \item \textit{ZeroMQ, The Guide} \cite{zguide}: pola publish--subscribe dan peran broker pada pipeline pesan.
+  \item \textit{DevOps: A Software Architect's Perspective} \cite{bass2015devops}: posisi eksekusi dan operasi dalam praktik DevOps.
+\end{itemize}

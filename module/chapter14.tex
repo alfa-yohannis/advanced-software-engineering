@@ -3,9 +3,9 @@
 
 \section*{Tujuan Pembelajaran}
 \begin{enumerate}
-  \item Menjelaskan arsitektur sistem multi-agen (MAS) berbasis Model Context Protocol (MCP) untuk orkestrasi tugas otomatis pada sistem web perusahaan.
-  \item Menerapkan pola \textit{Orchestrator-Worker} dalam pendistribusian tugas dari pemrosesan data jadwal (CSV/Excel) ke otomasi browser (Playwright), termasuk merancang \textit{task queue} berbasis berkas JSON sebagai mekanisme komunikasi antar-agen.
-  \item Mengimplementasikan server MCP modular untuk pembaca data jadwal, otomasi browser, dan \textit{shared state}, sekaligus menganalisis \textit{trade-off} pendekatan agen tunggal dan multi-agen dari sisi skalabilitas, keandalan, efisiensi konteks, dan penalaran visual.
+  \item Menjelaskan arsitektur sistem multi-agen (MAS) berbasis Model Context Protocol (MCP) untuk orkestrasi\index{orkestrasi} tugas otomatis pada sistem web perusahaan.
+  \item Menerapkan pola \textit{Orchestrator-Worker} dalam pendistribusian tugas dari pemrosesan data jadwal (CSV/Excel) ke otomasi browser (Playwright), termasuk merancang \textit{task queue} berbasis berkas JSON sebagai mekanisme komunikasi antar-agen\index{agen}.
+  \item Mengimplementasikan server MCP\index{MCP} modular untuk pembaca data jadwal, otomasi browser, dan \textit{shared state}, sekaligus menganalisis \textit{trade-off} pendekatan agen tunggal dan multi-agen dari sisi skalabilitas, keandalan, efisiensi konteks, dan penalaran visual.
 \end{enumerate}
 
 \section{Pendahuluan}
@@ -98,7 +98,7 @@ Kebutuhan ini menjadi dasar perancangan arsitektur tiga server MCP (\texttt{siak
 
 Sistem ini menggunakan Model Context Protocol (MCP) sebagai lapisan abstraksi antara agen kecerdasan buatan dan \textit{host resources}. MCP menyediakan mekanisme standar bagi LLM untuk memanggil \textit{tools} eksternal melalui transport \texttt{stdio}, sehingga server MCP dapat digunakan oleh berbagai model tanpa modifikasi. Metodologi pengembangannya mengikuti tujuh langkah berikut.
 
-\subsection{Langkah 1: Analisis Domain dan Identifikasi Peran Agen}
+\subsection[Langkah 1: Analisis Domain]{Langkah 1: Analisis Domain dan Identifikasi Peran Agen}
 
 Langkah pertama adalah menganalisis domain otomasi dan mengidentifikasi peran yang diperlukan. Pada domain ini, dua peran utama diidentifikasi:
 \begin{itemize}
@@ -136,7 +136,7 @@ Setiap server MCP mendefinisikan sekumpulan \textit{tools} yang dapat dipanggil 
 
 \textbf{Output tahap ini:} Spesifikasi API setiap tool (nama, parameter, deskripsi, contoh kembalian).
 
-\subsection{Langkah 4: Perancangan Task Queue dan State Machine}
+\subsection[Langkah 4: Perancangan Task Queue]{Langkah 4: Perancangan Task Queue dan State Machine}
 
 Task queue dirancang sebagai kumpulan berkas JSON di direktori \texttt{tasks/}. Setiap berkas merepresentasikan satu tugas dengan \textit{state machine} sebagai berikut:
 
@@ -229,7 +229,7 @@ session-14/
 
 \subsection{Konfigurasi Sistem}
 
-Seluruh kredensial dan URL dikonfigurasi dalam satu berkas \texttt{config.json} yang dimuat oleh setiap server MCP saat startup.
+Seluruh kredensial dan URL dikonfigurasi dalam satu berkas \texttt{config.json} yang dimuat oleh setiap server MCP saat startup. Perintahnya ada pada Listing~\ref{lst:ch14-config-json}.
 
 \begin{lstlisting}[
   language=json,
@@ -250,11 +250,14 @@ Seluruh kredensial dan URL dikonfigurasi dalam satu berkas \texttt{config.json} 
 
 Data jadwal disimpan dalam format CSV dengan kolom-kolom berikut:
 
+
+Tabel~\ref{tab:ch14-csv-format} menampilkan format kolom CSV data jadwal.
 \begin{table}[h]
 \centering
 \caption{Format kolom CSV data jadwal}
 \label{tab:ch14-csv-format}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\centering\arraybackslash}p{0.09\textwidth}|>{\raggedright\arraybackslash}p{0.55\textwidth}|}
 \hline
 \textbf{Kolom} & \textbf{Wajib} & \textbf{Deskripsi} \\
@@ -273,10 +276,13 @@ Data jadwal disimpan dalam format CSV dengan kolom-kolom berikut:
 \hline
 \texttt{deskripsi} & Ya & Deskripsi pembahasan yang akan diisi ke formulir \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
+
+Listing~\ref{lst:ch14-csv-sample} menampilkan contoh data jadwal dalam format CSV.
 \begin{lstlisting}[
   language=bash,
   caption={Contoh data jadwal dalam format CSV},
@@ -348,11 +354,14 @@ def read_attendance_data(file_path: str) -> str:
 
 Tiga tool tambahan mendukung filtering dan eksplorasi data:
 
+
+Tabel~\ref{tab:ch14-csv-tools} menampilkan daftar tools pada server siakad-csv-reader.
 \begin{table}[h]
 \centering
 \caption{Daftar tools pada server \texttt{siakad-csv-reader}}
 \label{tab:ch14-csv-tools}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.57\textwidth}|}
 \hline
 \textbf{Tool} & \textbf{Deskripsi} \\
@@ -365,7 +374,8 @@ Tiga tool tambahan mendukung filtering dan eksplorasi data:
 \hline
 \texttt{list\_attendance\_dates(path)} & Mendaftar semua tanggal unik dalam berkas \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -533,7 +543,7 @@ async def find_schedule_row(mata_kuliah: str,
     } if result else {"error": "No match"})
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch14-find-row} menunjukkan bagaimana JavaScript yang dievaluasi langsung di dalam browser mem-parsing tabel HTML dan melakukan \textit{case-insensitive substring matching}. Hasil berupa \texttt{row\_index} yang kemudian digunakan oleh tool \texttt{click\_absensi\_button} untuk mengklik tombol yang tepat.
+\noindent Listing~\ref{lst:ch14-find-row} menunjukkan bagaimana JavaScript yang dievaluasi langsung di dalam browser mem-parsing tabel HTML dan melakukan \textit{case-insensitive substring matching}. Hasil berupa \texttt{row\_index} yang kemudian digunakan oleh tool \texttt{click\_absensi\_button} untuk mengklik tombol yang tepat. Perintah lengkapnya ada pada Listing~\ref{lst:ch14-fill-form}.
 
 \begin{lstlisting}[
   style=PythonStyle,
@@ -586,6 +596,7 @@ Tabel~\ref{tab:ch14-browser-tools} merangkum seluruh 15 tools yang tersedia pada
 \caption{Daftar tools pada server \texttt{siakad-browser} (15 tools)}
 \label{tab:ch14-browser-tools}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.04\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|>{\raggedright\arraybackslash}p{0.50\textwidth}|}
 \hline
 \textbf{No} & \textbf{Tool} & \textbf{Deskripsi} \\
@@ -620,7 +631,8 @@ Tabel~\ref{tab:ch14-browser-tools} merangkum seluruh 15 tools yang tersedia pada
 \hline
 15 & \texttt{close\_browser} & Menutup browser dan cleanup \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -679,11 +691,14 @@ def update_task(task_id: str, status: str,
 
 \noindent Listing~\ref{lst:ch14-shared-state} memperlihatkan mekanisme persistensi tugas. Setiap tugas disimpan sebagai berkas terpisah (\texttt{task\_001.json}, \texttt{task\_002.json}, dst.), sehingga dapat di-\textit{inspect} secara manual dan tahan terhadap restart proses.
 
+
+Tabel~\ref{tab:ch14-shared-state-tools} menampilkan daftar tools pada server shared-state (6 tools).
 \begin{table}[h]
 \centering
 \caption{Daftar tools pada server \texttt{shared-state} (6 tools)}
 \label{tab:ch14-shared-state-tools}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.31\textwidth}|>{\raggedright\arraybackslash}p{0.55\textwidth}|}
 \hline
 \textbf{Tool} & \textbf{Deskripsi} \\
@@ -700,13 +715,14 @@ def update_task(task_id: str, status: str,
 \hline
 \texttt{clear\_tasks()} & Menghapus seluruh berkas tugas dari direktori \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
 \subsection{Agent Prompt Engineering}
 
-Setiap agen menerima instruksi melalui berkas Markdown yang mendefinisikan perannya secara komprehensif. Prompt Orchestrator mendefinisikan alur kerja delapan langkah:
+Setiap agen menerima instruksi melalui berkas Markdown yang mendefinisikan perannya secara komprehensif. Prompt Orchestrator mendefinisikan alur kerja delapan langkah (Listing~\ref{lst:ch14-orch-workflow}):
 
 \begin{lstlisting}[
   language=bash,
@@ -727,7 +743,7 @@ Setiap agen menerima instruksi melalui berkas Markdown yang mendefinisikan peran
 8. Report summary       -- Laporan akhir
 \end{lstlisting}
 
-Prompt Worker mendefinisikan aturan keandalan (\textit{reliability rules}) yang kritis:
+Prompt Worker mendefinisikan aturan keandalan (\textit{reliability rules}) yang kritis (Listing~\ref{lst:ch14-worker-rules}):
 
 \begin{lstlisting}[
   language=bash,
@@ -747,11 +763,14 @@ Prompt Worker mendefinisikan aturan keandalan (\textit{reliability rules}) yang 
                             pembahasan' setelah save
 \end{lstlisting}
 
+
+Tabel~\ref{tab:ch14-agent-responsibilities} menampilkan perbandingan tanggung jawab Orchestrator vs Worker.
 \begin{table}[h]
 \centering
 \caption{Perbandingan tanggung jawab Orchestrator vs Worker}
 \label{tab:ch14-agent-responsibilities}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.13\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{Orchestrator (Claude)} & \textbf{Worker (Gemini)} \\
@@ -766,7 +785,8 @@ Interaksi & Tidak berinteraksi dengan browser & Tidak membaca data jadwal \\
 \hline
 Error handling & Retry dengan task ID baru & Screenshot + fallback selector \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -880,11 +900,14 @@ Menggunakan berkas \texttt{advanced\_software\_engineering\_and\_devops.csv} yan
 
 \subsection{Perbandingan Aspek Teknis}
 
+
+Tabel~\ref{tab:ch14-perbandingan} menampilkan perbandingan Pendekatan Multi-Agen vs Agen Tunggal.
 \begin{table}[h]
 \centering
 \caption{Perbandingan Pendekatan Multi-Agen vs Agen Tunggal}
 \label{tab:ch14-perbandingan}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.13\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{Multi-Agent (Claude + Gemini)} & \textbf{Single-Agent (Claude/Gemini Only)} \\
@@ -901,7 +924,8 @@ Kompleksitas & Lebih tinggi; memerlukan \textit{task queue}, skrip peluncuran, d
 \hline
 Debugging & Lebih mudah; berkas JSON tugas dapat di-\textit{inspect}, \textit{screenshot} per langkah. & Lebih sulit; seluruh konteks ada di satu log agen. \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -909,11 +933,14 @@ Debugging & Lebih mudah; berkas JSON tugas dapat di-\textit{inspect}, \textit{sc
 
 Sistem ini menyediakan empat mode eksekusi yang dapat dipilih sesuai kebutuhan:
 
+
+Tabel~\ref{tab:ch14-run-modes} menampilkan mode eksekusi yang tersedia.
 \begin{table}[h]
 \centering
 \caption{Mode eksekusi yang tersedia}
 \label{tab:ch14-run-modes}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.31\textwidth}|>{\raggedright\arraybackslash}p{0.12\textwidth}|>{\raggedright\arraybackslash}p{0.47\textwidth}|}
 \hline
 \textbf{Skrip} & \textbf{Agen} & \textbf{Keterangan} \\
@@ -926,7 +953,8 @@ Sistem ini menyediakan empat mode eksekusi yang dapat dipilih sesuai kebutuhan:
 \hline
 \texttt{run\_claude\_interactive.sh} & Claude (interaktif) & Mode percakapan; pengguna memberikan perintah satu per satu untuk debugging. \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -964,3 +992,26 @@ Bab ini menunjukkan bahwa pendekatan Multi-Agent System (MAS) berbasis Model Con
 Implementasi terdiri dari tiga server MCP modular --- \texttt{siakad-csv-reader} (4 tools), \texttt{siakad-browser} (15 tools), dan \texttt{shared-state} (6 tools) --- yang berkomunikasi melalui transport \texttt{stdio}. Task queue berbasis berkas JSON di direktori \texttt{tasks/} menyediakan mekanisme sinkronisasi yang sederhana, persisten, dan mudah di-debug. Agent prompt engineering mengatur perilaku setiap agen melalui instruksi terstruktur dalam berkas Markdown.
 
 Trade-off utama adalah peningkatan kompleksitas infrastruktur (skrip peluncuran, registrasi MCP, sinkronisasi startup) yang diperlukan untuk mendukung arsitektur multi-agen. Namun, keuntungan dalam hal keandalan (\textit{retry} otomatis), efisiensi konteks (setiap agen hanya menerima konteks relevan), dan kemampuan debugging (\textit{screenshot} per langkah, berkas JSON tugas yang dapat di-\textit{inspect}) menjadikan pendekatan ini layak untuk skenario otomasi yang melibatkan antarmuka web dinamis dan data input yang besar.
+
+\section{Latihan}
+
+Kerjakan latihan berikut dengan sistem multi-agen pada proyek session-14.
+
+\begin{enumerate}
+  \item Jalankan satu tugas yang sama pada mode agen tunggal dan mode multi-agen. Catat jumlah panggilan perkakas, waktu penyelesaian, dan tahap tempat kegagalan terjadi bila ada.
+  \item Tambahkan satu \textit{tool} baru pada salah satu server MCP, lalu uji pemanggilannya oleh agen dan periksa catatan panggilannya.
+  \item Berikan masukan yang rusak, misalnya berkas CSV dengan kolom yang hilang, lalu amati cara agen menanganinya dan catat apakah kegagalannya terlaporkan dengan jelas.
+  \item Susun daftar izin minimum untuk setiap peran agen, lalu jelaskan risiko apa yang dicegah oleh setiap pembatasan.
+  \item Tentukan batas jumlah percobaan ulang untuk satu tugas, jelaskan alasannya, dan uji perilaku sistem ketika batas itu tercapai.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{What is the Model Context Protocol?} \cite{mcp-intro}: gagasan dasar protokol penghubung agen dan perkakas.
+  \item \textit{Model Context Protocol Specification} \cite{mcp-spec}: rincian protokol, transport, dan definisi tool.
+  \item \textit{Claude Code Overview} \cite{doc-claude-code}: agen yang berperan sebagai orkestrator pada studi kasus.
+  \item \textit{Gemini CLI} \cite{doc-gemini-cli}: agen yang berperan sebagai pekerja peramban pada studi kasus.
+\end{itemize}

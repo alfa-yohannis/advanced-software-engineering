@@ -3,14 +3,14 @@
 
 \section*{Tujuan Pembelajaran}
 \begin{enumerate}
-  \item Menjelaskan konsep transformasi model-ke-model (\textit{model-to-model transformation}) dalam konteks \textit{Model-Driven Engineering} (MDE), termasuk peran metamodel sumber dan target serta pemetaan konseptual antar elemen domain.
+  \item Menjelaskan konsep transformasi model-ke-model (\textit{model-to-model transformation}) dalam konteks \textit{Model-Driven Engineering} (MDE), termasuk peran metamodel\index{metamodel} sumber dan target serta pemetaan konseptual antar elemen domain.
   \item Menerapkan transformasi model menggunakan dua bahasa transformasi --- ATL (\textit{ATLAS Transformation Language}) dan ETL (\textit{Epsilon Transformation Language}) --- untuk mengonversi model pipeline \textit{MediaFlow} (berbasis \texttt{mediaflow.ecore}) menjadi UML Activity Diagram.
-  \item Menganalisis \textit{trade-off} antara pendekatan deklaratif (ATL) dan pendekatan hibrid imperatif-deklaratif (ETL) dalam hal ekspresivitas, struktur kode, dan mekanisme pembuatan model output.
+  \item Menganalisis \textit{trade-off} antara pendekatan deklaratif (ATL) dan pendekatan hibrid imperatif-deklaratif (ETL\index{ETL}) dalam hal ekspresivitas, struktur kode, dan mekanisme pembuatan model output.
 \end{enumerate}
 
 \section{Pendahuluan}
 
-Pada bab-bab sebelumnya, pipeline pemrosesan media digital \textit{MediaFlow} telah dimodelkan melalui tiga pendekatan yang saling melengkapi. Bab~8 memperkenalkan metamodel domain (\texttt{mediaflow.ecore}) sebagai fondasi formal yang mendefinisikan konsep \texttt{Graph}, \texttt{Node}, \texttt{Port}, dan \texttt{Edge}. Bab~9 mengimplementasikan \textit{textual DSL} menggunakan ANTLR, Xtext, dan Langium, memungkinkan pengguna menulis model sebagai teks terstruktur. Bab~10 memperkenalkan \textit{visual DSL} menggunakan Eclipse Sirius, memungkinkan pengguna membuat dan mengedit model melalui diagram grafis.
+Pada bab-bab sebelumnya, pipeline\index{pipeline} pemrosesan media digital \textit{MediaFlow} telah dimodelkan melalui tiga pendekatan yang saling melengkapi. Bab~8 memperkenalkan metamodel domain (\texttt{mediaflow.ecore}) sebagai fondasi formal yang mendefinisikan konsep \texttt{Graph}, \texttt{Node}, \texttt{Port}, dan \texttt{Edge}. Bab~9 mengimplementasikan \textit{textual DSL} menggunakan ANTLR, Xtext, dan Langium, memungkinkan pengguna menulis model sebagai teks terstruktur. Bab~10 memperkenalkan \textit{visual DSL} menggunakan Eclipse Sirius, memungkinkan pengguna membuat dan mengedit model melalui diagram grafis.
 
 Ketiga pendekatan tersebut berfokus pada \textit{authoring} model: bagaimana model domain dibuat, diedit, dan disimpan. Namun, dalam siklus pengembangan \textit{Model-Driven Engineering} (MDE) yang lengkap, model tidak hanya dibuat --- model juga \textit{ditransformasi}. Transformasi model merupakan mekanisme sentral yang memungkinkan model pada satu tingkat abstraksi atau domain dikonversi secara otomatis ke model pada tingkat abstraksi atau domain yang berbeda.
 
@@ -28,7 +28,7 @@ Domain target adalah \textbf{UML Activity Diagram}, sebuah diagram standar UML y
 
 \subsection{Target Transformasi}
 
-Target transformasi pada bab ini adalah konversi otomatis model \textit{MediaFlow} XMI menjadi model UML Activity Diagram. Dua model input digunakan sebagai korpus uji:
+Target transformasi pada bab ini adalah konversi otomatis model \textit{MediaFlow} XMI\index{XMI} menjadi model UML Activity Diagram. Dua model input digunakan sebagai korpus uji:
 \begin{enumerate}
   \item \texttt{flow1.xmi}: topologi linier sederhana --- satu \texttt{Resource} input, satu \texttt{Scaler}, satu \texttt{Resource} output (3 node, 2 edge).
   \item \texttt{flow2.xmi}: topologi bercabang --- satu \texttt{Resource} input, satu \texttt{Scaler}, dua \texttt{Transcoder}, dua \texttt{Resource} output (6 node, 5 edge).
@@ -41,6 +41,7 @@ Pemetaan konseptual dari elemen \textit{MediaFlow} ke elemen UML Activity Diagra
 \caption{Pemetaan konseptual elemen MediaFlow ke elemen UML Activity Diagram}
 \label{tab:ch11-mapping-konseptual}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.27\textwidth}|>{\raggedright\arraybackslash}p{0.22\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|}
 \hline
 \textbf{Elemen MediaFlow} & \textbf{Elemen UML} & \textbf{Kondisi / Keterangan} \\
@@ -59,7 +60,8 @@ Pemetaan konseptual dari elemen \textit{MediaFlow} ke elemen UML Activity Diagra
 \hline
 \texttt{Edge} & \texttt{ControlFlow} & Menghubungkan node yang ditransformasi dari owner port sumber ke owner port target \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -68,6 +70,7 @@ Pemetaan konseptual dari elemen \textit{MediaFlow} ke elemen UML Activity Diagra
 \begin{figure}[htbp]
 \centering
 \scalebox{0.85}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[>=Latex, node distance=8mm,
   mf/.style={draw, rounded corners=3pt, minimum width=2.2cm, minimum height=0.65cm, align=center, font=\scriptsize},
   uml/.style={draw, rounded corners=3pt, minimum width=2.2cm, minimum height=0.65cm, align=center, font=\scriptsize},
@@ -114,7 +117,8 @@ Pemetaan konseptual dari elemen \textit{MediaFlow} ke elemen UML Activity Diagra
   \draw[mapline] (res2.east) -- (fin1.west) node[midway, above, lbl]{ExitResource2Final};
   \draw[mapline] (res3.east) -- (fin2.west) node[midway, above, lbl]{ExitResource2Final};
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Visualisasi pemetaan model \texttt{flow2}: pipeline MediaFlow (kiri) ditransformasi menjadi UML Activity Diagram (kanan). Panah putus-putus menunjukkan aturan transformasi yang diterapkan pada setiap elemen.}
 \label{fig:ch11-mapping-visual}
@@ -177,7 +181,7 @@ Pemilihan bahasa transformasi bergantung pada gaya penulisan yang diinginkan dan
 
 \textbf{Output tahap ini:} keputusan bahasa transformasi dan setup proyek.
 
-\subsection{Langkah 4: Definisi Helper/Operation untuk Navigasi Model}
+\subsection[Langkah 4: Definisi Helper/Operation]{Langkah 4: Definisi Helper/Operation untuk Navigasi Model}
 
 Transformasi MediaFlow memerlukan navigasi yang melampaui akses atribut langsung. Helper (ATL) atau operation (ETL) didefinisikan untuk:
 \begin{itemize}
@@ -213,7 +217,7 @@ Aturan transformasi ditulis berdasarkan tabel pemetaan konseptual. Setiap baris 
 
 Runner mengeksekusi transformasi secara programatik. Runner bertanggung jawab untuk:
 \begin{itemize}
-  \item Menginisialisasi \textit{resource factories} EMF dan mendaftarkan paket metamodel.
+  \item Menginisialisasi \textit{resource factories} EMF\index{EMF} dan mendaftarkan paket metamodel.
   \item Memuat model sumber dari berkas XMI.
   \item Membuat \textit{resource} kosong untuk model output.
   \item Memuat dan menjalankan modul/aturan transformasi.
@@ -273,7 +277,7 @@ m2m/
 +-- .project                               # Konfigurasi proyek Eclipse
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch11-project-structure} memperlihatkan pemisahan yang jelas antara empat lapisan: \textit{source layer} (runner Java di \texttt{src/}), \textit{transformation layer} (aturan di \texttt{transformer/}), \textit{input layer} (model sumber di \texttt{input/}), dan \textit{output layer} (model hasil di \texttt{output/}). Model input tersedia dalam dua format: teks DSL (\texttt{.mediaflow}) yang dibuat melalui bahasa dari Bab~9, dan XMI (\texttt{.xmi}) yang dihasilkan melalui parser atau editor Sirius dari Bab~10.
+\noindent Listing~\ref{lst:ch11-project-structure} memperlihatkan pemisahan yang jelas antara empat lapisan: \textit{source layer} (runner Java di \texttt{src/}), \textit{transformation layer} (aturan di \texttt{transformer/}), \textit{input layer} (model sumber di \texttt{input/}), dan \textit{output layer} (model hasil di \texttt{output/}). Model input tersedia dalam dua format: teks DSL (\texttt{.mediaflow}) yang dibuat melalui bahasa dari Bab~9, dan XMI (\texttt{.xmi}) yang dihasilkan melalui parser atau editor Sirius\index{Sirius} dari Bab~10.
 
 \subsection{Model Input: MediaFlow XMI}
 
@@ -816,6 +820,7 @@ Untuk model \texttt{flow2} yang lebih kompleks (topologi bercabang), output meng
 \begin{figure}[htbp]
 \centering
 \scalebox{.96}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[>=Latex, node distance=10mm,
   mfnode/.style={draw, rounded corners=3pt, minimum width=2.4cm, minimum height=0.7cm, align=center, font=\scriptsize},
   port/.style={draw, fill=white, minimum size=4mm, inner sep=0pt, font=\tiny},
@@ -896,7 +901,8 @@ Untuk model \texttt{flow2} yang lebih kompleks (topologi bercabang), output meng
   \draw[flow] (h264-uml) -- (end1o) node[midway, left, font=\tiny]{e4};
   \draw[flow] (vp9-uml) -- (end2o) node[midway, right, font=\tiny]{e5};
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Perbandingan instans model \texttt{flow2}: MediaFlow (kiri) dengan port sebagai titik koneksi, dan UML Activity Diagram (kanan) hasil transformasi dengan koneksi langsung node-ke-node. Panah besar menunjukkan arah transformasi M2M.}
 \label{fig:ch11-activity-diagram}
@@ -960,6 +966,7 @@ Strategi pengujian yang diterapkan meliputi:
 \caption{Hasil evaluasi transformasi pada dua model input}
 \label{tab:ch11-hasil-evaluasi}
 \footnotesize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.15\textwidth}|c|c|c|c|}
 \hline
 \textbf{Model Input} & \textbf{Node Input} & \textbf{Edge Input} & \textbf{Node Output} & \textbf{Edge Output} \\
@@ -968,7 +975,8 @@ Strategi pengujian yang diterapkan meliputi:
 \hline
 \texttt{flow2.xmi} & 6 & 5 & 6 (1 Initial, 3 Opaque, 2 Final) & 5 ControlFlow \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -985,6 +993,7 @@ Tabel~\ref{tab:ch11-perbandingan-teknis} menunjukkan perbedaan aspek teknis utam
 \caption{Perbandingan aspek teknis ATL vs ETL}
 \label{tab:ch11-perbandingan-teknis}
 \scriptsize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{ATL} & \textbf{ETL (Epsilon)} \\
@@ -1003,7 +1012,8 @@ Ekosistem & Bagian dari Eclipse M2M (ATL Project). & Bagian dari platform Epsilo
 \hline
 Runner complexity & Lebih kompleks: registrasi metamodel manual, \textit{resource factory}, \texttt{ExecEnv}. & Lebih ringkas: API \texttt{EmfModel} tingkat tinggi, \texttt{EtlModule.parse/execute}. \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -1016,6 +1026,7 @@ Dari sisi produktivitas, Tabel~\ref{tab:ch11-perbandingan-produktivitas} memperl
 \caption{Perbandingan produktivitas dan tooling ATL vs ETL}
 \label{tab:ch11-perbandingan-produktivitas}
 \scriptsize
+\adjustbox{max width=\textwidth}{%
 \begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{ATL} & \textbf{ETL (Epsilon)} \\
@@ -1030,7 +1041,8 @@ Integrasi tooling & Editor ATL di Eclipse dengan syntax highlighting dan compile
 \hline
 Komposisi transformasi & Superimposition (overlay aturan). & Importasi modul dan pewarisan aturan (\texttt{@greedy}, \texttt{@lazy}). \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \normalsize
 \end{table}
 
@@ -1039,7 +1051,7 @@ Komposisi transformasi & Superimposition (overlay aturan). & Importasi modul dan
 Panduan pemilihan praktis berdasarkan konteks penggunaan:
 \begin{enumerate}
   \item \textbf{Pilih ATL} jika transformasi bersifat pemetaan simetris \textit{one-to-one} yang jelas, jika tim sudah familiar dengan paradigma deklaratif, atau jika integrasi dengan ekosistem Eclipse M2M/ATL diperlukan.
-  \item \textbf{Pilih ETL} jika transformasi memerlukan logika imperatif yang signifikan (misalnya pembangunan kontainer pasca-transformasi), jika diperlukan integrasi dengan bahasa Epsilon lainnya (EOL, EVL, EGL), atau jika kemudahan debugging menjadi prioritas.
+  \item \textbf{Pilih ETL} jika transformasi memerlukan logika imperatif yang signifikan (misalnya pembangunan kontainer pasca-transformasi), jika diperlukan integrasi dengan bahasa Epsilon lainnya (EOL, EVL, EGL\index{EGL}), atau jika kemudahan debugging menjadi prioritas.
   \item \textbf{Pertimbangkan keduanya} dalam konteks pembelajaran atau evaluasi: mengimplementasikan transformasi yang sama dalam kedua bahasa memberikan pemahaman yang lebih dalam tentang \textit{trade-off} antara paradigma deklaratif dan imperatif.
 \end{enumerate}
 
@@ -1067,3 +1079,26 @@ Bab ini menunjukkan bahwa transformasi model-ke-model (M2M) merupakan mekanisme 
 Kedua implementasi berbagi pola navigasi yang sama --- enam helper/operation untuk menyelesaikan indirection port-ke-node --- dan menghasilkan model output yang ekuivalen secara semantik. Perbedaan utama terletak pada mekanisme pembangunan model: ATL secara deklaratif membangun kontainer (\texttt{Model} dan \texttt{Activity}) sebagai bagian dari aturan transformasi, sedangkan ETL menggunakan blok \texttt{post} yang imperatif untuk membungkus elemen-elemen yang telah ditransformasi ke dalam kontainer.
 
 Trade-off utama yang perlu dipertimbangkan adalah: ATL unggul pada keterbacaan dan konsistensi deklaratif untuk pemetaan simetris, tetapi kurang fleksibel untuk logika pembangunan model yang kompleks dan memerlukan langkah kompilasi tambahan. ETL unggul pada fleksibilitas imperatif dan kemudahan debugging, tetapi memerlukan lebih banyak kode eksplisit untuk resolusi referensi dan pembangunan kontainer. Pemilihan antara keduanya sebaiknya didasarkan pada kompleksitas pemetaan, kebutuhan debugging, dan ekosistem tooling yang digunakan tim.
+
+\section{Latihan}
+
+Kerjakan latihan berikut dengan transformasi model ke model.
+
+\begin{enumerate}
+  \item Jalankan transformasi ETL pada \texttt{flow1.xmi} dan \texttt{flow2.xmi}, lalu periksa keluarannya terhadap tabel pemetaan pada bab ini. Catat elemen yang tidak memiliki pasangan.
+  \item Tambahkan satu aturan transformasi untuk subtipe node baru, lalu uji pada model yang memuat subtipe tersebut.
+  \item Susun model yang memuat node tanpa sambungan, jalankan transformasi, dan jelaskan hasil yang diperoleh beserta alasannya.
+  \item Tulis ulang satu aturan ETL ke dalam ATL. Bandingkan keduanya dari sisi keterbacaan dan cara menangani referensi antarelemen.
+  \item Jelaskan cara memeriksa keterlacakan antara elemen sumber dan elemen target, lalu usulkan pengujian yang dapat dijalankan otomatis untuk memastikannya.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Model Transformation (ETL)} \cite{doc-etl}: aturan transformasi, pemetaan elemen, dan eksekusinya.
+  \item \textit{The Epsilon Transformation Language} \cite{kolovos2008etl}: rancangan bahasa ETL beserta alasannya.
+  \item \textit{ATL Documentation} \cite{doc-atl}: pembanding pendekatan transformasi model ke model.
+  \item \textit{The Epsilon Object Language (EOL)} \cite{kolovos2006eol}: bahasa dasar yang dipakai di dalam aturan ETL.
+\end{itemize}

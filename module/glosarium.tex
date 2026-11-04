@@ -1,0 +1,51 @@
+\chapter{Glosarium}
+
+\begin{description}
+  \setlength{\itemsep}{2pt}
+  \item[Agen] Program berbasis model bahasa besar yang menerima tugas, memanggil perkakas, dan melaporkan hasilnya.
+  \item[\textit{Backend}] Bagian sistem yang berjalan di sisi peladen dan tidak terlihat langsung oleh pengguna.
+  \item[\textit{Broker}] Komponen perantara yang meneruskan pesan antara pengirim dan penerima tanpa menafsirkan isinya.
+  \item[CI/CD] \textit{Continuous integration} dan \textit{continuous delivery}, yaitu otomasi integrasi, pengujian, dan penerapan perubahan kode.
+  \item[\textit{Constraint}] Aturan yang membatasi model agar hanya bentuk yang sah yang diterima.
+  \item[\textit{Container}] Unit eksekusi yang mengemas aplikasi beserta dependensinya agar berjalan sama di berbagai mesin.
+  \item[\textit{Deployment}] Objek Kubernetes yang menyatakan jumlah dan versi pod yang harus berjalan, sekaligus istilah umum untuk penerapan sistem.
+  \item[\textit{Desired state}] Kondisi akhir yang dinyatakan dalam konfigurasi, yang kemudian diwujudkan oleh perkakas seperti Terraform atau Kubernetes.
+  \item[DSL] \textit{Domain-specific language}, bahasa yang dirancang untuk satu domain tertentu, bukan untuk pemrograman umum.
+  \item[Ecore] Bahasa metamodel pada EMF yang dipakai untuk mendefinisikan struktur model.
+  \item[EGL] \textit{Epsilon Generation Language}, bahasa templat untuk membangkitkan teks dari model.
+  \item[EGX] Bahasa koordinasi pada Epsilon yang menentukan templat mana dijalankan untuk elemen mana dan berkas keluarannya.
+  \item[EMF] \textit{Eclipse Modeling Framework}, kerangka kerja pemodelan yang menyediakan Ecore beserta perkakas pendukungnya.
+  \item[EOL] \textit{Epsilon Object Language}, bahasa dasar Epsilon untuk mengakses dan memanipulasi model.
+  \item[ETL] \textit{Epsilon Transformation Language}, bahasa untuk transformasi model ke model.
+  \item[EVL] \textit{Epsilon Validation Language}, bahasa untuk menyatakan aturan validasi model beserta pesan dan tingkat keparahannya.
+  \item[\textit{Gateway}] Komponen yang menerima permintaan dari luar dan meneruskannya ke layanan di dalam sistem.
+  \item[IaC] \textit{Infrastructure as Code}, praktik menuliskan infrastruktur sebagai kode yang dapat diversikan dan dijalankan ulang.
+  \item[\textit{Idempotent}] Sifat operasi yang memberi hasil akhir sama walaupun dijalankan berulang kali.
+  \item[\textit{Image}] Berkas hasil pembangunan yang menjadi cetakan untuk menjalankan container.
+  \item[Kubernetes] Orkestrator container yang menjaga sistem tetap berada pada kondisi yang dinyatakan.
+  \item[\textit{Linting}] Pemeriksaan otomatis terhadap gaya dan pola penulisan kode atau konfigurasi.
+  \item[M2M] \textit{Model-to-model transformation}, transformasi dari satu model ke model lain.
+  \item[M2T] \textit{Model-to-text transformation}, generasi artefak teks dari model.
+  \item[MCP] \textit{Model Context Protocol}, protokol yang menghubungkan agen dengan perkakas dan sumber data.
+  \item[MDE] \textit{Model-driven engineering}, pendekatan yang menempatkan model sebagai artefak utama pembangunan sistem.
+  \item[Metamodel] Model yang mendefinisikan struktur model lain, termasuk tipe, atribut, dan relasi yang sah.
+  \item[Metrik] Nilai terukur dari sistem yang berjalan, misalnya jumlah permintaan, latensi, atau pemakaian memori.
+  \item[Minikube] Lingkungan Kubernetes satu mesin untuk pengembangan dan percobaan.
+  \item[Observabilitas] Kemampuan menyimpulkan keadaan internal sistem dari data yang dipancarkannya, yaitu metrik, log, dan trace.
+  \item[OCL] \textit{Object Constraint Language}, bahasa standar OMG untuk menyatakan batasan pada model.
+  \item[Orkestrasi] Pengelolaan otomatis terhadap penjadwalan, penskalaan, dan pemulihan beban kerja pada sekumpulan mesin.
+  \item[\textit{Pipeline}] Rangkaian tahapan yang dijalankan berurutan, baik pada pemrosesan data maupun pada otomasi CI/CD.
+  \item[\textit{Pod}] Unit penjadwalan terkecil pada Kubernetes, berisi satu atau beberapa container yang berbagi jaringan dan penyimpanan.
+  \item[\textit{Publish--subscribe}] Pola komunikasi tempat pengirim menerbitkan pesan pada topik, dan penerima berlangganan topik yang diminatinya.
+  \item[\textit{Runner}] Mesin yang menjalankan pekerjaan dari sistem CI/CD, baik disediakan penyedia layanan maupun milik sendiri.
+  \item[Sintaks abstrak] Struktur konsep sebuah bahasa, tanpa menentukan bentuk tulisannya.
+  \item[Sintaks konkret] Bentuk yang terlihat dari sebuah bahasa, baik berupa teks maupun diagram.
+  \item[Sirius] Kerangka kerja Eclipse untuk membangun editor model visual di atas metamodel.
+  \item[\textit{State}] Catatan kondisi sumber daya yang dikelola, misalnya berkas \texttt{terraform.tfstate}.
+  \item[Terraform] Perkakas IaC yang menyatakan infrastruktur secara deklaratif dan menerapkannya melalui alur \textit{plan} dan \textit{apply}.
+  \item[Trace] Rekaman perjalanan satu permintaan melintasi beberapa komponen sistem.
+  \item[\textit{Unit test}] Pengujian otomatis terhadap satu bagian kecil program secara terisolasi.
+  \item[XMI] Format pertukaran model berbasis XML yang dipakai EMF untuk menyimpan model.
+  \item[Xtext] Kerangka kerja untuk membangun DSL tekstual beserta editornya di atas EMF.
+  \item[ZeroMQ] Pustaka pesan ringan yang dipakai pada studi kasus pipeline pemrosesan video.
+\end{description}

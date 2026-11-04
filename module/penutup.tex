@@ -1,12 +1,118 @@
 \chapter{Penutup}
 
-Penggunaan Large Language Model (LLM) dalam dunia pendidikan membuka peluang baru untuk mentransformasi cara guru mengajar, merancang pembelajaran, memberikan umpan balik, hingga mengelola tugas-tugas administratif. Melalui enam bab sebelumnya, buku ini telah mengajak pembaca mengeksplorasi berbagai aplikasi praktis LLM mulai dari mendesain materi ajar, memberikan penilaian yang responsif, hingga mengelola komunikasi dan dokumen secara otomatis.
+\section*{Sintesis Isi Buku}\addcontentsline{toc}{section}{Sintesis Isi Buku}
 
-Pengenalan LLM di kelas bukan sekadar tren teknologi, tetapi bagian dari proses adaptasi terhadap kebutuhan pembelajaran yang semakin kompleks dan beragam. Dengan memahami cara kerja dan potensi LLM, guru dapat lebih percaya diri menggunakan AI sebagai mitra untuk meningkatkan kualitas pembelajaran, bukan sebagai pengganti peran edukatif mereka.
+Empat belas bab sebelumnya menempuh satu jalur, dari sistem yang dijalankan
+menuju model yang membangkitkan sistem itu kembali. Bab 1 sampai Bab 3
+memperlakukan sistem sebagai objek yang dapat dijalankan dan diamati, yaitu
+pipeline pemrosesan video yang dieksekusi dengan kontainer, diukur melalui metrik
+dan dasbor, lalu dibatasi perilakunya dengan kontrol keamanan pada saat berjalan.
 
-Namun, adopsi teknologi juga membawa tantangan etis dan risiko yang perlu disikapi dengan bijak. Bab tentang etika menjadi pengingat penting bahwa kecanggihan teknologi harus selalu diimbangi dengan pertimbangan nilai, tanggung jawab, dan perlindungan terhadap peserta didik.
+Bab 4 sampai Bab 6 memindahkan pekerjaan manual itu ke otomasi. Pipeline CI/CD
+menjalankan pengujian dan penerapan tanpa langkah manual, Terraform menyatakan
+infrastruktur sebagai kode deklaratif untuk tiga lingkungan, dan Kubernetes
+menjalankan sistem yang sama di atas orkestrator. Pada titik ini jumlah artefak
+operasional meningkat, dan duplikasi antar lingkungan menjadi masalah yang nyata.
 
-Sebagai penutup, diharapkan pembaca tidak hanya memperoleh pemahaman teknis dan praktis tentang LLM, tetapi juga membangun refleksi kritis dan kesadaran profesional dalam penggunaannya. Teknologi hanyalah alat; dampak positifnya tergantung pada bagaimana dan untuk tujuan apa ia digunakan.
+Bab 7 sampai Bab 13 menjawab masalah tersebut dengan menaikkan tingkat
+abstraksi. Model lingkungan dan templat membangkitkan berkas Terraform dan
+Kubernetes, metamodel MediaFlow memformalkan domain pipeline media, DSL tekstual
+dan visual menyediakan dua sintaks konkret di atas sintaks abstrak yang sama,
+transformasi model ke model memetakan model ke representasi lain, generator model
+ke teks menurunkan artefak yang dipakai langsung oleh penampil, dan aturan
+validasi menolak model yang salah sebelum artefaknya dibangkitkan. Bab 14
+menutup rangkaian itu dengan sistem multi-agen yang menjalankan perkakas tersebut
+melalui antrean tugas bersama.
 
-Mari terus belajar, bereksperimen, dan bertumbuh bersama AI—dengan tetap menempatkan nilai-nilai pendidikan sebagai fondasi utama dalam setiap langkah transformasi digital di kelas.
+\section*{Jawaban atas Rumusan Masalah}\addcontentsline{toc}{section}{Jawaban atas Rumusan Masalah}
 
+Pendahuluan mengajukan tiga pertanyaan. Berikut jawaban yang diberikan isi buku
+ini.
+
+\begin{enumerate}
+  \item \textbf{Jalur dari sistem berjalan menuju model yang dapat dieksekusi.}
+        Setiap abstraksi diperkenalkan setelah masalah yang diatasinya terlihat
+        pada sistem yang berjalan. Metamodel diperkenalkan setelah pembaca
+        menulis berkas konfigurasi berulang, dan generator diperkenalkan setelah
+        pembaca menyalin artefak yang sama ke tiga lingkungan. Urutan ini
+        menjaga kaitan antara model dan artefak operasional, karena keduanya
+        dibandingkan pada sistem yang sama.
+  \item \textbf{Satu studi kasus lintas tahapan.} Domain MediaFlow dipakai
+        berturut-turut pada Bab 8 sampai Bab 14, sedangkan \textit{stack} layanan
+        text to speech dipakai pada Bab 4 sampai Bab 7. Dengan cara itu,
+        perbedaan antar pendekatan dapat dinilai tanpa mengganti domain, dan
+        akibat satu keputusan perancangan metamodel dapat ditelusuri sampai ke
+        artefak yang dibangkitkan.
+  \item \textbf{Pengurangan duplikasi dan batasnya.} Pendekatan berbasis model
+        memangkas duplikasi ketika artefak yang sama perlu diturunkan untuk
+        banyak lingkungan atau banyak target, sebagaimana ditunjukkan pada Bab 7
+        dan Bab 12. Biayanya muncul pada sisi lain, yaitu metamodel, templat, dan
+        generator yang harus dipelihara, serta kesalahan generator yang langsung
+        menyebar ke seluruh keluaran. Untuk sistem kecil dengan satu lingkungan,
+        menulis artefak secara langsung masih lebih murah.
+\end{enumerate}
+
+\section*{Kontribusi}\addcontentsline{toc}{section}{Kontribusi}
+
+Buku ini memberikan tiga kontribusi. Pertama, satu rangkaian materi yang
+menggabungkan praktik DevOps \cite{bass2015devops, humble2010cd, morris2021iac}
+dengan rekayasa berbasis model \cite{schmidt2006mde, brambilla2017mdse} pada satu
+jalur yang berangkat dari eksekusi. Kedua, satu metamodel beserta perkakas
+pendukungnya, yaitu DSL tekstual, DSL visual, transformasi ETL
+\cite{kolovos2008etl}, generator EGL \cite{rose2008egl}, dan aturan validasi EVL
+\cite{kolovos2009evl}, yang seluruhnya dapat dijalankan ulang dari repositori
+publik. Ketiga, perbandingan antar perkakas pada tugas yang sama, sehingga
+pembaca memiliki dasar untuk memilih perkakas pada proyeknya sendiri.
+
+\section*{Keterbatasan}\addcontentsline{toc}{section}{Keterbatasan}
+
+Empat keterbatasan perlu dinyatakan terbuka.
+
+\begin{enumerate}
+  \item \textbf{Belum ada pengujian empiris pada pembelajaran.} Pengaruh urutan
+        materi ini terhadap capaian belajar mahasiswa belum diukur dengan
+        rancangan penelitian yang terkendali.
+  \item \textbf{Skala studi kasus.} Seluruh studi kasus dijalankan pada satu
+        mesin dengan beban kecil. Perilaku pada klaster produksi, beban nyata,
+        dan model berukuran besar belum diuji.
+  \item \textbf{Keterikatan pada versi perkakas.} Perintah dan keluaran
+        mengikuti versi perkakas yang dipakai saat penulisan. Perubahan versi
+        Terraform, Kubernetes, Eclipse, atau Epsilon dapat mengubah rincian
+        langkah, sehingga contoh perlu dijalankan ulang pada cetakan berikutnya.
+  \item \textbf{Perbandingan yang bersifat kualitatif.} Perbandingan antar
+        perkakas disusun dari pengalaman menerapkannya pada satu tugas yang
+        sama, dan belum memakai pengukuran berulang dengan analisis statistik.
+\end{enumerate}
+
+\section*{Arah Pengembangan}\addcontentsline{toc}{section}{Arah Pengembangan}
+
+Keterbatasan di atas menunjukkan pekerjaan lanjutan yang dapat dikerjakan.
+
+\begin{enumerate}
+  \item \textbf{Pengujian di kelas.} Urutan materi ini dapat diuji dengan
+        membandingkan dua kelompok kelas, memakai nilai sebelum dan sesudah,
+        kualitas artefak yang dihasilkan, serta waktu yang dibutuhkan mahasiswa
+        untuk menyelesaikan tugas yang sama.
+  \item \textbf{Pengukuran kuantitatif antar perkakas.} Perbandingan pada Bab 9,
+        Bab 11, dan Bab 13 dapat diulang dengan model berukuran lebih besar dan
+        pengulangan yang cukup, sehingga waktu eksekusi, jumlah baris, dan
+        tingkat kesalahan dapat dilaporkan dengan ukuran efek.
+  \item \textbf{Perluasan target generasi.} Generator pada Bab 12 dapat
+        diperluas untuk membangkitkan manifes Kubernetes dan berkas Terraform
+        secara langsung dari metamodel MediaFlow, sehingga rantai dari model ke
+        sistem berjalan tertutup penuh.
+  \item \textbf{Peran model bahasa besar.} Bab 14 membuka kemungkinan agen
+        menjalankan rantai perkakas ini. Langkah lanjutannya adalah mengukur
+        keandalan agen pada tugas pemodelan, termasuk tingkat keberhasilan,
+        jumlah perbaikan yang dibutuhkan, dan biayanya.
+\end{enumerate}
+
+\section*{Ringkasan}\addcontentsline{toc}{section}{Ringkasan}
+
+Buku ini berangkat dari satu gagasan sederhana: sistem perangkat lunak lebih
+mudah dipahami ketika dijalankan lebih dahulu, dan abstraksi lebih mudah diterima
+ketika masalah yang diatasinya sudah terlihat. Dari gagasan itu disusun jalur
+yang bergerak dari eksekusi, observasi, dan otomasi, menuju model, transformasi,
+validasi, dan generasi. Seluruh artefaknya tersedia terbuka, sehingga pembaca
+dapat menjalankannya kembali, memeriksa klaim yang dibuat, dan memakainya sebagai
+titik awal pada pekerjaannya sendiri.

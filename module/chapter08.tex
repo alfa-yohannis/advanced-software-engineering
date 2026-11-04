@@ -3,8 +3,8 @@
 
 \section*{Tujuan Pembelajaran}
 \begin{enumerate}
-    \item Menjelaskan konsep inti \textit{Model-Driven Software Engineering} (MDSE), termasuk peran metamodel, model, instance, \textit{abstract syntax}, \textit{concrete syntax}, transformasi model, dan validasi model.
-    \item Menganalisis keterkaitan antara metamodel dan model-model instance pada studi kasus MediaFlow, serta menunjukkan bagaimana struktur abstrak yang sama dapat merepresentasikan variasi pipeline media.
+    \item Menjelaskan konsep inti \textit{Model-Driven Software Engineering} (MDSE), termasuk peran metamodel\index{metamodel}, model, instance, \textit{abstract syntax}, \textit{concrete syntax}, transformasi model, dan validasi model.
+    \item Menganalisis keterkaitan antara metamodel dan model-model instance pada studi kasus MediaFlow, serta menunjukkan bagaimana struktur abstrak yang sama dapat merepresentasikan variasi pipeline\index{pipeline} media.
     \item Menerapkan cara membaca dan menyusun representasi model MediaFlow dalam bentuk tekstual (YAML/DSL) dan visual (diagram), serta mengaitkannya dengan kebutuhan otomasi artefak implementasi.
 \end{enumerate}
 
@@ -30,15 +30,16 @@ Sebagai pengikat pembahasan, bab ini menggunakan studi kasus \textit{MediaFlow},
 
 \textbf{Concrete Syntax.} \textit{Concrete syntax} adalah cara \textit{abstract syntax} ditampilkan atau dituliskan agar dapat digunakan oleh manusia dan alat bantu. Ada dua bentuk utama. \textbf{Visual syntax} mengekspresikan model sebagai diagram sehingga topologi dan relasi cepat dipahami. \textbf{Textual syntax} mengekspresikan model sebagai bahasa teks (misalnya DSL, YAML, atau format deklaratif lain) sehingga mudah di-versioning, di-review, dan diotomasi. \textbf{Contoh 1.} Model perpustakaan dapat ditampilkan sebagai class diagram (visual) atau sebagai file YAML (tekstual). \textbf{Contoh 2.} Workflow pemesanan dapat ditampilkan sebagai diagram state machine (visual) atau ditulis dalam DSL transisi status (tekstual).
 
-\textbf{Model-to-Model Transformation (M2M).} Transformasi model-ke-model memetakan model sumber ke model target pada level abstraksi yang sama atau berbeda tanpa langsung menjadi kode akhir. \textbf{Contoh 1.} Model proses bisnis BPMN ditransformasikan menjadi model workflow internal yang lebih teknis untuk orkestrasi sistem. \textbf{Contoh 2.} Model domain netral ditransformasikan menjadi model khusus platform cloud tertentu yang menambahkan atribut deployment.
+\textbf{Model-to-Model Transformation (M2M).} Transformasi model-ke-model memetakan model sumber ke model target pada level abstraksi yang sama atau berbeda tanpa langsung menjadi kode akhir. \textbf{Contoh 1.} Model proses bisnis BPMN ditransformasikan menjadi model workflow internal yang lebih teknis untuk orkestrasi\index{orkestrasi} sistem. \textbf{Contoh 2.} Model domain netral ditransformasikan menjadi model khusus platform cloud tertentu yang menambahkan atribut deployment.
 
-\textbf{Model-to-Text Transformation (M2T).} Transformasi model-ke-teks mengubah model menjadi artefak tekstual yang dapat dijalankan atau dipakai tool lain, seperti konfigurasi, skrip, atau kode sumber. Pada alur MDSE modern, tahap ini biasanya dilakukan otomatis melalui template agar konsisten lintas environment. \textbf{Contoh 1.} Model struktur data ditransformasikan menjadi kelas Java/Kotlin secara otomatis. \textbf{Contoh 2.} Model deployment ditransformasikan menjadi YAML Kubernetes atau berkas Terraform.
+\textbf{Model-to-Text Transformation (M2T).} Transformasi model-ke-teks mengubah model menjadi artefak tekstual yang dapat dijalankan atau dipakai tool lain, seperti konfigurasi, skrip, atau kode sumber. Pada alur MDSE modern, tahap ini biasanya dilakukan otomatis melalui template agar konsisten lintas environment. \textbf{Contoh 1.} Model struktur data ditransformasikan menjadi kelas Java/Kotlin secara otomatis. \textbf{Contoh 2.} Model deployment ditransformasikan menjadi YAML Kubernetes\index{Kubernetes} atau berkas Terraform.
 
 \textbf{Model Validation.} Validasi model memastikan model memenuhi aturan metamodel dan aturan domain tambahan sebelum ditransformasikan. Validasi dapat mencakup pemeriksaan struktur, tipe data, kardinalitas relasi, serta aturan semantik khusus domain. Dengan validasi dini, kesalahan dapat dicegah sebelum mencapai tahap implementasi. \textbf{Contoh 1.} Validasi menolak model e-commerce jika \texttt{Order} tidak memiliki item produk sama sekali. \textbf{Contoh 2.} Validasi menolak model perpustakaan jika \texttt{dueDate} lebih awal daripada \texttt{loanDate}.
 
 \begin{figure}[h]
 \centering
 \scalebox{0.8}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   >=Latex,
   node distance=15mm and 20mm,
@@ -64,7 +65,8 @@ Sebagai pengikat pembahasan, bab ini menggunakan studi kasus \textit{MediaFlow},
   \draw[arr, dotted] (val) -- node[left, font=\scriptsize, xshift=-1pt]{validasi model} (model.south);
   \draw[arr, dotted] (val) -- node[right, font=\scriptsize, xshift=1pt]{validasi transformasi} (trans.south);
   \draw[arr, dotted] (val.east) -- node[right, font=\scriptsize, xshift=10pt]{validasi output} (inst.south);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Ringkasan konsep dasar MDSE: Metamodel $\rightarrow$ Model $\rightarrow$ Transformasi (M2M/M2T) $\rightarrow$ Output (model target/code/etc), dengan validasi di setiap tahap utama.}
 \label{fig:mdse-konsep-dasar}
@@ -84,15 +86,15 @@ Dalam kerangka MDSE, bentuk-bentuk kalimat lintas bahasa tersebut adalah model k
 
 \section{Ekosistem Tooling MDSE}
 
-\textbf{Eclipse.} Eclipse berperan sebagai \textit{integrated development environment} untuk aktivitas pemodelan, transformasi, dan validasi artefak MDSE. Dalam praktiknya, Eclipse menyediakan fondasi \textit{plugin-based} sehingga tool seperti EMF, Emfatic, Epsilon, dan Sirius dapat berjalan dalam satu workspace yang konsisten. Informasi lanjut: \url{https://www.eclipse.org/}.
+\textbf{Eclipse.} Eclipse berperan sebagai \textit{integrated development environment} untuk aktivitas pemodelan, transformasi, dan validasi artefak MDSE. Dalam praktiknya, Eclipse menyediakan fondasi \textit{plugin-based} sehingga tool seperti EMF, Emfatic, Epsilon, dan Sirius\index{Sirius} dapat berjalan dalam satu workspace yang konsisten. Informasi lanjut: \url{https://www.eclipse.org/}.
 
-\textbf{Eclipse Modeling Framework (EMF).} EMF menyediakan mekanisme inti untuk mendefinisikan metamodel, menghasilkan kode Java dari model, dan memanipulasi instance model secara terstruktur. Pada konteks bab ini, EMF menjadi mesin utama yang menghubungkan level abstraksi metamodel, model, dan instance. Informasi lanjut: \url{https://www.eclipse.org/modeling/emf/}.
+\textbf{Eclipse Modeling Framework (EMF\index{EMF}).} EMF menyediakan mekanisme inti untuk mendefinisikan metamodel, menghasilkan kode Java dari model, dan memanipulasi instance model secara terstruktur. Pada konteks bab ini, EMF menjadi mesin utama yang menghubungkan level abstraksi metamodel, model, dan instance. Informasi lanjut: \url{https://www.eclipse.org/modeling/emf/}.
 
-\textbf{Ecore.} Ecore adalah bahasa/metamodel inti pada EMF untuk menyatakan kelas, atribut, relasi, pewarisan, serta enumerasi domain. Definisi Ecore pada proyek MediaFlow menjadi kontrak formal yang membatasi bentuk model valid sebelum diproses lebih lanjut ke tahap transformasi. Informasi lanjut: \url{https://www.eclipse.org/modeling/emf/}.
+\textbf{Ecore.} Ecore\index{Ecore} adalah bahasa/metamodel inti pada EMF untuk menyatakan kelas, atribut, relasi, pewarisan, serta enumerasi domain. Definisi Ecore pada proyek MediaFlow menjadi kontrak formal yang membatasi bentuk model valid sebelum diproses lebih lanjut ke tahap transformasi. Informasi lanjut: \url{https://www.eclipse.org/modeling/emf/}.
 
 \textbf{Emfatic.} Emfatic menyediakan sintaks tekstual ringkas untuk menulis spesifikasi Ecore tanpa harus menggunakan editor pohon XML. Dengan Emfatic, perancangan metamodel menjadi lebih cepat dibaca, mudah direview melalui version control, dan lebih efisien untuk kolaborasi tim. Informasi lanjut: \url{https://eclipse.dev/emfatic/}.
 
-\textbf{Epsilon.} Epsilon adalah keluarga bahasa untuk operasi berbasis model, termasuk validasi (EVL), transformasi model-ke-model (ETL), dan tugas otomasi lain pada siklus MDSE. Kehadirannya melengkapi EMF dengan lapisan bahasa deklaratif yang fokus pada aturan dan kualitas model. Informasi lanjut: \url{https://eclipse.dev/epsilon/}.
+\textbf{Epsilon.} Epsilon adalah keluarga bahasa untuk operasi berbasis model, termasuk validasi (EVL\index{EVL}), transformasi model-ke-model (ETL), dan tugas otomasi lain pada siklus MDSE. Kehadirannya melengkapi EMF dengan lapisan bahasa deklaratif yang fokus pada aturan dan kualitas model. Informasi lanjut: \url{https://eclipse.dev/epsilon/}.
 
 \textbf{Sirius.} Sirius digunakan untuk membangun editor visual berbasis metamodel sehingga pengguna domain dapat memodelkan sistem melalui diagram yang terkontrol oleh aturan semantik. Dalam alur MDSE, Sirius memperkuat \textit{concrete syntax} visual yang tetap konsisten dengan struktur abstrak di Ecore/EMF. Informasi lanjut: \url{https://eclipse.dev/sirius/}.
 
@@ -258,7 +260,7 @@ edges:
 
 Listing~\ref{lst:flow1-yaml} memperlihatkan keterkaitan langsung ke metamodel: elemen \texttt{Resource} dan \texttt{Scaler} adalah instansiasi kelas konkret turunan \texttt{Node}; daftar \texttt{ports} merealisasikan relasi kontainmen \texttt{Node.ports}; daftar \texttt{edges} merealisasikan \texttt{Graph.edges}; dan pasangan koneksi \texttt{source}-\texttt{target} merealisasikan referensi \texttt{Edge} ke \texttt{Port}.
 
-\subsection{Model 2: Pipeline Bercabang Multi-Output (\texttt{flow2.model})}
+\subsection[Model 2: Pipeline Bercabang Multi-Output]{Model 2: Pipeline Bercabang Multi-Output (\texttt{flow2.model})}
 
 \texttt{flow2.model} memperluas skenario dengan satu node skala 1080p yang bercabang ke dua \texttt{Transcoder} berbeda (H264 dan VP9), lalu berakhir pada dua \texttt{Resource} output. Representasi YAML berikut memperlihatkan struktur yang sama dalam format yang lebih ringkas untuk dokumentasi.
 
@@ -471,6 +473,7 @@ Representasi visual melengkapi representasi YAML (Listing~\ref{lst:flow1-yaml} d
 \begin{figure}[htbp]
 \centering
 \scalebox{0.7}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   node distance=22mm,
   >=Latex,
@@ -484,7 +487,8 @@ Representasi visual melengkapi representasi YAML (Listing~\ref{lst:flow1-yaml} d
 
   \draw[arr] (in) -- node[above, font=\scriptsize, yshift=15pt]{input\_video\_out $\rightarrow$ scaler\_720\_video\_in} (scaler);
   \draw[arr] (scaler) -- node[above, font=\scriptsize, yshift=15pt]{scaler\_720\_video\_out $\rightarrow$ output\_video\_in} (out);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Representasi visual model \texttt{flow1.model}: alur linear Resource $\rightarrow$ Scaler $\rightarrow$ Resource.}
 \label{fig:flow1-visual}
@@ -497,6 +501,7 @@ Gambar~\ref{fig:flow1-visual} memperlihatkan topologi linear dengan dua edge. In
 \begin{figure}[htbp]
 \centering
 \scalebox{0.69}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   node distance=18mm and 18mm,
   >=Latex,
@@ -519,7 +524,8 @@ Gambar~\ref{fig:flow1-visual} memperlihatkan topologi linear dengan dua edge. In
 
   \draw[arr] (h264) -- node[above, font=\scriptsize, yshift=15pt]{transcoder\_h264\_out} (outmp4);
   \draw[arr] (vp9) -- node[below, font=\scriptsize, yshift=-15pt]{transcoder\_vp9\_out} (outwebm);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Representasi visual model \texttt{flow2.model}: topologi bercabang dari satu scaler ke dua transcoder dan dua output.}
 \label{fig:flow2-visual}
@@ -532,3 +538,26 @@ Gambar~\ref{fig:flow2-visual} menunjukkan bahwa metamodel yang sama mampu merepr
 Bab ini menegaskan bahwa \textit{Model-Driven Software Engineering} (MDSE) memindahkan fokus pengembangan dari implementasi langsung ke rekayasa berbasis model. Konsep inti seperti metamodel, model, instance, \textit{abstract syntax}, \textit{concrete syntax}, transformasi M2M/M2T, dan validasi membentuk satu alur yang saling terhubung. Dengan pendekatan ini, struktur domain dapat didefinisikan secara formal, kualitas model dapat dicek lebih awal, dan proses menghasilkan artefak implementasi menjadi lebih konsisten serta terkontrol.
 
 Melalui studi kasus MediaFlow, bab ini menunjukkan bagaimana satu metamodel dapat mendukung berbagai model pipeline, baik linear maupun bercabang, lalu direpresentasikan dalam bentuk tekstual (YAML/DSL) dan visual (diagram). Analogi SVO lintas bahasa juga memperjelas bahwa makna abstrak dapat dipertahankan meskipun bentuk konkret berbeda. Secara praktis, pendekatan MDSE membantu tim mengelola kompleksitas, mengurangi inkonsistensi, dan mempercepat adaptasi perubahan kebutuhan sistem melalui perubahan di level model.
+
+\section{Latihan}
+
+Kerjakan latihan berikut dengan metamodel dan model MediaFlow.
+
+\begin{enumerate}
+  \item Baca \texttt{mediaflow.ecore}, lalu gambarkan sendiri hubungan antara \texttt{Graph}, \texttt{Node}, \texttt{Port}, dan \texttt{Edge} beserta kardinalitasnya.
+  \item Susun satu model MediaFlow baru yang memuat satu \texttt{Resource} masukan, dua \texttt{Scaler}, dan dua \texttt{Resource} keluaran. Periksa apakah model tersebut diterima oleh EMF.
+  \item Tambahkan satu subtipe \texttt{Transformer} baru, misalnya \texttt{Watermarker}, pada metamodel. Daftarkan berkas dan perkakas mana saja yang perlu menyesuaikan diri setelah perubahan itu.
+  \item Jelaskan perbedaan sintaks abstrak dan sintaks konkret dengan contoh dari MediaFlow, lalu sebutkan satu hal yang hanya dapat dinyatakan pada masing-masing.
+  \item Bandingkan representasi tekstual dan visual untuk model yang sama. Informasi apa yang lebih cepat Anda tangkap dari masing-masing representasi?
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{Eclipse Modeling Framework} \cite{doc-emf}: kerangka pemodelan dan pembangkitan kode dari Ecore.
+  \item \textit{Emfatic} \cite{doc-emfatic}: notasi tekstual untuk menulis metamodel Ecore.
+  \item \textit{Meta Object Facility (MOF)} \cite{omg-mof}: standar arsitektur metamodel yang mendasari Ecore.
+  \item \textit{Model-Driven Software Engineering in Practice} \cite{brambilla2017mdse}: konsep dasar rekayasa berbasis model.
+\end{itemize}

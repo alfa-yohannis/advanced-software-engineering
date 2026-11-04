@@ -5,9 +5,9 @@
 
 Setelah mengikuti sesi ini, peserta diharapkan mampu:
 \begin{itemize}
-  \item menjelaskan konsep dan alur kerja \textit{Continuous Integration} dan \textit{Continuous Delivery/Deployment} (CI/CD) dalam pengembangan perangkat lunak modern;
-  \item menerapkan workflow CI/CD berbasis GitHub Actions untuk melakukan pengujian otomatis dan deployment terkontrol pada aplikasi berbasis container;
-  \item menganalisis integrasi antara pipeline CI/CD dan arsitektur sistem terdistribusi melalui studi kasus aplikasi \textit{text-to-speech} (TTS).
+  \item menjelaskan konsep dan alur kerja \textit{Continuous Integration} dan \textit{Continuous Delivery/Deployment} (CI/CD\index{CI/CD}) dalam pengembangan perangkat lunak modern;
+  \item menerapkan workflow CI/CD berbasis GitHub Actions\index{GitHub Actions} untuk melakukan pengujian otomatis dan deployment terkontrol pada aplikasi berbasis container;
+  \item menganalisis integrasi antara pipeline\index{pipeline} CI/CD dan arsitektur sistem terdistribusi melalui studi kasus aplikasi \textit{text-to-speech} (TTS).
 \end{itemize}
 
 
@@ -17,9 +17,9 @@ Dalam pengembangan perangkat lunak modern, perubahan kode tidak lagi terjadi sec
 
 Pendekatan \textit{Continuous Integration} dan \textit{Continuous Delivery/Deployment} (CI/CD) hadir sebagai jawaban atas tantangan tersebut. Dengan CI/CD, proses integrasi kode, pengujian, dan penyebaran aplikasi tidak lagi bergantung pada langkah manual yang rentan kesalahan, tetapi dijalankan secara otomatis dan konsisten melalui pipeline terdefinisi. Pipeline ini bertindak sebagai ``penjaga gerbang'' yang memverifikasi kualitas perubahan sebelum perubahan tersebut memengaruhi sistem yang berjalan.
 
-Pada bab ini, konsep CI/CD tidak hanya dibahas secara teoritis, tetapi juga diterapkan pada sebuah studi kasus nyata berupa sistem \textit{text-to-speech} (TTS) berbasis layanan terdistribusi. Studi kasus ini dipilih karena mencerminkan karakteristik umum aplikasi modern: adanya API, layanan web, komponen pemrosesan asinkron, penyimpanan objek, serta gateway sebagai titik masuk pengguna. Melalui contoh ini, peserta diharapkan dapat melihat bagaimana pipeline CI/CD berinteraksi langsung dengan arsitektur aplikasi dan lingkungan runtime berbasis container.
+Pada bab ini, konsep CI/CD tidak hanya dibahas secara teoritis, tetapi juga diterapkan pada sebuah studi kasus nyata berupa sistem \textit{text-to-speech} (TTS) berbasis layanan terdistribusi. Studi kasus ini dipilih karena mencerminkan karakteristik umum aplikasi modern: adanya API, layanan web, komponen pemrosesan asinkron, penyimpanan objek, serta gateway sebagai titik masuk pengguna. Melalui contoh ini, peserta diharapkan dapat melihat bagaimana pipeline CI/CD berinteraksi langsung dengan arsitektur aplikasi dan lingkungan runtime berbasis container\index{container}.
 
-Dengan mengaitkan konsep CI/CD, GitHub Actions, dan \texttt{docker-compose} dalam satu alur terpadu, bab ini bertujuan membangun pemahaman yang utuh mengenai bagaimana integrasi berkelanjutan dan penerapan berkelanjutan mendukung pengembangan sistem yang andal, dapat direproduksi, dan mudah dievolusikan. Pendekatan ini menjadi fondasi penting sebelum melangkah ke topik lanjutan seperti skalabilitas, observabilitas, dan otomasi infrastruktur.
+Dengan mengaitkan konsep CI/CD, GitHub Actions, dan \texttt{docker-compose} dalam satu alur terpadu, bab ini bertujuan membangun pemahaman yang utuh mengenai bagaimana integrasi berkelanjutan dan penerapan berkelanjutan mendukung pengembangan sistem yang andal, dapat direproduksi, dan mudah dievolusikan. Pendekatan ini menjadi fondasi penting sebelum melangkah ke topik lanjutan seperti skalabilitas, observabilitas\index{observabilitas}, dan otomasi infrastruktur.
 
 
 \section{Apa yang Dimaksud dengan CI/CD?}
@@ -78,7 +78,7 @@ Jika seluruh pengujian berhasil, workflow dapat dilanjutkan ke tahap
 deployment. Pada studi kasus ini, keberhasilan workflow CI akan memicu
 workflow lanjutan melalui event \texttt{workflow\_run}. Workflow deployment
 tersebut dijalankan pada \textit{self-hosted runner}, yang memiliki akses
-langsung ke Docker Engine dan lingkungan target. Dengan mekanisme ini,
+langsung ke Docker\index{Docker} Engine dan lingkungan target. Dengan mekanisme ini,
 deployment hanya dilakukan pada kode yang telah diverifikasi oleh CI.
 
 Secara keseluruhan, workflow CI/CD membentuk sebuah pipa eksekusi yang
@@ -89,9 +89,12 @@ terobservasi, dan dapat diaudit. Pendekatan ini sangat penting dalam konteks
 pengembangan perangkat lunak modern yang menuntut kecepatan, kualitas, dan
 reliabilitas secara simultan.
 
+
+Gambar~\ref{fig:cicd-workflow-session-04} menampilkan diagram workflow CI/CD pada studi kasus session-04. Commit dan pull request memicu workflow CI pada runner GitHub-hosted. Jika CI berstatus success, event workflow/\_run memicu workflow deploy pada self-hosted runner untuk melakukan deployment menggunakan Docker Compose..
 \begin{figure}[phtb]
 \centering
 \scalebox{0.95}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   font=\small\bfseries,
   node distance=9mm,
@@ -148,6 +151,7 @@ reliabilitas secara simultan.
 \draw[arrow] (deploy) -- (running);
 
 \end{tikzpicture}%
+}%
 }
 \caption{Diagram workflow CI/CD pada studi kasus \texttt{session-04}. Commit dan pull request memicu workflow CI pada runner GitHub-hosted. Jika CI berstatus \texttt{success}, event \texttt{workflow\_run} memicu workflow deploy pada self-hosted runner untuk melakukan deployment menggunakan Docker Compose.}
 \label{fig:cicd-workflow-session-04}
@@ -160,6 +164,7 @@ reliabilitas secara simultan.
 \begin{figure}[htbp]
 \centering
 \scalebox{0.9}{
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}[
   font=\small\bfseries,
   node distance=20mm and 16mm,
@@ -232,7 +237,8 @@ reliabilitas secara simultan.
 \draw[arrow] (web.north) -- node[right, yshift=5mm]{HTML/JS + MP3 URL} (client.south);
 
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 }
 \caption{Arsitektur \texttt{docker-compose} untuk TTS case study: client mengakses \textit{gateway} Nginx (\texttt{:8088}) yang merutekan \texttt{/} ke layanan \textit{web} dan \texttt{/api/*} ke layanan \textit{api}. Layanan \textit{api} mengantrikan job ke Redis, \textit{worker} mengambil job dari Redis, melakukan sintesis TTS (Piper) dan konversi MP3 (ffmpeg), lalu menyimpan hasil ke MinIO (S3). Layanan \textit{web} menyajikan UI dan mengambil MP3 dari MinIO untuk diputar oleh client.}
 \label{fig:tts-compose-architecture}
@@ -241,7 +247,7 @@ reliabilitas secara simultan.
 
 
 
-Sebagai contoh konkret penerapan konsep CI/CD dan orkestrasi layanan berbasis
+Sebagai contoh konkret penerapan konsep CI/CD dan orkestrasi\index{orkestrasi} layanan berbasis
 container, studi kasus ini menggunakan sistem \textit{text-to-speech} (TTS)
 yang dijalankan secara lokal menggunakan \texttt{docker-compose}. Diagram pada
 %Gambar~\ref{fig:tts-compose-architecture} menggambarkan arsitektur lengkap
@@ -314,14 +320,14 @@ Bagian ini menjelaskan cara menjalankan contoh sistem TTS secara lokal
 menggunakan \texttt{docker compose}, serta cara mengakses layanan yang
 tersedia baik melalui command-line maupun melalui web browser. Seluruh
 langkah diasumsikan dijalankan pada mesin lokal Ubuntu yang telah terpasang
-Docker Engine dan Docker Compose plugin.
+Docker Engine dan Docker Compose\index{Docker Compose} plugin.
 
 Langkah pertama adalah memastikan bahwa tidak ada container lama yang masih
 berjalan. Hal ini penting untuk menghindari konflik port, state lama pada
 container, atau penggunaan image yang sudah tidak relevan. Setelah itu,
-seluruh service akan dibangun ulang dan dijalankan.
+seluruh service akan dibangun ulang dan dijalankan. Perintahnya ada pada Listing~\ref{lst:ch04-1}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah sudo docker compose down}, label={lst:ch04-1}]
 sudo docker compose down
 sudo docker compose build
 sudo docker compose up
@@ -337,9 +343,9 @@ API, web server, worker, Redis, MinIO, dan gateway Nginx akan mulai berjalan.
 Setelah seluruh service berjalan dengan baik, sistem siap menerima
 permintaan text-to-speech. Permintaan dapat dikirimkan melalui API menggunakan
 HTTP request. Contoh berikut menunjukkan cara mengirimkan teks untuk diproses
-menjadi suara menggunakan perintah \texttt{curl}.
+menjadi suara menggunakan perintah \texttt{curl}. Perintah lengkapnya ada pada Listing~\ref{lst:ch04-2}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl}, label={lst:ch04-2}]
 # submit a text
 curl -X POST http://localhost:8088/api/jobs \
   -H "Content-Type: application/json" \
@@ -353,18 +359,18 @@ dimasukkan ke antrian Redis dan diproses secara asinkron oleh worker.
 
 Status pemrosesan job dapat diperiksa menggunakan job ID yang diperoleh dari
 respons sebelumnya. Contoh berikut menunjukkan cara mengambil status dan
-hasil pemrosesan job melalui API.
+hasil pemrosesan job melalui API. Listing~\ref{lst:ch04-3} memuat perintahnya.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl (2)}, label={lst:ch04-3}]
 # get the result
 curl http://localhost:8088/api/jobs/98627818-6d12-4d85-84ad-7f6d777d8e54
 \end{lstlisting}
 
 Jika proses TTS telah selesai, respons API akan menunjukkan bahwa job telah
 berhasil diproses dan berkas MP3 telah tersedia. Berkas audio hasil sintesis
-dapat diakses melalui endpoint MP3 yang disediakan oleh layanan web.
+dapat diakses melalui endpoint MP3 yang disediakan oleh layanan web. Perintahnya ada pada Listing~\ref{lst:ch04-4}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl (3)}, label={lst:ch04-4}]
 # open the speech file (add -o output.mp3 to save the file)
 curl -I http://localhost:8088/mp3/98627818-6d12-4d85-84ad-7f6d777d8e54.mp3
 \end{lstlisting}
@@ -377,9 +383,9 @@ tergantung konfigurasi browser yang digunakan.
 
 Selain mengakses berkas MP3 secara langsung, pengguna juga dapat membuka
 antarmuka web yang disediakan oleh layanan \textit{web}. Antarmuka ini dapat
-diakses melalui browser pada alamat berikut:
+diakses melalui browser pada alamat berikut (Listing~\ref{lst:ch04-5}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Menjalankan Contoh}, label={lst:ch04-5}]
 http://localhost:8088/
 \end{lstlisting}
 
@@ -418,9 +424,9 @@ dijalankan pada sistem operasi Ubuntu Linux.
   Git adalah sistem \textit{distributed version control} yang wajib tersedia
   di lingkungan pengembangan lokal. Pada Ubuntu, Git dapat diinstal
   menggunakan \texttt{apt}. Setelah instalasi, versi Git perlu diverifikasi
-  untuk memastikan bahwa instalasi berjalan dengan benar.
+  untuk memastikan bahwa instalasi berjalan dengan benar. Perintah lengkapnya ada pada Listing~\ref{lst:ch04-6}.
 
-  \begin{lstlisting}[language=bash]
+  \begin{lstlisting}[language=bash, caption={Memperbarui indeks paket}, label={lst:ch04-6}]
 sudo apt update
 sudo apt install -y git
 git --version
@@ -433,9 +439,9 @@ git --version
 
   Sebelum menggunakan Git, identitas pengguna perlu dikonfigurasikan.
   Informasi ini akan tercatat secara permanen pada setiap commit yang dibuat.
-  Konfigurasi dilakukan satu kali pada mesin lokal dengan perintah berikut:
+  Konfigurasi dilakukan satu kali pada mesin lokal dengan perintah berikut (Listing~\ref{lst:ch04-7}):
 
-  \begin{lstlisting}[language=bash]
+  \begin{lstlisting}[language=bash, caption={Perintah git config --global user.name "Nama Lengkap Anda"}, label={lst:ch04-7}]
 git config --global user.name "Nama Lengkap Anda"
 git config --global user.email "email@contoh.com"
 git config --global --list
@@ -448,9 +454,9 @@ git config --global --list
   \item \textbf{Menggunakan repository GitHub untuk modul ini}
 
   Repository utama yang digunakan dalam modul ini telah disediakan dan dapat
-  diakses melalui alamat berikut:
+  diakses melalui alamat berikut (Listing~\ref{lst:ch04-8}):
 
-  \begin{lstlisting}[language=bash]
+  \begin{lstlisting}[language=bash, caption={Potongan kode pada Tutorial}, label={lst:ch04-8}]
 https://github.com/alfa-yohannis/advanced-software-engineering
   \end{lstlisting}
 
@@ -463,9 +469,9 @@ https://github.com/alfa-yohannis/advanced-software-engineering
 
   Proses \textit{clone} digunakan untuk menyalin seluruh isi repository dari
   GitHub ke lingkungan lokal agar dapat dijalankan, dimodifikasi, dan diuji.
-  Clone repository dilakukan dengan perintah berikut:
+  Clone repository dilakukan dengan perintah berikut (Listing~\ref{lst:ch04-9}):
 
-  \begin{lstlisting}[language=bash]
+  \begin{lstlisting}[language=bash, caption={Menyalin repositori}, label={lst:ch04-9}]
 git clone https://github.com/alfa-yohannis/advanced-software-engineering.git
 cd advanced-software-engineering
 git remote -v
@@ -482,9 +488,9 @@ GitHub CLI (\texttt{gh}) adalah alat bantu resmi dari GitHub yang mempermudah
 interaksi antara mesin lokal dan GitHub. Dengan \texttt{gh}, autentikasi,
 manajemen repository, serta pemantauan workflow CI/CD dapat dilakukan langsung
 melalui terminal. Pada Ubuntu, GitHub CLI dapat diinstal menggunakan
-\texttt{apt} sebagai berikut:
+\texttt{apt} sebagai berikut (Listing~\ref{lst:ch04-10}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memperbarui indeks paket (2)}, label={lst:ch04-10}]
 sudo apt update
 sudo apt install -y gh
 gh --version
@@ -498,17 +504,17 @@ dan siap digunakan.
 Setelah GitHub CLI terinstal, langkah berikutnya adalah melakukan autentikasi
 ke akun GitHub. Proses ini akan menghubungkan mesin lokal dengan akun GitHub
 tanpa perlu memasukkan username dan password setiap kali melakukan operasi Git.
-Autentikasi dilakukan dengan perintah berikut:
+Autentikasi dilakukan dengan perintah berikut (Listing~\ref{lst:ch04-11}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah gh auth login}, label={lst:ch04-11}]
 gh auth login
 \end{lstlisting}
 
 Pada proses login, pilih GitHub.com, metode HTTPS, dan autentikasi melalui
 browser. Setelah proses selesai, status autentikasi dapat diverifikasi
-dengan perintah berikut:
+dengan perintah berikut (Listing~\ref{lst:ch04-12}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah gh auth status}, label={lst:ch04-12}]
 gh auth status
 \end{lstlisting}
 
@@ -520,9 +526,9 @@ dengan benar.
 Docker Engine digunakan untuk menjalankan aplikasi dalam bentuk container.
 Seluruh eksperimen pada modul ini menggunakan container sebagai unit eksekusi
 utama. Pada Ubuntu, Docker Engine dapat diinstal melalui repository bawaan
-sebagai berikut:
+sebagai berikut (Listing~\ref{lst:ch04-13}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memperbarui indeks paket (3)}, label={lst:ch04-13}]
 sudo apt update
 sudo apt install -y docker.io
 docker version
@@ -530,9 +536,9 @@ docker version
 
 Jika informasi versi Docker tampil, maka Docker Engine telah berhasil
 terinstal. Agar Docker dapat dijalankan tanpa menggunakan \texttt{sudo},
-pengguna perlu ditambahkan ke grup \texttt{docker}:
+pengguna perlu ditambahkan ke grup \texttt{docker} (Listing~\ref{lst:ch04-14}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah sudo usermod -aG docker \$USER}, label={lst:ch04-14}]
 sudo usermod -aG docker $USER
 # logout dan login kembali
 docker ps
@@ -543,16 +549,16 @@ docker ps
 Docker Compose digunakan untuk menjalankan sistem yang terdiri dari beberapa
 service secara bersamaan, seperti API, database, worker, dan reverse proxy.
 Versi modern Docker menggunakan Compose sebagai plugin terintegrasi.
-Ketersediaan Docker Compose dapat diperiksa dengan perintah berikut:
+Ketersediaan Docker Compose dapat diperiksa dengan perintah berikut (Listing~\ref{lst:ch04-15}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah docker compose version}, label={lst:ch04-15}]
 docker compose version
 \end{lstlisting}
 
 Jika perintah tersebut belum tersedia, Docker Compose plugin dapat diinstal
-menggunakan \texttt{apt}:
+menggunakan \texttt{apt} (Listing~\ref{lst:ch04-16}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memasang paket -y docker-compose-plugin}, label={lst:ch04-16}]
 sudo apt install -y docker-compose-plugin
 docker compose version
 \end{lstlisting}
@@ -566,9 +572,9 @@ aplikasi multi-service menggunakan file \texttt{docker-compose.yml}.
 GitHub Actions runner dijalankan sebagai proses mandiri pada mesin lokal
 atau server. Oleh karena itu, langkah pertama adalah menyiapkan direktori
 khusus untuk runner agar file biner dan konfigurasi tidak tercampur dengan
-kode proyek. Direktori ini umumnya diletakkan pada home directory pengguna.
+kode proyek. Direktori ini umumnya diletakkan pada home directory pengguna. Listing~\ref{lst:ch04-17} memuat perintahnya.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Perintah mkdir actions-runner \&\& cd actions-runner}, label={lst:ch04-17}]
 mkdir actions-runner && cd actions-runner
 \end{lstlisting}
 
@@ -579,9 +585,9 @@ runner akan dilakukan di dalam direktori \texttt{actions-runner}.
 
 GitHub menyediakan runner resmi dalam bentuk arsip terkompresi.
 Unduh paket runner untuk arsitektur Linux x64 menggunakan \texttt{curl}
-sebagai berikut:
+sebagai berikut (Listing~\ref{lst:ch04-18}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl (4)}, label={lst:ch04-18}]
 curl -o actions-runner-linux-x64-2.331.0.tar.gz -L \
 https://github.com/actions/runner/releases/download/v2.331.0/actions-runner-linux-x64-2.331.0.tar.gz
 \end{lstlisting}
@@ -593,9 +599,9 @@ diperlukan untuk menghubungkan runner dengan repository GitHub.
 
 Sebelum mengekstrak arsip, integritas file perlu divalidasi untuk memastikan
 bahwa paket tidak rusak atau dimodifikasi selama proses unduhan.
-Validasi dilakukan menggunakan checksum SHA-256 yang disediakan oleh GitHub.
+Validasi dilakukan menggunakan checksum SHA-256 yang disediakan oleh GitHub. Perintahnya ada pada Listing~\ref{lst:ch04-19}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Menampilkan keluaran di terminal}, label={lst:ch04-19}]
 echo "<SHA256_CHECKSUM>  actions-runner-linux-x64-2.331.0.tar.gz" | shasum -a 256 -c
 \end{lstlisting}
 
@@ -606,9 +612,9 @@ diekstrak dan digunakan.
 
 Setelah checksum tervalidasi, arsip runner diekstrak menggunakan perintah
 \texttt{tar}. Proses ini akan menghasilkan sejumlah file dan direktori,
-termasuk skrip \texttt{config.sh} dan \texttt{run.sh}.
+termasuk skrip \texttt{config.sh} dan \texttt{run.sh}. Isi berkasnya ada pada Listing~\ref{lst:ch04-20}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Isi berkas config.sh}, label={lst:ch04-20}]
 tar xzf actions-runner-linux-x64-2.331.0.tar.gz
 \end{lstlisting}
 
@@ -631,9 +637,9 @@ disimpan secara permanen.
 
 Langkah terakhir adalah mengonfigurasi runner agar terdaftar pada repository
 GitHub. Proses konfigurasi dilakukan menggunakan skrip \texttt{config.sh}
-dengan memasukkan URL repository dan token registrasi yang telah dibuat.
+dengan memasukkan URL repository dan token registrasi yang telah dibuat. Listing~\ref{lst:ch04-21} memuat kodenya.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Tutorial (2)}, label={lst:ch04-21}]
 ./config.sh \
   --url https://github.com/alfa-yohannis/advanced-software-engineering \
   --token <TOKEN>
@@ -666,9 +672,9 @@ Label-label ini harus ditetapkan saat proses konfigurasi runner.
 
 Jika diminta memasukkan label secara interaktif, pastikan ketiga label
 tersebut ada dan dipisahkan dengan koma. Label ini memungkinkan workflow
-menggunakan deklarasi berikut pada file YAML:
+menggunakan deklarasi berikut pada file YAML (Listing~\ref{lst:ch04-22}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Tutorial (3)}, label={lst:ch04-22}]
 runs-on: [self-hosted, Linux, X64]
 \end{lstlisting}
 
@@ -690,9 +696,9 @@ setiap kali job dijalankan.
 
 Setelah konfigurasi selesai, runner dapat dijalankan secara manual untuk
 pertama kali menggunakan skrip \texttt{run.sh}. Perintah ini akan
-menghubungkan runner ke GitHub dan menunggu job dari workflow.
+menghubungkan runner ke GitHub dan menunggu job dari workflow. Kodenya ada pada Listing~\ref{lst:ch04-23}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Tutorial (4)}, label={lst:ch04-23}]
 ./run.sh
 \end{lstlisting}
 
@@ -708,9 +714,9 @@ sudah mencukupi.
 
 Setelah runner aktif, langkah terakhir adalah memastikan bahwa repository
 memiliki workflow yang dapat dijalankan. Daftar workflow dapat dilihat
-menggunakan GitHub CLI dengan perintah berikut:
+menggunakan GitHub CLI dengan perintah berikut (Listing~\ref{lst:ch04-24}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub}, label={lst:ch04-24}]
 gh workflow list
 \end{lstlisting}
 
@@ -727,16 +733,16 @@ lokal menggunakan commit Git. Commit berfungsi sebagai unit perubahan yang
 akan dilacak, diuji, dan dieksekusi oleh pipeline CI.
 
 Sebelum commit, periksa status repository untuk memastikan file yang
-berubah sudah sesuai:
+berubah sudah sesuai (Listing~\ref{lst:ch04-25}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengirim perubahan ke repositori}, label={lst:ch04-25}]
 git status
 \end{lstlisting}
 
 Tambahkan perubahan ke staging area dan buat commit dengan pesan yang
-deskriptif:
+deskriptif (Listing~\ref{lst:ch04-26}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengirim perubahan ke repositori (2)}, label={lst:ch04-26}]
 git add .
 git commit -m "chore: update configuration for CI test"
 \end{lstlisting}
@@ -747,9 +753,9 @@ Commit ini masih bersifat lokal dan belum dikirim ke GitHub.
 
 Agar perubahan dapat diproses oleh GitHub Actions, commit lokal perlu
 dikirim ke repository GitHub, khususnya ke branch \texttt{main} yang
-digunakan sebagai branch utama pada modul ini.
+digunakan sebagai branch utama pada modul ini. Perintah lengkapnya ada pada Listing~\ref{lst:ch04-27}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Mengirim perubahan ke repositori (3)}, label={lst:ch04-27}]
 git push origin main
 \end{lstlisting}
 
@@ -762,9 +768,9 @@ Selain dipicu otomatis oleh event \texttt{push}, workflow CI juga dapat
 dijalankan secara manual menggunakan GitHub CLI. Hal ini berguna untuk
 pengujian atau debugging pipeline tanpa perlu membuat commit baru.
 
-Workflow dapat dijalankan menggunakan nama file workflow sebagai berikut:
+Workflow dapat dijalankan menggunakan nama file workflow sebagai berikut (Listing~\ref{lst:ch04-28}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub (2)}, label={lst:ch04-28}]
 gh workflow run tests.yml
 \end{lstlisting}
 
@@ -775,9 +781,9 @@ branch aktif.
 
 Untuk memastikan workflow dijalankan secara eksplisit pada branch
 \texttt{main}, GitHub CLI menyediakan opsi \texttt{--ref}. Opsi ini
-digunakan ketika repository memiliki beberapa branch aktif.
+digunakan ketika repository memiliki beberapa branch aktif. Listing~\ref{lst:ch04-29} memuat perintahnya.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub (3)}, label={lst:ch04-29}]
 gh workflow run "CI Tests (session-04)" --ref main
 \end{lstlisting}
 
@@ -788,9 +794,9 @@ menggunakan kode terbaru pada branch \texttt{main}.
 
 Setelah workflow dijalankan, status dan hasil eksekusi dapat dipantau
 langsung dari terminal menggunakan GitHub CLI. Daftar eksekusi workflow
-ditampilkan dengan perintah berikut:
+ditampilkan dengan perintah berikut (Listing~\ref{lst:ch04-30}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub (4)}, label={lst:ch04-30}]
 gh run list
 \end{lstlisting}
 
@@ -804,9 +810,9 @@ dipantau tanpa harus membuka antarmuka web GitHub.
 
 Setelah workflow CI dijalankan, semua eksekusi workflow dapat dilihat langsung
 melalui terminal menggunakan GitHub CLI. Untuk membatasi tampilan hanya pada
-workflow \texttt{CI Tests (session-04)}, gunakan perintah berikut:
+workflow \texttt{CI Tests (session-04)}, gunakan perintah berikut (Listing~\ref{lst:ch04-31}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub (5)}, label={lst:ch04-31}]
 gh run list --workflow "CI Tests (session-04)"
 \end{lstlisting}
 
@@ -819,9 +825,9 @@ mengidentifikasi run terbaru yang sedang atau telah dieksekusi.
 GitHub CLI menyediakan mekanisme untuk memantau proses eksekusi workflow
 secara real-time dari terminal. Fitur ini sangat berguna untuk memahami
 tahapan CI yang sedang berjalan, seperti proses instalasi dependensi,
-pengujian unit, dan pengujian integrasi.
+pengujian unit, dan pengujian integrasi. Perintahnya ada pada Listing~\ref{lst:ch04-32}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub (6)}, label={lst:ch04-32}]
 gh run watch
 \end{lstlisting}
 
@@ -833,9 +839,9 @@ selesai atau dihentikan secara manual.
 Untuk keperluan otomatisasi atau skrip, eksekusi workflow dapat dipantau
 hingga selesai dengan mengembalikan status exit sesuai hasil workflow.
 Perintah ini akan berhenti secara otomatis ketika workflow selesai,
-dan mengembalikan kode keluar non-zero jika workflow gagal.
+dan mengembalikan kode keluar non-zero jika workflow gagal. Perintah lengkapnya ada pada Listing~\ref{lst:ch04-33}.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub (7)}, label={lst:ch04-33}]
 gh run watch --exit-status
 \end{lstlisting}
 
@@ -847,9 +853,9 @@ dari proses yang lebih besar, misalnya sebelum melanjutkan ke tahap deploy.
 Setiap eksekusi workflow memiliki ID unik yang dapat digunakan untuk
 mengambil detail lebih lanjut, seperti log spesifik atau artefak.
 ID eksekusi workflow CI terbaru pada branch \texttt{main} dapat diperoleh
-menggunakan perintah berikut:
+menggunakan perintah berikut (Listing~\ref{lst:ch04-34}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Memantau workflow di GitHub (8)}, label={lst:ch04-34}]
 gh run list \
   --workflow "CI Tests (session-04)" \
   --branch main \
@@ -936,9 +942,9 @@ resource atau port yang sama.
 
 Langkah deployment ini didefinisikan secara eksplisit di dalam workflow file
 \texttt{.github/workflows/deploy-local.yml}. Cuplikan berikut menunjukkan perintah yang
-dieksekusi oleh self-hosted runner pada tahap deployment:
+dieksekusi oleh self-hosted runner pada tahap deployment (Listing~\ref{lst:ch04-35}):
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, caption={Potongan kode pada Tutorial (5)}, label={lst:ch04-35}]
 - name: Run app locally (compose)
   run: |
     docker compose -f projects/session-04/docker-compose.yml down || true
@@ -989,7 +995,29 @@ Bagian ini membantu mahasiswa mengaitkan konsep CI/CD dengan praktik pada studi 
 
 \section{Ringkasan}
 
-CI/CD adalah pendekatan otomasi yang menghubungkan perubahan kode dengan proses verifikasi dan penyebaran sistem secara konsisten. Pada tahap CI, setiap commit atau pull request memicu runner untuk melakukan \textit{checkout}, menyiapkan environment, menjalankan unit test, dan menjalankan integration test berbasis \texttt{docker compose}. Mekanisme ini mendorong deteksi dini terhadap bug, konflik dependensi, serta masalah integrasi antar layanan sehingga kualitas sistem terjaga sebelum melangkah ke tahap rilis.
+CI/CD adalah pendekatan otomasi yang menghubungkan perubahan kode dengan proses verifikasi dan penyebaran sistem secara konsisten. Pada tahap CI, setiap commit atau pull request memicu runner untuk melakukan \textit{checkout}, menyiapkan environment, menjalankan unit test\index{unit test}, dan menjalankan integration test berbasis \texttt{docker compose}. Mekanisme ini mendorong deteksi dini terhadap bug, konflik dependensi, serta masalah integrasi antar layanan sehingga kualitas sistem terjaga sebelum melangkah ke tahap rilis.
 
 Pada studi kasus TTS, arsitektur multi-service (Gateway, Web, API, Redis, Worker, MinIO) menunjukkan mengapa CI/CD penting pada sistem terdistribusi: banyak kegagalan muncul pada batas antar komponen, bukan pada fungsi tunggal. Dengan memisahkan workflow CI dan deploy melalui event \texttt{workflow\_run}, deployment hanya dilakukan saat verifikasi berhasil, dan dijalankan pada self-hosted runner yang memiliki akses langsung ke Docker di lingkungan target. Hasilnya adalah proses pengembangan yang lebih transparan, terukur, dan dapat diaudit.
 
+\section{Latihan}
+
+Kerjakan latihan berikut dengan pipeline CI/CD pada proyek session-04.
+
+\begin{enumerate}
+  \item Kirim satu perubahan kecil ke repositori, lalu ikuti jalannya workflow CI dengan \texttt{gh run watch} sampai selesai. Catat lama tiap job.
+  \item Buat satu pengujian gagal dengan sengaja, lalu periksa bagaimana kegagalan itu menghentikan tahap berikutnya dan bagian log mana yang paling cepat menunjukkan sebabnya.
+  \item Jalankan workflow secara manual tanpa membuat commit baru, lalu jelaskan kapan cara ini berguna.
+  \item Daftarkan satu self-hosted runner, jalankan, dan amati bagaimana job deploy berpindah dari antrean ke eksekusi. Jelaskan apa yang terjadi bila runner tidak aktif.
+  \item Tambahkan satu tahap baru pada pipeline, misalnya pemeriksaan gaya penulisan kode, lalu tentukan apakah tahap itu harus menghentikan penerapan ketika gagal.
+\end{enumerate}
+
+\section{Rujukan}
+
+Sumber berikut dipakai pada bab ini dan seluruhnya dapat diakses daring.
+
+\begin{itemize}
+  \item \textit{GitHub Actions Documentation} \cite{doc-gh-actions}: pemicu workflow, job, runner, dan artefak.
+  \item \textit{pytest Documentation} \cite{doc-pytest}: penulisan dan penjalanan pengujian otomatis.
+  \item \textit{Continuous Delivery} \cite{humble2010cd}: prinsip jalur rilis otomatis dan deployment pipeline.
+  \item \textit{DevOps: A Software Architect's Perspective} \cite{bass2015devops}: kaitan arsitektur dengan praktik penerapan berkelanjutan.
+\end{itemize}
