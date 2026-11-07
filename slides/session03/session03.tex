@@ -442,20 +442,17 @@
 	\vspace{6pt}
 	\begin{columns}[t]
 		\column{0.6\textwidth}
-		\begin{lstlisting}[style=PythonStyle, caption={Generate Fernet key for payload encryption}]
-from cryptography.fernet import Fernet
+		\begin{lstlisting}[language=bash, basicstyle=\ttfamily\footnotesize, breakatwhitespace=true, caption={Generate Fernet key into .env (README, step 2)}]
+cd projects/session-03/python
+../../.venv/bin/python -c "from cryptography.fernet import Fernet; print('PAYLOAD_KEY=' + Fernet.generate_key().decode())" > .env
+\end{lstlisting}
+		{\footnotesize Hasilnya satu baris di \texttt{.env}: \texttt{PAYLOAD\_KEY=} diikuti 44 karakter Base64.}
 
-# generate symmetric encryption key
-key = Fernet.generate_key()
-
-# print as Base64 string
-print(key.decode())
-		\end{lstlisting}
-		
 		\column{0.4\textwidth}
 		\begin{itemize}
 			\item Kunci dihasilkan satu kali sebelum sistem dijalankan.
 			\item Digunakan sebagai kebijakan keamanan runtime.
+			\item Disimpan di \texttt{.env}, yang diabaikan Git.
 			\item Didistribusikan melalui konfigurasi lingkungan.
 			\item Tidak tertanam di dalam kode aplikasi.
 		\end{itemize}
@@ -468,41 +465,46 @@ print(key.decode())
 \subsection*{Konfigurasi Kunci pada \texttt{docker-compose.yml}}
 
 \begin{frame}[fragile]{Konfigurasi Kunci Enkripsi pada Layanan}
-	\vspace{20pt}
+	\vspace{4pt}
 	\begin{columns}[T]
-		\column{0.5\textwidth}
-		\begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny, caption={Inject PAYLOAD\_KEY via docker-compose environment}]
+		\column{0.55\textwidth}
+		\begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny, caption={docker-compose.yml (excerpt): PAYLOAD\_KEY from .env}]
+# PAYLOAD_KEY comes from .env in this folder. Git ignores .env, so every copy of
+# the repository creates its own (README, step 2). The broker gets no key.
 services:
-  transformer:
-	...
+  broker-session03:
+    # ...
+  capturer-session03:
+    # ...
     environment:
-      - PAYLOAD_KEY=put the generated key here
-  ...  
-  capturer:
-    ...
+      # ...
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
+    # ...
+  transformer-session03:
+    # ...
     environment:
-      - PAYLOAD_KEY=put the generated key here
-  ...
-  web:
-    ...
+      # ...
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
+    # ...
+  web_server-session03:
+    # ...
     environment:
-      - PAYLOAD_KEY=put the generated key here
-  ...
-  broker:
-    ...
-    # intentionally no PAYLOAD_KEY here
+      # ...
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
+    # ...
 \end{lstlisting}
-		
-		\column{0.5\textwidth}
+
+		\column{0.45\textwidth}
 		\begin{itemize}
 			\item Kunci diberikan hanya pada komponen yang memproduksi atau mengonsumsi payload.
 			\item Broker tidak menerima kunci enkripsi.
+			\item Compose mengisi \texttt{\$\{PAYLOAD\_KEY\}} dari \texttt{.env}, bukan dari berkas yang dilacak Git.
 			\item Kebijakan keamanan diwujudkan melalui konfigurasi runtime.
 			\item Tidak ada perubahan pada kode aplikasi.
 		\end{itemize}
 
 		\vspace{4pt}
-	{\footnotesize Pembatasan akses data dicapai melalui distribusi kunci, bukan melalui kepercayaan pada komponen perantara}
+	{\footnotesize Jalankan: \texttt{sudo docker compose up --build -d}. Pembatasan akses data dicapai melalui distribusi kunci, bukan melalui kepercayaan pada komponen perantara}
 	\end{columns}
 \end{frame}
 
