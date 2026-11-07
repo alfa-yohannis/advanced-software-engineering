@@ -15,7 +15,9 @@ spec:
     spec:
       containers:
         - name: minio
-          image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+          # The official minio/minio image is no longer on Docker Hub. Silo is a community
+          # fork of the MinIO server that keeps its S3 API, MINIO_* settings and start command.
+          image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
           args: ["server", "/data"]
           volumeMounts:
             - name: data

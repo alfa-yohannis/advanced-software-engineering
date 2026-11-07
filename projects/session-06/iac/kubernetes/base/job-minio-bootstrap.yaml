@@ -8,5 +8,6 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: mc
-          image: minio/mc
+          # minio/mc is no longer on Docker Hub; the Silo image includes the mc client.
+          image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
           command: ["sh", "-c", "echo MinIO bootstrap placeholder"]

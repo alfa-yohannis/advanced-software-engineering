@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: session05-api:production
+          image: session05-api:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

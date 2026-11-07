@@ -7,3 +7,5 @@ resources:
   - ../../base
   - ingress-api.yaml
   - ingress-web.yaml
+patchesStrategicMerge:
+  - patch-images.yaml

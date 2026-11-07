@@ -10,9 +10,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Piper (binary + bundled .so deps) from tar.gz
+# The release has one archive per CPU type. uname -m picks the one for the CPU
+# this image is built for: x86_64, aarch64 or armv7l.
 RUN set -eux; \
-    curl -L -o /tmp/piper.tar.gz \
-      https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz; \
+    curl -fL -o /tmp/piper.tar.gz \
+      "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_$(uname -m).tar.gz"; \
     mkdir -p /tmp/piper_extracted; \
     tar -xzf /tmp/piper.tar.gz -C /tmp/piper_extracted; \
     rm -f /tmp/piper.tar.gz; \
@@ -43,16 +45,23 @@ ENV LD_LIBRARY_PATH="/opt/piper:${LD_LIBRARY_PATH}"
 # (Optional but helpful) point to bundled espeak-ng data
 ENV ESPEAK_DATA_PATH="/opt/piper/espeak-ng-data"
 
-# Download your HF model
+# Download your HF model (-f stops the build if the download fails)
 RUN mkdir -p /models && \
-    curl -L -o /models/en_GB-alan-medium.onnx \
+    curl -fL -o /models/en_GB-alan-medium.onnx \
     https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/medium/en_GB-alan-medium.onnx && \
-    curl -L -o /models/en_GB-alan-medium.onnx.json \
+    curl -fL -o /models/en_GB-alan-medium.onnx.json \
     https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/medium/en_GB-alan-medium.onnx.json
 
 ENV PIPER_MODEL_PATH=/models/en_GB-alan-medium.onnx
 ENV PIPER_MODEL_CONFIG_PATH=/models/en_GB-alan-medium.onnx.json
 
 COPY worker.py .
+
+# Without a terminal attached, Python buffers print() output and
+# docker compose logs worker shows nothing.
+ENV PYTHONUNBUFFERED=1
+# docker stop sends SIGINT, which Python turns into KeyboardInterrupt, so the worker
+# exits cleanly. As PID 1 it ignores SIGTERM and Docker would kill it after 10 s.
+STOPSIGNAL SIGINT
 
 CMD ["python", "worker.py"]
