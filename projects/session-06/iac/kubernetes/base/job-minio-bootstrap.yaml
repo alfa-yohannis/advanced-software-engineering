@@ -8,5 +8,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: mc
-          image: minio/mc
+          # Image minio/mc sudah tidak ada di Docker Hub. Job ini hanya mencetak
+          # penanda, jadi image kecil mana pun cukup.
+          image: busybox:1.36
           command: ["sh", "-c", "echo MinIO bootstrap placeholder"]

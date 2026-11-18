@@ -89,7 +89,9 @@ resource "docker_container" "redis" {
 resource "docker_container" "minio" {
   # ✅ unique container name
   name    = "${local.prefix}-minio"
-  image   = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
+  # Image resmi minio/minio sudah tidak ada di Docker Hub. Silo adalah fork 
+  # komunitas server MinIO yang mempertahankan S3 API, variabel MINIO_*, dan perintah jalannya.
+  image   = "pgsty/silo:RELEASE.2026-09-16T00-00-00Z"
   restart = "unless-stopped"
 
   command = ["server", "/data", "--console-address", ":9001"]

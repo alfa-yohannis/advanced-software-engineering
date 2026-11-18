@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse, StreamingResponse
 import boto3
 from botocore.config import Config
@@ -38,6 +38,14 @@ def index():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
+def storage_error(e: ClientError) -> HTTPException:
+    code = e.response.get("Error", {}).get("Code", "")
+    # NoSuchBucket: the worker creates the bucket when it uploads its first MP3
+    if code in ("NoSuchKey", "NoSuchBucket", "404"):
+        return HTTPException(status_code=404, detail="mp3 not found")
+    return HTTPException(status_code=502, detail="storage error")
+
+
 @app.get("/mp3/{job_id}.mp3")
 def serve_mp3(job_id: str):
     key = f"{job_id}.mp3"
@@ -45,12 +53,30 @@ def serve_mp3(job_id: str):
     try:
         obj = s3.get_object(Bucket=S3_BUCKET, Key=key)
     except ClientError as e:
-        code = e.response.get("Error", {}).get("Code", "")
-        if code in ("NoSuchKey", "404"):
-            raise HTTPException(status_code=404, detail="mp3 not found")
-        raise HTTPException(status_code=502, detail="storage error")
+        raise storage_error(e)
+
+    headers = {}
+    if "ContentLength" in obj:
+        headers["Content-Length"] = str(obj["ContentLength"])
 
     return StreamingResponse(
         obj["Body"],
-        media_type="audio/mpeg"
+        media_type="audio/mpeg",
+        headers=headers
+    )
+
+
+# HEAD returns the headers of the MP3 without its content (curl -I)
+@app.head("/mp3/{job_id}.mp3")
+def head_mp3(job_id: str):
+    key = f"{job_id}.mp3"
+
+    try:
+        meta = s3.head_object(Bucket=S3_BUCKET, Key=key)
+    except ClientError as e:
+        raise storage_error(e)
+
+    return Response(
+        media_type="audio/mpeg",
+        headers={"Content-Length": str(meta["ContentLength"])}
     )

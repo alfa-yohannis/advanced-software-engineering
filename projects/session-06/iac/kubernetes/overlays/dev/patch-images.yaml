@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: tts-api:dev
+          image: session05-api:dev
           imagePullPolicy: IfNotPresent
 ---
 apiVersion: apps/v1
@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: tts-web:dev
+          image: session05-web:dev
           imagePullPolicy: IfNotPresent
 ---
 apiVersion: apps/v1
@@ -31,5 +31,5 @@ spec:
     spec:
       containers:
         - name: worker
-          image: tts-worker:dev
+          image: session05-worker:dev
           imagePullPolicy: IfNotPresent
