@@ -12,13 +12,26 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
-					<release>25</release>
+					<release>17</release>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.antlr</groupId>
 				<artifactId>antlr4-maven-plugin</artifactId>
 				<version>4.13.2</version>
+				<!-- Without this execution the plugin never runs, and the parser
+				     checked into src/ stays at whatever ANTLR version generated
+				     it. A 4.4 parser against the 4.13.2 runtime fails with
+				     "Could not deserialize ATN with version 3 (expected 4)". -->
+				<executions>
+					<execution>
+						<id>generate-parser</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>antlr4</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
 					<sourceDirectory>${project.basedir}/antlr</sourceDirectory>
 					<includes>
@@ -39,6 +52,12 @@
 				<version>3.2.0</version>
 				<configuration>
 					<mainClass>yohannis.alfa.mediaflow.antlr.Main</mainClass>
+					<!-- exec:java runs in Maven's own JVM, so it keeps the directory
+					     Maven was started in. Pass an absolute path so the command
+					     works from the project folder and from session-09. -->
+					<arguments>
+						<argument>${project.basedir}/input/test3.mediaflow</argument>
+					</arguments>
 				</configuration>
 			</plugin>
 		</plugins>
