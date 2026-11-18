@@ -42,7 +42,7 @@ The `minio` service runs Silo (`pgsty/silo`), a community fork of the MinIO serv
 
 - Docker with the Compose plugin, for the comparison in step 2 and for Minikube's driver.
 - Minikube and kubectl. This guide was tested with Minikube 1.38.0 and kubectl 1.35.0 on Kubernetes 1.35.
-- Terraform 1.5 or newer for step 9, and membership of the `docker` group, because the provider talks to the Docker socket directly.
+- Terraform 1.5 or newer for step 11, and membership of the `docker` group, because the provider talks to the Docker socket directly.
 - Free ports 6379, 8000, 8080, 8088, 9000 and 9001 for the Compose and Terraform steps. The Kubernetes steps use the cluster address instead, so they do not need them.
 - Around 6 GB of memory and 4 CPUs free for the cluster, and about 2 GB of disk for the images.
 - For the tests: Python 3.12 and the virtual environment in `projects/.venv`.
@@ -135,6 +135,15 @@ minikube image ls | grep session05
 
 Loading the worker image takes the longest, because it carries Piper and the voice. The names keep the `session05` prefix on purpose: these are the images built in session 5, now running on a cluster.
 
+Each overlay asks for its own tag: `:dev`, `:staging` and `:prod`. Before applying one of the other two, give the cluster the tags it will ask for, or the rollout stalls and you end up with more pods than the overlay asked for, as the last row of the troubleshooting table explains:
+
+```bash
+for svc in api web worker; do
+  sudo docker tag session05-$svc:dev session05-$svc:staging
+  minikube image load session05-$svc:staging
+done
+```
+
 ## Step 6. Apply the dev overlay
 
 ```bash
@@ -208,12 +217,204 @@ worker   Deployment/worker   cpu: 0%/70%   1         5         1          5m51s
 
 Right after the cluster starts, the column reads `cpu: <unknown>/70%`. The metrics-server needs a minute or two before the first values arrive. To see the autoscaler react, send a long text or several jobs at once and watch the replica count.
 
-## Step 9. The same stack through Terraform
+## Step 9. Switch to another overlay, or start over
+
+The three overlays differ in five places:
+
+| | dev | staging | prod |
+|---|---|---|---|
+| Ingress host | `dev.tts.local` | `staging.tts.local` | `tts.local` |
+| Image tags | `:dev` | `:staging` | `:prod` |
+| api and web replicas | 1 each, straight from the base | 2 each | 3 each |
+| `APP_ENV` and bucket | `dev`, `tts-dev` | `staging`, `tts-staging` | `prod`, `tts-prod` |
+| Extra objects | none | none | two PodDisruptionBudgets |
+
+The worker is missing from the replica row on purpose: the autoscaler owns its replica count in all three environments.
+
+Switching is not just another `apply`. `kubectl apply -k` adds and updates objects but never removes what the previous overlay created, and each overlay names its ingresses after itself, so applying staging on top of dev leaves four:
+
+```bash
+kubectl get ingress -n tts -o custom-columns='NAME:.metadata.name,HOST:.spec.rules[0].host'
+```
+
+```
+NAME              HOST
+tts-api           dev.tts.local
+tts-api-staging   staging.tts.local
+tts-web           dev.tts.local
+tts-web-staging   staging.tts.local
+```
+
+Both hostnames then reach pods that run the staging configuration, which is confusing in a demo and wrong in a test. So clear the namespace first:
+
+```bash
+kubectl delete -k overlays/dev
+kubectl get ns tts
+```
+
+```
+namespace "tts" deleted
+...
+Error from server (NotFound): namespaces "tts" not found
+```
+
+Every overlay includes `base/namespace.yaml`, so deleting an overlay deletes the namespace and cascades to everything inside it, including objects another overlay created and the `minio-data` claim with the MP3 files on it. When you no longer know which overlay is deployed, `kubectl delete namespace tts` does the same thing in one line. That is also the answer to `field is immutable`.
+
+Then bring up the environment you want, from nothing:
+
+```bash
+for svc in api web worker; do
+  sudo docker tag session05-$svc:dev session05-$svc:staging
+  minikube image load session05-$svc:staging
+done
+
+kubectl apply -k overlays/staging
+kubectl wait --for=condition=available --timeout=300s \
+  deploy/api deploy/web deploy/worker deploy/redis -n tts
+kubectl get deploy -n tts
+```
+
+```
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+api      2/2     2            2           23m
+redis    1/1     1            1           23m
+web      2/2     2            2           23m
+worker   1/1     1            1           23m
+```
+
+`UP-TO-DATE` matching `READY` is the column that says the rollout finished. Check that the environment really changed, rather than trusting the apply:
+
+```bash
+kubectl get configmap tts-config -n tts \
+  -o jsonpath='{.data.APP_ENV}{"  "}{.data.MP3_BUCKET}{"\n"}'
+curl -H 'Host: staging.tts.local' http://$(minikube ip)/api/healthz
+```
+
+```
+staging  tts-staging
+{"ok":true,"env":"staging"}
+```
+
+The bucket changed with the environment, so the MP3 files made under dev are in `tts-dev` and the staging stack will not serve them. Each environment starts with an empty bucket, which is the point of patching the name.
+
+One trap worth knowing: every deployment reads the config map with `envFrom`, and that happens once at start-up. Changing a config map does not reach a running pod. Switching overlays gets away with it because the image tag changes at the same moment and every pod restarts. If you ever edit only the config map, restart them yourself:
+
+```bash
+kubectl rollout restart deploy -n tts
+```
+
+## Step 10. Change one service and roll the change out
+
+A cluster is not a place to edit files. Changing one service of the stack means building a new image, handing it to the cluster, and letting the Deployment replace its own pods. The web service is the one to try it on, because the change shows up in a browser.
+
+Change the heading on the page:
+
+```bash
+cd ../..                      # back to projects/session-06
+sed -i 's|<h1>TTS Case Study</h1>|<h1>TTS Case Study v2</h1>|' \
+  app/services/web/static/index.html
+```
+
+Build it under a new tag and load it. The new tag is what matters: rebuilding under `:dev` leaves the pod spec unchanged, so Kubernetes sees nothing to do and keeps the old pod running.
+
+```bash
+sudo docker build -t session05-web:v2 app/services/web
+minikube image load session05-web:v2
+```
+
+Point the deployment at the new image and watch the replacement:
+
+```bash
+kubectl set image deploy/web web=session05-web:v2 -n tts
+kubectl rollout status deploy/web -n tts
+kubectl get pods -n tts -l app=web
+```
+
+```
+deployment.apps/web image updated
+Waiting for deployment "web" rollout to finish: 1 old replicas are pending termination...
+deployment "web" successfully rolled out
+
+NAME                   READY   STATUS        RESTARTS   AGE
+web-64bc5754cd-x85ld   1/1     Running       0          1s
+web-759b68d9c9-ppx99   1/1     Terminating   0          51s
+```
+
+In `web=session05-web:v2` the name on the left is the container, not the deployment. Here each deployment has one container named after itself, so the worker version is `kubectl set image deploy/worker worker=session05-worker:v2 -n tts`. Naming a container that does not exist is rejected with `unable to find container named ...`.
+
+The new page is live:
+
+```bash
+curl -s -H 'Host: dev.tts.local' http://$(minikube ip)/ | grep '<h1>'
+```
+
+```
+<h1>TTS Case Study v2</h1>
+```
+
+### Was it really without downtime?
+
+Measure it instead of believing it. In a second terminal, poll the health endpoint a few times a second while the rollout runs:
+
+```bash
+IP=$(minikube ip)
+while true; do
+  printf '%s %s\n' "$(date +%H:%M:%S)" "$(curl -s -o /dev/null -w '%{http_code}' \
+    --max-time 3 -H 'Host: dev.tts.local' http://$IP/healthz)"
+  sleep 0.25
+done
+```
+
+The dev overlay runs one web replica, and one replica cannot cover for itself. Rolling the image this way gave nine answers of 200 and one 502: for a moment the ingress had no ready endpoint behind it. Give the deployment a second replica and do it again:
+
+```bash
+kubectl rollout undo deploy/web -n tts            # back to :dev
+kubectl scale deploy/web --replicas=2 -n tts
+kubectl set image deploy/web web=session05-web:v2 -n tts
+```
+
+The same probe then gave 119 answers of 200 and one three-second timeout, in the window where the ingress controller was picking up the new endpoints. So a rolling update is only seamless when there are spare replicas to serve from. That is the reason staging patches api and web to 2 and prod to 3, and the reason prod adds PodDisruptionBudgets.
+
+### Undo
+
+Each image change is a revision, and the Deployment keeps them:
+
+```bash
+kubectl rollout history deploy/web -n tts
+kubectl rollout undo deploy/web -n tts
+kubectl scale deploy/web --replicas=1 -n tts
+```
+
+```
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+3         <none>
+```
+
+`CHANGE-CAUSE` is empty unless you write it yourself:
+
+```bash
+kubectl annotate deploy/web -n tts \
+  kubernetes.io/change-cause="web heading v2" --overwrite
+```
+
+Then put the file back, because this was an exercise:
+
+```bash
+git checkout -- app/services/web/static/index.html
+```
+
+One thing this exercise cannot show: a live reload. `index.html` is copied into the image when it is built, so a saved file never reaches a running pod on its own. Editing and seeing the result straight away is what the Compose stack in step 2 is for; on a cluster the loop is always build, load, roll out.
+
+## Step 11. The same stack through Terraform
 
 For comparison, `iac/terraform` builds the stack with containers on your own machine, exactly as in session 5:
 
+Step 10 left you in the project folder, so the path starts there:
+
 ```bash
-cd ../terraform/dev
+cd iac/terraform/dev
 terraform init
 terraform apply -var-file=dev.tfvars
 ```
@@ -226,9 +427,9 @@ terraform destroy -var-file=dev.tfvars
 
 Running this while the Compose stack is up fails, because both want the same ports.
 
-## Step 10. Clean up
+## Step 12. Clean up
 
-Step 9 left you in `iac/terraform/dev`, so go back to the project folder first:
+Step 11 left you in `iac/terraform/dev`, so go back to the project folder first:
 
 ```bash
 cd ../../..
@@ -236,7 +437,9 @@ kubectl delete -k iac/kubernetes/overlays/dev
 minikube stop
 ```
 
-`minikube delete` removes the cluster and its image store as well, which means step 5 has to be repeated next time.
+Use the overlay you actually applied, or `kubectl delete namespace tts` if you have switched between them.
+
+`minikube stop` keeps the cluster and its image store, so the next session starts at step 6. `minikube delete` throws both away, and then step 5 has to be repeated.
 
 ## Changing the settings
 
@@ -260,7 +463,8 @@ The secret holds `dev-token-change-me` and the MinIO login `minioadmin`. Change 
 | Pods stay `ContainerCreating` and events show `Pulling image "session05-..."` | The images are not in the cluster. Run the `minikube image load` commands from step 5 and wait for them to finish. |
 | `ErrImagePull` or `ImagePullBackOff` on redis, minio or busybox | The cluster is pulling from Docker Hub and the network is slow or blocked. Pull the image on your machine and load it: `sudo docker pull busybox:1.36 && minikube image load busybox:1.36`. |
 | `kubectl get hpa` keeps showing `cpu: <unknown>` | The metrics-server addon is missing or still starting. Run `minikube addons enable metrics-server`, then check `kubectl top pods -n tts`. |
-| `port is already allocated` in step 2 or 9 | Another session's containers hold the ports. Stop them, for example with `sudo docker compose down` in the other folder, or `terraform destroy` in session 5. |
+| `port is already allocated` in step 2 or 11 | Another session's containers hold the ports. Stop them, for example with `sudo docker compose down` in the other folder, or `terraform destroy` in session 5. |
 | The page loads but Synthesize fails | The request went to the web service without `/api` routing. Use the ingress host, not a port-forward to the web pod alone. |
 | A job stays `QUEUED` | The worker cannot reach Redis or the queue name differs. Check `kubectl logs deploy/worker -n tts` and compare `QUEUE_KEY` with `APP_ENV` in the config map. |
 | `field is immutable` when applying | An object from an earlier run differs in a field Kubernetes cannot change in place, usually a Job. Delete it first: `kubectl delete job minio-bootstrap -n tts`. |
+| After `kubectl apply -k overlays/staging`, three api pods are running although the overlay asks for two, one of them in `ImagePullBackOff` | The overlay asked for `:staging` images the cluster does not have. Each deployment started a rolling update, and `maxSurge` of 25 percent on two replicas allows one extra pod, so the new ReplicaSet gets one pod that never pulls its image. Kubernetes then refuses to retire the working `:dev` pods, which is why the old ones stay. `kubectl get deploy -n tts` shows it as `READY 2/2` with `UP-TO-DATE 1`, and `kubectl rollout status deploy/api -n tts` hangs. Load the missing tags as in step 5 and the rollout finishes by itself, or run `kubectl rollout undo deploy/api -n tts` to go back. |
