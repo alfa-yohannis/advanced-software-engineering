@@ -40,7 +40,7 @@ RUN set -eux; \
     ldd /opt/piper/piper || true
 
 # IMPORTANT: libs are in /opt/piper (same directory as binary)
-ENV LD_LIBRARY_PATH="/opt/piper:${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH="/opt/piper"
 
 # (Optional but helpful) point to bundled espeak-ng data
 ENV ESPEAK_DATA_PATH="/opt/piper/espeak-ng-data"
