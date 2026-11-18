@@ -8,6 +8,6 @@ resources:
   - ingress-api.yaml
   - ingress-web.yaml
 
-patchesStrategicMerge:
-  - patch-images.yaml
-  - patch-replicas.yaml
+patches:
+  - path: patch-images.yaml
+  - path: patch-replicas.yaml

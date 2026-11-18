@@ -96,7 +96,17 @@ def clean_output_root(output_root: Path) -> None:
     for subdir in ["terraform", "kubernetes"]:
         target = output_root / subdir
         if target.exists():
-            subprocess.run(["rm", "-rf", str(target)], check=True)
+            shutil.rmtree(target)
+
+
+def format_terraform(output_root: Path) -> None:
+    # Templates cannot keep HCL aligned, so leave the formatting to Terraform.
+    terraform = shutil.which("terraform")
+    target = output_root / "terraform"
+    if not terraform or not target.exists():
+        return
+    subprocess.run([terraform, "fmt", "-recursive", str(target)],
+                   check=False, stdout=subprocess.DEVNULL)
 
 
 def generate(paths: Paths, output_root: Path) -> None:
@@ -152,6 +162,7 @@ def main() -> None:
     )
 
     generate(paths, output_root)
+    format_terraform(output_root)
     print(f"Generated artifacts in: {output_root}")
 
 

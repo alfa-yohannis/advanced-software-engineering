@@ -5,13 +5,15 @@ namespace: tts
 
 resources:
   - ../../base
+  - configmap-app.yaml
+  - secret-app.yaml
   - ingress-api.yaml
   - ingress-web.yaml
 {% if include_pdb %}  - pdb-api.yaml
   - pdb-web.yaml
 {% endif %}
-patchesStrategicMerge:
-  - patch-images.yaml
-  - patch-hpa-worker.yaml
-{% if include_replicas_patch %}  - patch-replicas.yaml
+patches:
+  - path: patch-images.yaml
+  - path: patch-hpa-worker.yaml
+{% if include_replicas_patch %}  - path: patch-replicas.yaml
 {% endif %}

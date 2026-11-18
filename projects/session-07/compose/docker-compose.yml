@@ -1,3 +1,7 @@
+# Tanpa name, Compose memakai nama folder "compose" sebagai nama proyek,
+# padahal session 5, 6, dan 7 sama-sama punya folder bernama compose.
+name: session-07
+
 services:
   redis:
     image: redis:7-alpine
@@ -5,7 +9,9 @@ services:
       - "6379:6379"
 
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # Image resmi minio/minio sudah tidak ada di Docker Hub. Silo adalah fork 
+    # komunitas server MinIO yang mempertahankan S3 API, variabel MINIO_*, dan perintah jalannya.
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin

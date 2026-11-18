@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tts-config
+data:
+  APP_ENV: "{{ env_value }}"
+  MP3_BUCKET: "{{ mp3_bucket }}"
+  REDIS_URL: "{{ redis_url }}"
+  API_BASE_URL: "{{ api_base_url }}"
+  S3_ENDPOINT: "{{ s3_endpoint }}"
+  S3_REGION: "{{ s3_region }}"

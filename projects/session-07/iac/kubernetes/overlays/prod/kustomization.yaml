@@ -10,6 +10,6 @@ resources:
   - pdb-api.yaml
   - pdb-web.yaml
 
-patchesStrategicMerge:
-  - patch-images.yaml
-  - patch-replicas.yaml
+patches:
+  - path: patch-images.yaml
+  - path: patch-replicas.yaml

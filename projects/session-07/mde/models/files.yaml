@@ -43,6 +43,10 @@ env_files:
     output: terraform/{{ name }}/{{ tfvars_filename }}
   - template: kubernetes/overlay/kustomization.yaml.j2
     output: kubernetes/overlays/{{ k8s_overlay }}/kustomization.yaml
+  - template: kubernetes/overlay/configmap-app.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/configmap-app.yaml
+  - template: kubernetes/overlay/secret-app.yaml.j2
+    output: kubernetes/overlays/{{ k8s_overlay }}/secret-app.yaml
   - template: kubernetes/overlay/ingress-api.yaml.j2
     output: kubernetes/overlays/{{ k8s_overlay }}/ingress-api.yaml
   - template: kubernetes/overlay/ingress-web.yaml.j2
