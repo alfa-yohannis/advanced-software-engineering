@@ -215,7 +215,62 @@ NAME     REFERENCE           TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
 worker   Deployment/worker   cpu: 0%/70%   1         5         1          5m51s
 ```
 
-Right after the cluster starts, the column reads `cpu: <unknown>/70%`. The metrics-server needs a minute or two before the first values arrive. To see the autoscaler react, send a long text or several jobs at once and watch the replica count.
+Right after the cluster starts, the column reads `cpu: <unknown>/70%`. The metrics-server needs a minute or two before the first values arrive.
+
+That is the idle picture. To see the autoscaler work, give the worker more jobs than one pod can chew through. Open two more terminals and leave them watching:
+
+```bash
+watch -n 2 kubectl get hpa worker -n tts
+watch -n 2 kubectl get pods -n tts -l app=worker
+```
+
+Then send the load from the project folder. `load_client.py` submits jobs, polls each one until it is DONE, and reports how long each took. It needs nothing but Python 3:
+
+```bash
+python3 app/client/load_client.py \
+  --base-url http://$(minikube ip) --host dev.tts.local \
+  --jobs 20 --concurrency 20
+```
+
+```
+api says {"ok":true,"env":"dev"}
+submitting 20 job(s), 20 at a time, 511 characters each
+  job   4: DONE    in   16.1s
+  ...
+  job  18: DONE    in  176.7s
+
+wall clock      : 176.8s
+done            : 20/20
+per job seconds : min 16.1, median 113.4, max 176.7
+throughput      : 0.11 jobs/second
+```
+
+Here is what the two watch windows showed while that ran, sampled every five seconds:
+
+```
+17:29:39  cpu 199%  desired 5  running 1
+17:30:20  cpu 199%  desired 5  running 2
+17:31:23  cpu 199%  desired 5  running 3
+17:32:22  cpu 199%  desired 5  running 5
+...  the queue drains, the client reports the last job  ...
+17:35:16  cpu  20%  desired 4  running 4
+17:35:32  cpu  24%  desired 3  running 3
+17:35:47  cpu  32%  desired 2  running 2
+17:36:02  cpu  24%  desired 1  running 1
+17:36:18  cpu   0%  desired 1  running 1
+```
+
+Up in about three minutes, down in about one, and back to the idle line the step opened with.
+
+Three things are worth pointing at while this happens.
+
+`desired` jumps to 5 almost at once, while `running` climbs over about three minutes. The autoscaler decides immediately; the pods take their time, because each new worker pod has a 500 MB image to start and Piper to load. Scaling is not instant capacity.
+
+CPU reads 199 percent, not 70. The number is the average across the pods as a share of the `requests` value, which is `500m` for the worker, so 199 percent means each pod is using about one whole core, which is also its limit. The autoscaler cannot push it lower than the work demands; all it can do is spread the queue over more pods.
+
+Scaling down waits for the metric, not for the queue. The queue was already empty, and `kubectl top pods -n tts` showed the workers almost idle, a good minute before the HPA reduced the count. The averaging window in metrics-server is what you are waiting for.
+
+The speed of both directions comes from the `behavior` block in `base/hpa-worker.yaml`: no stabilisation window going up, two pods or 70 percent every five seconds, and going down a five second window with one pod or 20 percent every five seconds. Those are deliberately impatient settings, chosen so the demo fits in a class. The Kubernetes defaults wait five minutes before scaling down.
 
 ## Step 9. Switch to another overlay, or start over
 
