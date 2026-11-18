@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ASCII"?>
-<mediaflow:Graph xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mediaflow="mediaflow" xmi:id="_graphFlow2">
+<mediaflow:Graph xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mediaflow="mediaflow" xmi:id="_graphFlow2" name="flow2">
   <nodes xsi:type="mediaflow:Resource" xmi:id="_inputResource" name="input_master" mediaType="VIDEO" uri="file:///home/user/alfa/mediaflow/master.mov" external="true">
     <ports xmi:id="_inputOut" name="input_master_out" direction="OUT" owner="_inputResource"/>
   </nodes>
