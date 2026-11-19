@@ -317,9 +317,9 @@ AQL (\textit{Acceleo Query Language}) digunakan untuk ekspresi label dinamis yan
     <ownedRepresentations
         xsi:type="description_1:DiagramDescription"
         name="MediaFlow diagram"
-        domainClass="mediaflow::Graph"
-        synchronized="true"
-        showOnStartup="true">
+        initialisation="true"
+        showOnStartup="true"
+        domainClass="mediaflow::Graph">
       <metamodel href="mediaflow#/"/>
       <defaultLayer name="Default">
         <!-- mappings dan tools di sini -->
@@ -330,7 +330,7 @@ AQL (\textit{Acceleo Query Language}) digunakan untuk ekspresi label dinamis yan
 \end{lstlisting}
 \vspace{2pt}
 \small \texttt{domainClass="mediaflow::Graph"} mengikat diagram ke kelas root metamodel.\\
-\texttt{synchronized="true"} menjaga konsistensi diagram--model XMI secara otomatis.
+Sinkronisasi diagram--model XMI adalah sifat tiap diagram di \texttt{.aird}, aktif secara bawaan.
 \end{frame}
 
 \begin{frame}[fragile]{Resource: Container \& Bordered Node Port}

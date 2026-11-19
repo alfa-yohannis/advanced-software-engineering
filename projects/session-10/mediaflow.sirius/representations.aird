@@ -569,7 +569,7 @@
     <ownedAnnotationEntries xmi:type="description:AnnotationEntry" uid="_zFSFoCzaEfGKobnzlBFwUw" source="DANNOTATION_CUSTOMIZATION_KEY">
       <data xmi:type="diagram:ComputedStyleDescriptionRegistry" uid="_zFSFoSzaEfGKobnzlBFwUw"/>
     </ownedAnnotationEntries>
-    <ownedDiagramElements xmi:type="diagram:DNode" uid="_zuO8ACzaEfGKobnzlBFwUw" name="scaler_720 (720x1080)" width="12" height="8" resizeKind="NSEW">
+    <ownedDiagramElements xmi:type="diagram:DNode" uid="_zuO8ACzaEfGKobnzlBFwUw" name="scaler_720 (1080x720)" width="12" height="8" resizeKind="NSEW">
       <target xmi:type="mediaflow:Scaler" href="flow1.mediaflow#_eT0y0BwZEfG_Eu00KUW-gA"/>
       <semanticElements xmi:type="mediaflow:Scaler" href="flow1.mediaflow#_eT0y0BwZEfG_Eu00KUW-gA"/>
       <ownedBorderedNodes xmi:type="diagram:DNode" uid="_zuPjEizaEfGKobnzlBFwUw" name="scaler_720_video_in" incomingEdges="_zuQxOyzaEfGKobnzlBFwUw" width="2" height="2" resizeKind="NSEW">

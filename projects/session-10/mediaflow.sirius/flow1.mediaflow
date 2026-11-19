@@ -6,7 +6,7 @@
   <nodes xsi:type="mediaflow:Resource" xmi:id="_VTxHkBwZEfG_Eu00KUW-gA" name="output_video" uri="file:///home/user/alfa/mediaflow/output.mp4" external="true">
     <ports xmi:id="_pfXeMBwZEfG_Eu00KUW-gA" name="output_video_in" owner="_VTxHkBwZEfG_Eu00KUW-gA"/>
   </nodes>
-  <nodes xsi:type="mediaflow:Scaler" xmi:id="_eT0y0BwZEfG_Eu00KUW-gA" name="scaler_720" command="scale=1080:720" replicas="1" width="720" height="1080">
+  <nodes xsi:type="mediaflow:Scaler" xmi:id="_eT0y0BwZEfG_Eu00KUW-gA" name="scaler_720" command="scale=1080:720" replicas="1" width="1080" height="720">
     <ports xmi:id="_5rAmYBwZEfG_Eu00KUW-gA" name="scaler_720_video_in" owner="_eT0y0BwZEfG_Eu00KUW-gA"/>
     <ports xmi:id="_9ofIkBwZEfG_Eu00KUW-gA" name="scaler_720_video_out" direction="OUT" owner="_eT0y0BwZEfG_Eu00KUW-gA"/>
   </nodes>

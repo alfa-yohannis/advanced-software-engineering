@@ -22,7 +22,7 @@ How the viewpoint shows each class:
 | Class | Mapping | Shape | Label |
 |---|---|---|---|
 | `Resource` | `ResourceContainer` | light blue box, a container | `name [mediaType]`, for example `input_video [VIDEO]` |
-| `Scaler` | `ScalerNode` | light green ellipse | `name (widthxheight)`, for example `scaler_720 (720x1080)` |
+| `Scaler` | `ScalerNode` | light green ellipse | `name (widthxheight)`, for example `scaler_720 (1080x720)` |
 | `Transcoder` | `TranscoderNode` | light orange ellipse | `name [videoCodec/audioCodec]`, for example `transcoder_h264 [h264/aac]` |
 | `Port` | `PortInResource`, `PortInScaler`, `PortInTranscoder` | small square on the border of its node | `name` |
 | `Edge` | `EdgeMapping` | arrow from the source port to the target port | `name` |
@@ -126,7 +126,7 @@ What to check, as in chapter 10:
 
 | Diagram | What to check |
 |---|---|
-| `flow1 diagram` | Three nodes from left to right: the box `input_video [VIDEO]`, the ellipse `scaler_720 (720x1080)` and the box `output_video [VIDEO]`. Four small ports on their borders, and two arrows named `edge_input_video_to_scaler_720` and `edge_scaler_720_to_output_video`. |
+| `flow1 diagram` | Three nodes from left to right: the box `input_video [VIDEO]`, the ellipse `scaler_720 (1080x720)` and the box `output_video [VIDEO]`. Four small ports on their borders, and two arrows named `edge_input_video_to_scaler_720` and `edge_scaler_720_to_output_video`. |
 | `flow2 diagram` | Six nodes: `input_master [VIDEO]`, `scaler_1080 (1920x1080)`, `transcoder_h264 [h264/aac]`, `transcoder_vp9 [vp9/opus]`, `output_mp4 [VIDEO]` and `output_webm [VIDEO]`, and five arrows. The scaler has two outgoing arrows, one to each transcoder. |
 
 `flow1 diagram.svg` and `flow2 diagram.svg` show what the diagrams should look like.

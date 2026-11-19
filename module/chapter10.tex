@@ -259,12 +259,15 @@ Implementasi visual DSL \textit{MediaFlow} dengan Sirius mengikuti langkah-langk
 ]
 Manifest-Version: 1.0
 Bundle-SymbolicName: mediaflow.sirius;singleton:=true
-Require-Bundle: org.eclipse.sirius.diagram,
- org.eclipse.sirius.diagram.ui,
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.core.resources,
+ org.eclipse.sirius,
+ org.eclipse.sirius.common.acceleo.aql,
  mediaflow
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch10-manifest} menunjukkan bahwa proyek Sirius mendeklarasikan dependensi eksplisit ke \texttt{mediaflow} (metamodel) dan ke modul diagram Sirius. Dependensi ini memastikan kelas EMF dan layanan Sirius tersedia saat runtime Eclipse.
+\noindent Listing~\ref{lst:ch10-manifest} menunjukkan bahwa proyek Sirius mendeklarasikan dependensi eksplisit ke \texttt{mediaflow} (metamodel), ke Sirius beserta interpreter AQL yang dipakai ekspresi \texttt{aql:} pada \texttt{.odesign}, dan ke bundle UI serta runtime Eclipse. Dependensi ini memastikan kelas EMF dan layanan Sirius tersedia saat runtime Eclipse.
 
 \textbf{Langkah 2: Mendefinisikan viewpoint dan diagram.} Berkas \texttt{mediaflow.odesign} mendefinisikan satu viewpoint bernama \texttt{graph} dengan satu diagram bernama \texttt{MediaFlow diagram}. Diagram ini terikat ke \texttt{mediaflow::Graph} sebagai kelas domain root.
 
@@ -280,9 +283,10 @@ Require-Bundle: org.eclipse.sirius.diagram,
       icon="/mediaflow.sirius/icons/resource.png">
     <ownedRepresentations xsi:type="description_1:DiagramDescription"
         name="MediaFlow diagram"
+        initialisation="true"
+        showOnStartup="true"
         domainClass="mediaflow::Graph"
-        synchronized="true"
-        showOnStartup="true">
+        enablePopupBars="true">
       <metamodel href="mediaflow#/"/>
       <defaultLayer name="Default">
         ...
@@ -292,7 +296,7 @@ Require-Bundle: org.eclipse.sirius.diagram,
 </description:Group>
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch10-odesign-header} memperlihatkan tiga atribut penting pada \texttt{DiagramDescription}: \texttt{domainClass} menetapkan bahwa setiap instans diagram mewakili satu \texttt{Graph}; \texttt{synchronized="true"} memastikan diagram selalu sinkron dengan model XMI; dan \texttt{modelFileExtension="mediaflow"} menghubungkan viewpoint ke berkas dengan ekstensi \texttt{.mediaflow}.
+\noindent Listing~\ref{lst:ch10-odesign-header} memperlihatkan atribut penting pada viewpoint dan \texttt{DiagramDescription}: \texttt{domainClass} menetapkan bahwa setiap instans diagram mewakili satu \texttt{Graph}; \texttt{initialisation="true"} dan \texttt{showOnStartup="true"} membuat Sirius membuat diagram untuk setiap \texttt{Graph} lalu langsung membukanya; dan \texttt{modelFileExtension="mediaflow"} menghubungkan viewpoint ke berkas dengan ekstensi \texttt{.mediaflow}. Sinkronisasi diagram dengan model XMI bukan atribut \texttt{DiagramDescription}, melainkan sifat setiap diagram (\texttt{DDiagram}) di \texttt{representations.aird}. Nilai bawaannya aktif, sehingga perubahan model langsung tampak pada diagram.
 
 \textbf{Langkah 3: Mendefinisikan mapping node untuk Resource.} \texttt{Resource} didefinisikan sebagai \textit{container} (bukan node biasa) karena port ditampilkan sebagai \textit{bordered node} di tepi container. Gaya visualnya menggunakan \texttt{FlatContainerStyleDescription} dengan warna biru muda.
 
