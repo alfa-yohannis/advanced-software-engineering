@@ -324,10 +324,14 @@ def read_attendance_data(file_path: str) -> str:
             col_mapping["tanggal"] = col
         # ... similarly for mata_kuliah, topik, deskripsi
 
-    # Normalize dates to YYYY-MM-DD
-    df["tanggal"] = pd.to_datetime(
-        df["tanggal"], dayfirst=True, format="mixed"
-    ).dt.strftime("%Y-%m-%d")
+    # Normalize dates to YYYY-MM-DD: ISO dates first,
+    # then DD/MM/YYYY and the rest with dayfirst=True
+    tanggal = pd.to_datetime(df["tanggal"].str[:10],
+        format="%Y-%m-%d", errors="coerce")
+    other = tanggal.isna()
+    tanggal[other] = pd.to_datetime(df.loc[other, "tanggal"],
+        dayfirst=True, format="mixed")
+    df["tanggal"] = tanggal.dt.strftime("%Y-%m-%d")
 
     return json.dumps({"data": df.to_dict("records")})
 \end{lstlisting}

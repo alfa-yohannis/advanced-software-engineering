@@ -338,10 +338,16 @@ def read_attendance_data(file_path: str) -> str:
         elif "deskripsi" in col or "description" in col:
             col_mapping["deskripsi"] = col
 
-    # Validate and convert dates to YYYY-MM-DD
-    df["tanggal"] = pd.to_datetime(
-        df["tanggal"], dayfirst=True, format="mixed"
-    ).dt.strftime("%Y-%m-%d")
+    # Convert dates to YYYY-MM-DD. ISO dates are parsed as such first,
+    # because dayfirst=True would read 2026-02-04 as 2 April.
+    tanggal = pd.to_datetime(
+        df["tanggal"].astype(str).str.strip().str[:10],
+        format="%Y-%m-%d", errors="coerce")
+    other = tanggal.isna()
+    if other.any():
+        tanggal[other] = pd.to_datetime(
+            df.loc[other, "tanggal"], dayfirst=True, format="mixed")
+    df["tanggal"] = tanggal.dt.strftime("%Y-%m-%d")
 
     records = df.to_dict(orient="records")
     return json.dumps({
@@ -350,7 +356,7 @@ def read_attendance_data(file_path: str) -> str:
     }, indent=2, ensure_ascii=False, default=str)
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch14-csv-reader} menunjukkan dua fitur penting. Pertama, \textit{flexible column name mapping} memungkinkan pengguna menggunakan variasi nama kolom (misalnya \texttt{date} sebagai pengganti \texttt{tanggal}, atau \texttt{topic} sebagai pengganti \texttt{topik}). Kedua, konversi tanggal otomatis melalui \texttt{pd.to\_datetime} dengan \texttt{dayfirst=True} dan \texttt{format="mixed"} menangani berbagai format input (DD/MM/YYYY, YYYY-MM-DD, dll.) ke format standar \texttt{YYYY-MM-DD}.
+\noindent Listing~\ref{lst:ch14-csv-reader} menunjukkan dua fitur penting. Pertama, \textit{flexible column name mapping} memungkinkan pengguna menggunakan variasi nama kolom (misalnya \texttt{date} sebagai pengganti \texttt{tanggal}, atau \texttt{topic} sebagai pengganti \texttt{topik}). Kedua, konversi tanggal dilakukan dalam dua tahap. Tanggal ISO (YYYY-MM-DD) dibaca lebih dulu dengan format tetap, karena \texttt{dayfirst=True} akan membaca \texttt{2026-02-04} sebagai 2 April. Nilai lainnya, misalnya DD/MM/YYYY, dibaca melalui \texttt{pd.to\_datetime} dengan \texttt{dayfirst=True} dan \texttt{format="mixed"}. Hasil keduanya disimpan dalam format standar \texttt{YYYY-MM-DD}.
 
 Tiga tool tambahan mendukung filtering dan eksplorasi data:
 
