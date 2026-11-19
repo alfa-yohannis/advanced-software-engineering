@@ -1,8 +1,8 @@
 -- OCL companion specification for the MediaFlow validation case study.
--- It covers the core invariants from the EVL file so students can compare
--- EVL's pragmatic validation syntax with declarative OCL over the same
--- metamodel. EVL adds implementation-oriented checks such as URI schemes,
--- codec/container compatibility and warning severity.
+-- It states the same 27 rules as the EVL file, with the same names, so
+-- students can compare EVL's pragmatic validation syntax with declarative
+-- OCL over the same metamodel. OCL has no warning severity: the Java runner
+-- reports TooManyWorkers as a warning, as the EVL critique does.
 
 package mediaflow
 
