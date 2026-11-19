@@ -465,7 +465,6 @@ cd projects/session-03/python
 \subsection*{Konfigurasi Kunci pada \texttt{docker-compose.yml}}
 
 \begin{frame}[fragile]{Konfigurasi Kunci Enkripsi pada Layanan}
-	\vspace{4pt}
 	\begin{columns}[T]
 		\column{0.55\textwidth}
 		\begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny, caption={docker-compose.yml (excerpt): PAYLOAD\_KEY from .env}]
@@ -503,7 +502,6 @@ services:
 			\item Tidak ada perubahan pada kode aplikasi.
 		\end{itemize}
 
-		\vspace{4pt}
 	{\footnotesize Jalankan: \texttt{sudo docker compose up --build -d}. Pembatasan akses data dicapai melalui distribusi kunci, bukan melalui kepercayaan pada komponen perantara}
 	\end{columns}
 \end{frame}
@@ -578,22 +576,16 @@ def decrypt_bytes(token: bytes) -> bytes:
 	\vspace{6pt}
 	\begin{columns}[t]
 		\column{0.7\textwidth}
-		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize, caption={Transformer decrypts input and encrypts output payload}]
-# receive encrypted parts from broker
-enc_header_b, enc_jpeg_in = recv_parts()
-
-# decrypt at runtime
+		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize, caption={transformer/transformer.py (excerpt): decrypt input, encrypt output payload}]
+topic, enc_header_b, enc_jpeg_in = sub.recv_multipart()
+# ...
 header_b = decrypt_bytes(enc_header_b)
-jpeg_in  = decrypt_bytes(enc_jpeg_in)
-
-# process (decode -> transform -> encode)
-out_header_b, jpeg_out = process_frame(header_b, jpeg_in)
-
-# encrypt again before publishing
+jpeg_in = decrypt_bytes(enc_jpeg_in)
+# ... decode, grayscale, encode as JPEG
 enc_out_header = encrypt_bytes(out_header_b)
-enc_jpeg_out   = encrypt_bytes(jpeg_out)
-
-send_parts(enc_out_header, enc_jpeg_out)
+enc_jpeg_out = encrypt_bytes(jpeg_out)
+# ...
+pub.send_multipart([PUB_TOPIC, enc_out_header, enc_jpeg_out])
 		\end{lstlisting}
 		
 		\column{0.3\textwidth}
@@ -658,20 +650,19 @@ print("OK: encryption on, wrong key fails, correct key succeeds.")
 	\vspace{6pt}
 	\begin{columns}[t]
 		\column{0.7\textwidth}
-		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize, caption={Sniffer view: visible bytes, unreadable without key}]
-def hexdump(b: bytes, n: int = 32) -> str:
-    return b[:n].hex()
+		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize, caption={sniffer.py (excerpt): visible bytes, unreadable without key}]
+parts = s.recv_multipart()
+# ...
+for idx, p in enumerate(parts):
+    head_hex = binascii.hexlify(p[:16]).decode()
+    print(f"  part[{idx}] len={len(p)} hex16={head_hex} utf8={preview_utf8(p)}")
 
-# captured payload (e.g., from network observation)
-captured = token  # placeholder for wire-captured bytes
-print("Visible (first bytes):", hexdump(captured))
-
-# no key available -> decryption must fail
-from cryptography.fernet import Fernet, InvalidToken
-try:
-    Fernet(Fernet.generate_key()).decrypt(captured)
-except InvalidToken:
-    print("Unreadable: decrypt failed without the correct key.")
+# quick heuristics for the common 3-part pattern: [topic, header, jpeg]
+if len(parts) >= 3:
+    header_part = parts[1]
+    payload_part = parts[2]
+    looks_json = is_json_object(header_part)
+    looks_jpeg = is_probably_jpeg(payload_part)
 		\end{lstlisting}
 		
 		\column{0.3\textwidth}
@@ -693,12 +684,13 @@ except InvalidToken:
 	\vspace{6pt}
 	\begin{columns}[t]
 		\column{0.5\textwidth}
-		\textbf{Tanpa Enkripsi}
-		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize]
-Visible (first bytes):
-ffd8ffe000104a464946000101...
-Readable:
-JPEG header detected
+		\textbf{Tanpa Enkripsi (pipeline sesi 2)}
+		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\tiny, breaklines=true]
+--- msg 0 parts=3 ---
+  part[1] len=213 hex16=7b226672616d655f6964223a2033372c utf8='{"frame_id": 37, ...'
+  part[2] len=107045 hex16=ffd8ffe000104a464946000101000001 utf8=<not utf8>
+  => header looks like JSON (PLAINTEXT)
+  => payload looks like JPEG (PLAINTEXT ffd8ff)
 		\end{lstlisting}
 		\begin{itemize}
 			\item Byte awal \texttt{FF D8 FF}
@@ -708,12 +700,12 @@ JPEG header detected
 		\end{itemize}
 		
 		\column{0.5\textwidth}
-		\textbf{Dengan Enkripsi Payload}
-		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize]
-Visible (first bytes):
-674141414141426d4e6d6c5a...
-Unreadable:
-decrypt failed without key
+		\textbf{Dengan Enkripsi Payload (sesi 3)}
+		\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\tiny, breaklines=true]
+--- msg 0 parts=3 ---
+  part[1] len=376 hex16=6741414141414271764e6873714c3249 utf8='gAAAAABqvNhs...'
+  part[2] len=141028 hex16=6741414141414271764e687361587765 utf8='gAAAAABqvNhs...'
+  => header+payload do NOT look like JSON/JPEG (LIKELY ENCRYPTED)
 		\end{lstlisting}
 		\begin{itemize}
 			\item Tidak ada pola tetap
