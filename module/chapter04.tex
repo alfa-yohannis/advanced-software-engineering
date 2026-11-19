@@ -967,8 +967,11 @@ registry eksternal.
 Langkah terakhir, \texttt{docker compose ps}, digunakan untuk memverifikasi
 status seluruh service yang dijalankan. Jika seluruh container berstatus
 \texttt{Up}, maka deployment lokal dapat dianggap berhasil secara teknis dan
-sistem berada pada kondisi runtime yang konsisten dengan kode terbaru pada
-branch \texttt{main}.
+sistem berada pada kondisi runtime yang konsisten dengan commit pada
+branch \texttt{main} yang baru saja lulus CI. Workflow hanya melakukan deploy
+bila run CI tersebut berhasil dan dipicu oleh push ke \texttt{main}, lalu
+melakukan checkout tepat pada commit yang diuji
+(\texttt{github.event.workflow\_run.head\_sha}).
 
 \end{enumerate}
 

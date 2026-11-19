@@ -284,7 +284,7 @@ To keep the runner online after a reboot, install it as a service instead: `sudo
 
 ## Step 9. Deploy automatically after CI succeeds (CD)
 
-`.github/workflows/deploy-local.yml` defines the workflow `deploy-local`. GitHub starts it each time a run of `CI Tests (session-04)` completes, and skips its job unless that run succeeded. The job asks for a runner with the labels `self-hosted`, `Linux` and `X64`. That is a machine of your own with Docker, which you register with the repository. On it the job checks out branch `main` and runs, from the root of the repository:
+`.github/workflows/deploy-local.yml` defines the workflow `deploy-local`. GitHub starts it each time a run of `CI Tests (session-04)` completes. Its job runs only when that run succeeded and a push to `main` started it, so runs for other branches and for pull requests deploy nothing. The job asks for a runner with the labels `self-hosted`, `Linux` and `X64`. That is a machine of your own with Docker, which you register with the repository. On it the job checks out the commit that the CI run tested and runs, from the root of the repository:
 
 ```bash
 docker compose -f projects/session-04/docker-compose.yml down || true
