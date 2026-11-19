@@ -12,8 +12,15 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
-		<!-- Tycho settings -->
-		<tycho-version>4.0.13</tycho-version>
+		<!-- Tycho settings. Tycho 5 needs Maven 3.9.9 or newer and a JDK 21 or newer.
+			On Maven 3.10, .mvn/maven.config also sets maven.resolver.validation=MILD,
+			because the stricter default of Maven 3.10 rejects the classpath entries that
+			Tycho adds for jars nested in bundles (such as lib/ant.jar in org.apache.ant). -->
+		<tycho-version>5.0.4</tycho-version>
+		<!-- Xtext 2.40 comes with ASM 9.8, which reads class files up to Java 25. The MWE2
+			workflow and the Xtend compiler read the classes of the JDK that runs Maven, so
+			they get ASM 9.10.1 (the version of Xtext 2.44), which reads them up to Java 27. -->
+		<asmVersion>9.10.1</asmVersion>
 		<!-- Define overridable properties for tycho-surefire-plugin -->
 		<platformSystemProperties></platformSystemProperties>
 		<moduleProperties></moduleProperties>
@@ -21,6 +28,8 @@
 		<additionalTestArguments></additionalTestArguments>
 	</properties>
 	<modules>
+		<!-- the EMF metamodel bundle that the language requires -->
+		<module>../mediaflow</module>
 		<module>mediaflow.xtext</module>
 		<module>mediaflow.xtext.ide</module>
 		<module>mediaflow.xtext.ui</module>
@@ -152,6 +161,13 @@
 						<outputDirectory>${basedir}/xtend-gen</outputDirectory>
 						<testOutputDirectory>${basedir}/xtend-gen</testOutputDirectory>
 					</configuration>
+					<dependencies>
+						<dependency>
+							<groupId>org.ow2.asm</groupId>
+							<artifactId>asm</artifactId>
+							<version>${asmVersion}</version>
+						</dependency>
+					</dependencies>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -164,6 +180,10 @@
 								<includes>
 									<include>**/*</include>
 								</includes>
+								<!-- keep the .gitignore files that Git tracks in xtend-gen -->
+								<excludes>
+									<exclude>**/.gitignore</exclude>
+								</excludes>
 							</fileset>
 						</filesets>
 					</configuration>

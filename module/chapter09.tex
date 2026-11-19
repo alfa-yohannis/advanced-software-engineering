@@ -461,10 +461,13 @@ public class MediaFlowValidator extends AbstractMediaFlowValidator {
   label={lst:ch09-xtext-build},
   basicstyle=\ttfamily\scriptsize
 ]
+cd projects/session-09
 mvn -f mediaflow.xtext.parent/pom.xml clean verify
+# bila Maven lebih lama dari 3.9.9: Maven wrapper (Maven 3.9.9)
+sh mediaflow.xtext.parent/mvnw -f mediaflow.xtext.parent/pom.xml clean verify
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch09-xtext-build} digunakan sebagai verifikasi awal bahwa konfigurasi Tycho multi-modul (runtime, IDE, web, dan tests) berada dalam kondisi konsisten.
+\noindent Listing~\ref{lst:ch09-xtext-build} digunakan sebagai verifikasi awal bahwa konfigurasi Tycho multi-modul (runtime, IDE, web, dan tests) berada dalam kondisi konsisten. Build ini memakai Tycho~5, sehingga membutuhkan Maven 3.9.9 atau lebih baru dan JDK 21 sampai 27; Eclipse tidak diperlukan karena Tycho mengunduh Eclipse, EMF, dan Xtext sesuai target platform di \texttt{mediaflow.xtext.target}. Bundle metamodel \texttt{mediaflow} ikut dibangun sebagai modul pertama, kemudian workflow MWE2 menghasilkan ulang \texttt{src-gen/}, Xtend dikompilasi, dan \texttt{MediaFlowParsingTest} dijalankan di runtime OSGi. Build pertama mengunduh sekitar 640~MB dependensi ke \texttt{\textasciitilde/.m2}, sehingga dapat memakan waktu belasan menit tergantung kecepatan koneksi; build berikutnya selesai dalam kurang dari satu menit.
 
 \subsection{Titik Ekstensi}
 

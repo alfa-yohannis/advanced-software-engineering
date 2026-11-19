@@ -42,6 +42,12 @@
 						<artifactId>org.eclipse.xtext.xtext.generator.dependencies</artifactId>
 						<version>${xtextVersion}</version>
 					</dependency>
+					<!-- a newer ASM than the one of Xtext 2.40, see asmVersion in the parent pom -->
+					<dependency>
+						<groupId>org.ow2.asm</groupId>
+						<artifactId>asm</artifactId>
+						<version>${asmVersion}</version>
+					</dependency>
 				</dependencies>
 			</plugin>
 			<plugin>

@@ -5,6 +5,9 @@ package yohannis.alfa.mediaflow.tests
 
 import com.google.inject.Inject
 import mediaflow.Graph
+import mediaflow.Node
+import mediaflow.Port
+import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
@@ -17,14 +20,59 @@ import org.junit.jupiter.api.^extension.ExtendWith
 class MediaFlowParsingTest {
 	@Inject
 	ParseHelper<Graph> parseHelper
-	
+
+	// The pipeline of example/flow1.mediaflow: input video -> scaler -> output video.
+	val String demo = '''
+		graph demo {
+		  resource inputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/input.mp4" external=true {
+		    port inputOut OUT
+		  }
+		  scaler resize720 backend=FFMPEG command="ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4" replicas=1 width=1280 height=720 {
+		    port resizeIn IN
+		    port resizeOut OUT
+		  }
+		  resource outputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/output.mp4" external=true {
+		    port outputIn IN
+		  }
+		  edge e1 from inputOut to resizeIn
+		  edge e2 from resizeOut to outputIn
+		}
+	'''
+
 	@Test
 	def void loadModel() {
-		val result = parseHelper.parse('''
-			Hello Xtext!
-		''')
+		val result = parseHelper.parse(demo)
 		Assertions.assertNotNull(result)
 		val errors = result.eResource.errors
 		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')
+		Assertions.assertEquals('demo', result.name)
+		Assertions.assertEquals(#['inputVideo', 'resize720', 'outputVideo'], result.nodes.map[name])
+	}
+
+	@Test
+	def void linkEdgesToPorts() {
+		val result = parseHelper.parse(demo)
+		EcoreUtil2.resolveAll(result)
+		val errors = result.eResource.errors
+		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')
+		Assertions.assertEquals(
+			#['e1: inputVideo.inputOut -> resize720.resizeIn', 'e2: resize720.resizeOut -> outputVideo.outputIn'],
+			result.edges.map[name + ': ' + path(source) + ' -> ' + path(target)]
+		)
+	}
+
+	@Test
+	def void reportUnknownPort() {
+		val result = parseHelper.parse(demo.replace('to resizeIn', 'to resizeInn'))
+		EcoreUtil2.resolveAll(result)
+		Assertions.assertEquals(
+			#["Couldn't resolve reference to Port 'resizeInn'."],
+			result.eResource.errors.map[message]
+		)
+	}
+
+	// "node.port", so that a test sees which node a linked port belongs to
+	def private static String path(Port port) {
+		(port.eContainer as Node).name + '.' + port.name
 	}
 }

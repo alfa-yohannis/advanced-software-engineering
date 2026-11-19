@@ -1,0 +1,14 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<!-- The EMF metamodel bundle that the Xtext language requires (Require-Bundle: mediaflow).
+		It is built as a module of ../mediaflow.xtext.parent. -->
+	<parent>
+		<groupId>mediaflow.xtext</groupId>
+		<artifactId>mediaflow.xtext.parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../mediaflow.xtext.parent/pom.xml</relativePath>
+	</parent>
+	<artifactId>mediaflow</artifactId>
+	<packaging>eclipse-plugin</packaging>
+</project>

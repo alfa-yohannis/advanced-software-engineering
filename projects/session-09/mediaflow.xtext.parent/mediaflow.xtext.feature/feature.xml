@@ -3,6 +3,12 @@
 	label="MediaFlow Feature "
 	version="1.0.0.qualifier">
 	<plugin
+			id="mediaflow"
+			download-size="0"
+			install-size="0"
+			version="0.0.0"
+			unpack="false"/>
+	<plugin
 			id="mediaflow.xtext"
 			download-size="0"
 			install-size="0"
