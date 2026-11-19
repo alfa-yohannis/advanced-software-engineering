@@ -11,6 +11,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 import pytest
+import redis
 from fastapi.testclient import TestClient
 
 import services.api.api as api_mod  # type: ignore
@@ -36,7 +37,10 @@ class FakeRedis:
         # Redis stores strings; module uses decode_responses=True.
         self._hashes.setdefault(key, {})
         for k, v in mapping.items():
-            self._hashes[key][str(k)] = "" if v is None else str(v)
+            if v is None:
+                # the real client refuses None the same way
+                raise redis.exceptions.DataError("Invalid input of type: 'NoneType'")
+            self._hashes[key][str(k)] = str(v)
         return len(mapping)
 
     def hgetall(self, key: str) -> Dict[str, str]:
@@ -118,6 +122,19 @@ def test_create_job_stores_state_and_enqueues_work(client: TestClient, fake_redi
     assert work["speed"] == 1.0
     assert work["bucket"] == api_mod.BUCKET
     assert work["mp3_key"] == "00000000-0000-0000-0000-000000000000.mp3"
+
+
+def test_create_job_accepts_null_voice_and_speed(client: TestClient, fake_redis: FakeRedis):
+    r = client.post("/jobs", json={"text": "hello", "voice": None, "speed": None})
+    assert r.status_code == 200
+
+    state = fake_redis.hgetall(api_mod.job_key(r.json()["job_id"]))
+    assert state["voice"] == ""
+    assert state["speed"] == ""
+
+    work = json.loads(fake_redis.list_getall(api_mod.jobs_queue_key())[0])
+    assert work["voice"] is None
+    assert work["speed"] is None
 
 
 def test_get_job_returns_queued_and_no_mp3_url(client: TestClient, fake_redis: FakeRedis):

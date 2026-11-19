@@ -552,6 +552,8 @@ projects/session-05/app/models
 **/.terraform/
 
 projects/session-07/outputs*
+# The Python rule env/ above would also hide the generator's Terraform templates.
+!projects/session-07/mde/templates/terraform/env/
 projects/session-07/module
 projects/session-07/tree.txt
 projects/session-07/slides

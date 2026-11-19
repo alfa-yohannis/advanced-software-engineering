@@ -13,39 +13,13 @@
 # - This test assumes you use the nginx gateway so the API is reachable at /api/*
 # - If you don't use gateway, run with:
 #     --api-url http://localhost:8000 --web-url http://localhost:8080
+# - The options and the api_url and web_url fixtures are in tests/conftest.py.
+#   pytest reads pytest_addoption only from conftest.py files and plugins.
 
 from __future__ import annotations
 
-import os
-import time
 import requests
 from tenacity import retry, stop_after_delay, wait_fixed
-import pytest
-
-
-def pytest_addoption(parser):
-    parser.addoption("--base-url", action="store", default=os.getenv("BASE_URL", "http://localhost:8088"))
-    parser.addoption("--api-url", action="store", default=os.getenv("API_URL", ""))  # optional override
-    parser.addoption("--web-url", action="store", default=os.getenv("WEB_URL", ""))  # optional override
-
-
-@pytest.fixture
-def base_url(request) -> str:
-    return request.config.getoption("--base-url").rstrip("/")
-
-
-@pytest.fixture
-def api_url(request, base_url: str) -> str:
-    v = (request.config.getoption("--api-url") or "").strip()
-    # default: via gateway /api
-    return (v.rstrip("/") if v else f"{base_url}/api")
-
-
-@pytest.fixture
-def web_url(request, base_url: str) -> str:
-    v = (request.config.getoption("--web-url") or "").strip()
-    # default: via gateway root
-    return (v.rstrip("/") if v else base_url)
 
 
 def _create_job(api_url: str, text: str) -> str:
@@ -107,6 +81,11 @@ def test_e2e_compose_pipeline(api_url: str, web_url: str):
     ctype = mp3.headers.get("content-type", "")
     assert ctype.startswith("audio/mpeg") or mp3.content[:3] == b"ID3", f"Not MP3. content-type={ctype}"
     assert len(mp3.content) > 500, f"MP3 too small: {len(mp3.content)} bytes"
+
+    # 4) headers only, as curl -I does
+    head = requests.head(f"{web_url}/mp3/{job_id}.mp3", timeout=30)
+    assert head.status_code == 200, f"MP3 HEAD failed: {head.status_code}"
+    assert int(head.headers["content-length"]) == len(mp3.content)
 
 
 def test_e2e_invalid_job_rejected(api_url: str):

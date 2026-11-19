@@ -1,0 +1,72 @@
+module "tts" {
+  source = "{{ terraform_module_source }}"
+
+  env           = "{{ env_value }}"
+  k8s_overlay   = "{{ k8s_overlay }}"
+  project_root  = {{ project_root_expr }}
+  k8s_root_path = "{{ k8s_root_path }}"
+
+  minikube_profile      = "{{ minikube_profile }}"
+  api_base_url          = "{{ api_base_url }}"
+  image_registry_prefix = "{{ image_registry_prefix }}"
+
+  mp3_bucket     = var.mp3_bucket
+  internal_token = var.internal_token
+
+  {% if minio_root_user_from_var %}
+  minio_root_user     = var.minio_root_user
+  {% else %}
+  minio_root_user     = "{{ minio_root_user }}"
+  {% endif %}
+  {% if minio_root_password_from_var %}
+  minio_root_password = var.minio_root_password
+  {% else %}
+  minio_root_password = "{{ minio_root_password }}"
+  {% endif %}
+
+  worker_replicas = var.worker_replicas
+}
+
+variable "mp3_bucket" {
+  type = string
+}
+
+variable "internal_token" {
+  {% if internal_token_sensitive %}
+  type      = string
+  sensitive = true
+  {% else %}
+  type = string
+  {% endif %}
+}
+
+variable "worker_replicas" {
+  type    = number
+  default = {{ worker_replicas }}
+}
+{% if minio_root_user_from_var %}
+
+variable "minio_root_user" {
+  {% if minio_root_user_sensitive %}
+  type      = string
+  sensitive = true
+  {% else %}
+  type = string
+  {% endif %}
+}
+{% endif %}
+{% if minio_root_password_from_var %}
+
+variable "minio_root_password" {
+  {% if minio_root_password_sensitive %}
+  type      = string
+  sensitive = true
+  {% else %}
+  type = string
+  {% endif %}
+}
+{% endif %}
+
+output "urls" {
+  value = module.tts.urls
+}
