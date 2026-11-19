@@ -3,7 +3,7 @@
   <nodes xsi:type="mediaflow:Resource" name="inputVideo" uri="file:///home/alfa/videos/input.mp4" external="true">
     <ports name="inputOut" direction="OUT"/>
   </nodes>
-  <nodes xsi:type="mediaflow:Scaler" name="resize720" command="ffmpeg -i input.mp4 -vf scale=1280:720 &#xA;      scaled.mp4" replicas="1" width="1280" height="720">
+  <nodes xsi:type="mediaflow:Scaler" name="resize720" command="ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4" replicas="1" width="1280" height="720">
     <ports name="resizeIn"/>
     <ports name="resizeOut" direction="OUT"/>
   </nodes>
