@@ -144,10 +144,10 @@ Pada demo ini, Prometheus tidak diinstal secara manual pada sistem operasi host.
 
 Dengan menjalankan Prometheus sebagai container\index{container}, konfigurasi scraping dan penyimpanan metrik dapat dikelola secara terpisah dari kode aplikasi. Selain itu, Prometheus dapat dengan mudah dijalankan, dihentikan, atau dikonfigurasi ulang tanpa memengaruhi proses utama sistem studi kasus.
 
-Untuk mendukung ekspor metrik dari aplikasi berbasis Python, digunakan library \texttt{prometheus-client}. Library ini memungkinkan setiap node menyediakan endpoint metrik yang dapat diakses oleh Prometheus eksternal. Perintahnya ada pada Listing~\ref{lst:ch02-1}.
+Untuk mendukung ekspor metrik dari aplikasi berbasis Python, digunakan library \texttt{prometheus-client}. Library ini memungkinkan setiap node menyediakan endpoint metrik yang dapat diakses oleh Prometheus eksternal. Library \texttt{psutil} ikut dipasang untuk mengukur CPU dan memori setiap proses. Pada proyek ini keduanya dipasang oleh \texttt{Dockerfile} masing-masing node. Perintahnya ada pada Listing~\ref{lst:ch02-1}.
 
 \begin{lstlisting}[language=bash, caption={Memasang dependensi Python}, label={lst:ch02-1}]
-pip install prometheus-client
+pip install prometheus-client psutil
 \end{lstlisting}
 
 Dengan pendekatan ini, setiap node aplikasi mengekspor sinyal runtime secara mandiri, sementara Prometheus berperan sebagai pengumpul data terpusat yang berjalan sebagai layanan terpisah. Pemisahan peran ini mendukung observabilitas berbasis data runtime dan memungkinkan analisis perilaku sistem secara \emph{bottom-up} sebelum dilakukan penalaran terhadap struktur atau desain sistem.
@@ -181,7 +181,7 @@ Dalam arsitektur studi kasus ini, OpenTelemetry relevan terutama untuk konsep \e
 
 Penggunaan OpenTelemetry membantu mengaitkan metrik kuantitatif dengan konteks eksekusi yang lebih kaya. Ketika terjadi lonjakan latensi atau penurunan throughput yang terdeteksi melalui metrik Prometheus, trace yang dihasilkan melalui OpenTelemetry dapat digunakan untuk menelusuri titik keterlambatan atau bottleneck pada node tertentu.
 
-Dalam demo ini, OpenTelemetry tidak selalu diaktifkan secara penuh sebagai sistem terpisah, melainkan diperkenalkan sebagai kerangka konseptual untuk memahami relasi antara metrik, log, dan trace. Pendekatan ini menekankan bahwa observabilitas modern tidak hanya bergantung pada satu jenis sinyal, tetapi pada kombinasi berbagai bentuk telemetri yang saling melengkapi.
+Dalam demo ini, OpenTelemetry tidak dipakai dalam kode proyek, melainkan diperkenalkan sebagai kerangka konseptual untuk memahami relasi antara metrik, log, dan trace. Pendekatan ini menekankan bahwa observabilitas modern tidak hanya bergantung pada satu jenis sinyal, tetapi pada kombinasi berbagai bentuk telemetri yang saling melengkapi.
 
 Dengan memperkenalkan OpenTelemetry, peserta didorong untuk memahami observabilitas sebagai praktik lintas lapisan, yang menghubungkan sinyal runtime dengan alur eksekusi sistem terdistribusi. Pemahaman ini memperkuat pendekatan observabilitas \emph{bottom-up}, di mana sistem dianalisis melalui jejak perilaku aktual yang muncul selama eksekusi.
 
@@ -204,10 +204,10 @@ Eksperimen observabilitas dilakukan melalui beberapa tahapan berikut:
 
 Prometheus ditambahkan sebagai komponen observabilitas eksternal yang bertugas mengumpulkan metrik runtime dari seluruh node aplikasi. Prometheus dijalankan sebagai container dan dikonfigurasi untuk melakukan \emph{scraping} terhadap endpoint metrik yang diekspor oleh masing-masing node.
 
-Untuk memungkinkan setiap node aplikasi berbasis Python mengekspor metrik, digunakan library \texttt{prometheus-client}. Library ini dipasang pada seluruh node aplikasi, baik Capturer, Broker, Transformer, maupun Web Server. Perintah lengkapnya ada pada Listing~\ref{lst:ch02-2}.
+Untuk memungkinkan setiap node aplikasi berbasis Python mengekspor metrik, digunakan library \texttt{prometheus-client}, ditambah \texttt{psutil} yang dibutuhkan untuk metrik \texttt{process\_cpu\_percent} dan \texttt{process\_rss\_bytes}. Kedua library ini dipasang pada seluruh node aplikasi, baik Capturer, Broker, Transformer, maupun Web Server, melalui \texttt{Dockerfile} masing-masing node. Perintahnya ada pada Listing~\ref{lst:ch02-2}.
 
 \begin{lstlisting}[language=bash, caption={Memasang dependensi Python (2)}, label={lst:ch02-2}]
-pip install prometheus-client
+pip install prometheus-client psutil
 \end{lstlisting}
 
 Setelah library terpasang, setiap node menyediakan endpoint \texttt{/metrics} yang berisi metrik runtime dan dapat diakses oleh Prometheus eksternal. Endpoint ini tidak memengaruhi alur data utama sistem dan hanya berfungsi sebagai sumber observasi.
@@ -224,125 +224,181 @@ Kode pada node Capturer, Broker, Transformer, dan Web Server diperbarui untuk me
 
 Selain itu, ditambahkan \emph{shared library} metrik untuk memastikan konsistensi definisi metrik antar node, misalnya konsistensi penamaan metrik, label yang digunakan, serta tipe metrik (\texttt{Counter}, \texttt{Gauge}, \texttt{Histogram}). Shared library ini bertujuan mencegah duplikasi definisi metrik dan mengurangi risiko inkonsistensi antar node.
 
-Berikut contoh struktur minimal shared library metrik (misal: \texttt{shared/observability.py}) (Listing~\ref{lst:ch02-3}):
+Shared library ini berada pada berkas \texttt{shared/observability.py}. Cuplikannya ada pada Listing~\ref{lst:ch02-3}; bagian yang dilewati ditandai dengan \texttt{\# ...}:
 
-\begin{lstlisting}[style=PythonStyle, caption={Isi berkas shared/observability.py}, label={lst:ch02-3}]
-# shared/observability.py
-from prometheus_client import Counter, Gauge, Histogram
-
-# Throughput / volume counters
-frames_in_total = Counter(
+\begin{lstlisting}[style=PythonStyle, breakatwhitespace=true, caption={Cuplikan berkas shared/observability.py}, label={lst:ch02-3}]
+from prometheus_client import Counter, Gauge, Histogram, start_http_server
+# ...
+FRAMES_IN = Counter(
     "frames_in_total",
-    "Total frames received/consumed by a node",
-    ["service"]
+    "Frames received (events/messages)",
+    ["service", "instance", "topic"],
 )
-
-frames_out_total = Counter(
+FRAMES_OUT = Counter(
     "frames_out_total",
-    "Total frames produced/published by a node",
-    ["service"]
+    "Frames sent (events/messages)",
+    ["service", "instance", "topic"],
+)
+# ...
+STAGE_SECONDS = Histogram(
+    "stage_seconds",
+    "Stage latency in seconds",
+    ["service", "instance", "stage"],
+    buckets=(0.001, 0.003, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
+)
+# ...
+# End-to-end latency measured at Node C using Node A header ts_capture
+E2E_SECONDS = Histogram(
+    "e2e_seconds",
+    "End-to-end latency seconds (capture->node_c_ingest)",
+    ["service", "instance"],
+    buckets=(0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
 )
 
-# Runtime gauges
-queue_size = Gauge(
-    "queue_size",
-    "Approximate queue size (if applicable)",
-    ["service", "queue"]
+# Web server only (optional)
+MJPEG_CLIENTS = Gauge(
+    "mjpeg_clients",
+    "Active MJPEG clients",
+    ["service", "instance"],
 )
+# ...
+def init(
+    service: Optional[str] = None,
+    instance: Optional[str] = None,
+    metrics_port: Optional[int] = None,
+    enable_process_stats: bool = True,
+) -> None:
+    # ...
+    start_http_server(METRICS_PORT)
+    _started = True
 
-# Latency histograms (seconds)
-processing_seconds = Histogram(
-    "processing_seconds",
-    "Processing latency per frame/message in seconds",
-    ["service", "stage"]
-)
+    if enable_process_stats and psutil is not None:
+        _start_process_heartbeat()
 \end{lstlisting}
 
-Setiap node kemudian mengimpor shared library ini dan menjalankan server metrik. Contoh berikut menunjukkan pola umum yang dapat digunakan pada seluruh node (Listing~\ref{lst:ch02-4}):
+Semua metrik memakai label \texttt{service} dan \texttt{instance}. Counter frame menambahkan label \texttt{topic}, sedangkan \texttt{stage\_seconds} menambahkan label \texttt{stage}. Cuplikan ini tidak menampilkan metrik lain yang juga didefinisikan pada berkas yang sama, yaitu counter \texttt{bytes\_in\_total} dan \texttt{bytes\_out\_total} dengan label \texttt{topic}, counter \texttt{errors\_total} dengan label \texttt{where} dan \texttt{type}, histogram \texttt{jpeg\_bytes} dengan label \texttt{direction} yang bernilai \texttt{in} atau \texttt{out}, serta gauge \texttt{process\_rss\_bytes} dan \texttt{process\_cpu\_percent}. Fungsi \texttt{init()} menjalankan endpoint \texttt{/metrics} melalui \texttt{start\_http\_server()} dan, bila \texttt{psutil} tersedia, menjalankan thread yang setiap detik mengisi kedua gauge proses tersebut. Nilai label \texttt{instance} diambil dari variabel lingkungan \texttt{INSTANCE} atau, bila tidak diatur, \texttt{HOSTNAME}, yang di dalam container Docker berisi ID container.
 
-\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen}, label={lst:ch02-4}]
-# contoh potongan umum pada node (capturer/broker/transformer/web)
-from prometheus_client import start_http_server
-from shared.metrics2 import frames_in_total, frames_out_total, processing_seconds
+Setiap node kemudian mengimpor shared library ini dan menjalankan server metrik. Listing~\ref{lst:ch02-4} menunjukkan pola tersebut pada berkas \texttt{capturer/capturer.py}. Broker, transformer, dan web server memakai pola yang sama dengan nama layanan dan port masing-masing:
 
-SERVICE = "capturer"  # ganti sesuai node: broker/transformer/web_server
-
-def init_metrics_server(metrics_port: int) -> None:
-    # Menjalankan endpoint /metrics pada port tertentu
-    start_http_server(metrics_port)
-
-# Panggil sekali pada startup node
-init_metrics_server(9101)  # contoh untuk capturer
+\begin{lstlisting}[style=PythonStyle, breakatwhitespace=true, caption={Potongan kode pada Tahapan Eksperimen}, label={lst:ch02-4}]
+from shared.observability import (  # noqa: E402
+    init as obs_init,
+    SERVICE as OBS_SERVICE,
+    INSTANCE as OBS_INSTANCE,
+    FRAMES_OUT,
+    BYTES_OUT,
+    JPEG_BYTES,
+    STAGE_SECONDS,
+    ERRORS,
+)
+# ...
+METRICS_PORT = validate_port(getenv_int("METRICS_PORT", 9101), "METRICS_PORT")
+# ...
+def main() -> int:
+    # Start Prometheus metrics
+    obs_init(service="capturer", metrics_port=METRICS_PORT)
 \end{lstlisting}
 
-Dengan pola ini, ekspor metrik menjadi seragam: setiap node menjalankan endpoint \texttt{/metrics} dan menggunakan definisi metrik yang sama melalui shared library.
+Dengan pola ini, ekspor metrik menjadi seragam: setiap node menjalankan endpoint \texttt{/metrics} dan menggunakan definisi metrik yang sama melalui shared library. Port endpoint dibaca dari variabel lingkungan \texttt{METRICS\_PORT}, yang pada \texttt{docker-compose.yml} bernilai 9101 untuk capturer, 9102 untuk broker, 9103 untuk transformer, dan 9104 untuk web server.
 
 \item \textbf{Penambahan Metrik Runtime}  
 
 Setiap node dilengkapi dengan metrik tambahan yang merepresentasikan perilaku utama sistem, seperti jumlah frame yang diproses, laju publikasi data, serta aktivitas pemrosesan dan penyajian data. Metrik dipilih agar mudah dikaitkan dengan fenomena runtime pada sistem terdistribusi, misalnya throughput, latensi, serta indikasi penumpukan (backpressure) atau bottleneck.
 
-Berikut contoh penambahan metrik pada masing-masing node (cuplikan minimal):
+Berikut contoh penambahan metrik pada masing-masing node (cuplikan minimal). Pemanggilan \texttt{.labels()} mengisi nilai label secara berurutan sesuai definisinya, yaitu \texttt{service}, \texttt{instance}, lalu \texttt{topic} atau \texttt{stage}:
 
 \begin{enumerate}
-  \item \textbf{Capturer (Node A):} menghitung frame yang dihasilkan dan waktu akuisisi/publish.
+  \item \textbf{Capturer (Node A):} menghitung frame yang dipublikasikan ke topic \texttt{raw} dan mengukur waktu encode JPEG sebagai stage \texttt{capturer\_encode\_jpeg}. Waktu yang diukur hanya mencakup pemanggilan \texttt{cv2.imencode}, tidak termasuk waktu membaca video dan mengirim pesan.
 
-Listing~\ref{lst:ch02-5} menampilkan potongan kode pada Tahapan Eksperimen (2).
-\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (2)}, label={lst:ch02-5}]
-# di loop utama capturer
-from time import time
-from shared.metrics2 import frames_out_total, processing_seconds
+Listing~\ref{lst:ch02-5} menampilkan potongannya dari \texttt{capturer/capturer.py}.
+\begin{lstlisting}[style=PythonStyle, breakatwhitespace=true, caption={Potongan kode pada Tahapan Eksperimen (2)}, label={lst:ch02-5}]
+t_enc = time.time()
+ok2, jpg = cv2.imencode(".jpg", frame, encode_params)
+STAGE_SECONDS.labels(
+    OBS_SERVICE, OBS_INSTANCE, "capturer_encode_jpeg"
+).observe(time.time() - t_enc)
 
-t0 = time()
-# ... capture frame ...
-# ... publish raw frame ...
-frames_out_total.labels(service="capturer").inc()
-processing_seconds.labels(service="capturer", stage="capture_publish").observe(time() - t0)
+if ok2:
+    payload = jpg.tobytes()
+    JPEG_BYTES.labels(OBS_SERVICE, OBS_INSTANCE, "out").observe(len(payload))
+    # ...
+    pub.send_multipart([TOPIC, json.dumps(header).encode("utf-8"), payload])
+
+    FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, topic_str).inc()
+    BYTES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, topic_str).inc(len(payload))
 \end{lstlisting}
 
-  \item \textbf{Broker:} menghitung pesan yang diteruskan (raw/processed) dan (opsional) ukuran antrean internal jika ada.
+  \item \textbf{Broker:} menghitung pesan yang masuk lewat soket XSUB dan yang diteruskan lewat soket XPUB, serta mengukur waktu terima dan kirimnya (stage \texttt{broker\_recv\_xsub} dan \texttt{broker\_send\_xpub}). Label \texttt{topic} pada broker bukan \texttt{raw} atau \texttt{processed}, melainkan \texttt{xsub\_in} untuk pesan masuk, \texttt{xpub\_out} untuk pesan keluar, dan \texttt{subs} untuk pesan langganan dari subscriber, yang waktunya dicatat sebagai \texttt{broker\_recv\_xpub} dan \texttt{broker\_send\_xsub}. Broker tidak memiliki metrik antrean.
 
-Listing~\ref{lst:ch02-6} menampilkan potongan kode pada Tahapan Eksperimen (3).
-\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (3)}, label={lst:ch02-6}]
-from shared.metrics2 import frames_in_total, frames_out_total
+Listing~\ref{lst:ch02-6} menampilkan potongannya dari \texttt{broker/broker.py}.
+\begin{lstlisting}[style=PythonStyle, breakatwhitespace=true, caption={Potongan kode pada Tahapan Eksperimen (3)}, label={lst:ch02-6}]
+TOPIC_XSUB = "xsub_in"
+TOPIC_XPUB = "xpub_out"
+TOPIC_SUBS = "subs"
+# ...
+# Publisher -> Subscriber (data frames)
+if xsub in events:
+    t0 = time.time()
+    msg = xsub.recv_multipart()
+    STAGE_SECONDS.labels(OBS_SERVICE, OBS_INSTANCE, "broker_recv_xsub").observe(time.time() - t0)
 
-# saat menerima raw dari capturer
-frames_in_total.labels(service="broker").inc()
+    total_bytes = sum(len(p) for p in msg) if msg else 0
+    FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, TOPIC_XSUB).inc()
+    BYTES_IN.labels(OBS_SERVICE, OBS_INSTANCE, TOPIC_XSUB).inc(total_bytes)
 
-# saat meneruskan ke subscriber (raw atau processed)
-frames_out_total.labels(service="broker").inc()
+    t1 = time.time()
+    xpub.send_multipart(msg)
+    STAGE_SECONDS.labels(OBS_SERVICE, OBS_INSTANCE, "broker_send_xpub").observe(time.time() - t1)
+
+    FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, TOPIC_XPUB).inc()
+    BYTES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, TOPIC_XPUB).inc(total_bytes)
 \end{lstlisting}
 
-  \item \textbf{Transformer (Node B):} menghitung frame yang dikonsumsi dan yang diproduksi, serta latensi pemrosesan transformasi.
+  \item \textbf{Transformer (Node B):} menghitung frame yang dikonsumsi (topic \texttt{raw}) dan yang diproduksi (topic \texttt{processed}), serta mengukur waktu setiap tahap: \texttt{transformer\_recv}, \texttt{transformer\_parse\_header}, \texttt{transformer\_decode}, \texttt{transformer\_grayscale}, dan \texttt{transformer\_encode\_jpeg}. Tahap \texttt{transformer\_recv} ikut mencakup waktu menunggu frame berikutnya, sehingga nilainya mendekati interval publikasi capturer, yaitu 0,1 detik.
 
-Listing~\ref{lst:ch02-7} menampilkan potongan kode pada Tahapan Eksperimen (4).
-\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (4)}, label={lst:ch02-7}]
-from time import time
-from shared.metrics2 import frames_in_total, frames_out_total, processing_seconds
-
-# saat menerima raw
-frames_in_total.labels(service="transformer").inc()
-
-t0 = time()
-# ... transform frame ...
-frames_out_total.labels(service="transformer").inc()
-processing_seconds.labels(service="transformer", stage="transform").observe(time() - t0)
+Listing~\ref{lst:ch02-7} menampilkan potongannya dari \texttt{transformer/transformer.py}.
+\begin{lstlisting}[style=PythonStyle, breakatwhitespace=true, caption={Potongan kode pada Tahapan Eksperimen (4)}, label={lst:ch02-7}]
+FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, sub_topic_str).inc()
+# ...
+t_dec = time.time()
+img = jpeg_bytes_to_pil(jpeg_in).convert("RGB")
+STAGE_SECONDS.labels(
+    OBS_SERVICE, OBS_INSTANCE, "transformer_decode"
+).observe(time.time() - t_dec)
+# ...
+t_tr = time.time()
+gray = to_grayscale(img)
+STAGE_SECONDS.labels(
+    OBS_SERVICE, OBS_INSTANCE, "transformer_grayscale"
+).observe(time.time() - t_tr)
+# ...
+FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, pub_topic_str).inc()
 \end{lstlisting}
 
-  \item \textbf{Web Server (Node C):} menghitung frame yang disajikan dan (opsional) latensi penyajian/streaming.
+  \item \textbf{Web Server (Node C):} menghitung frame yang diterima dari broker dan mengukur latensi \texttt{e2e\_seconds}, yaitu waktu dari capture di Node A sampai frame tiba di Node C, bukan waktu penyajian ke browser. Frame yang diterima tercatat pada \texttt{frames\_in\_total} dengan topic \texttt{processed}; web server tidak menaikkan \texttt{frames\_out\_total}. Gauge \texttt{mjpeg\_clients} naik saat sebuah stream MJPEG dibuka dan turun saat stream ditutup, sehingga nilainya sama dengan jumlah stream yang sedang terbuka. Tahap penerimaannya dicatat sebagai \texttt{web\_recv\_zmq} dan \texttt{web\_parse\_header}.
 
-Listing~\ref{lst:ch02-8} menampilkan potongan kode pada Tahapan Eksperimen (5).
-\begin{lstlisting}[style=PythonStyle, caption={Potongan kode pada Tahapan Eksperimen (5)}, label={lst:ch02-8}]
-from shared.metrics2 import frames_in_total, frames_out_total
-
-# saat menerima processed dari broker
-frames_in_total.labels(service="web_server").inc()
-
-# saat frame dipublikasikan ke stream MJPEG (per frame terkirim)
-frames_out_total.labels(service="web_server").inc()
+Potongan dari \texttt{web\_server/web\_server.py} ada pada Listing~\ref{lst:ch02-8}.
+\begin{lstlisting}[style=PythonStyle, breakatwhitespace=true, caption={Potongan kode pada Tahapan Eksperimen (5)}, label={lst:ch02-8}]
+# Prometheus: active clients gauge
+MJPEG_CLIENTS.labels(OBS_SERVICE, OBS_INSTANCE).inc()
+try:
+    # ...
+finally:
+    MJPEG_CLIENTS.labels(OBS_SERVICE, OBS_INSTANCE).dec()
+# ...
+FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, SUB_TOPIC_STR).inc()
+# ...
+# End-to-end latency: capture (Node A) -> ingest here (Node C)
+ts_cap = header.get("ts_capture") or header.get("ts")
+if ts_cap is not None:
+    try:
+        E2E_SECONDS.labels(OBS_SERVICE, OBS_INSTANCE).observe(time.time() - float(ts_cap))
+    except Exception:
+        pass
 \end{lstlisting}
 \end{enumerate}
 
-Dengan penambahan metrik tersebut, peserta dapat melakukan pengamatan lintas node: misalnya membandingkan laju \texttt{frames\_out\_total} pada Capturer dengan \texttt{frames\_in\_total} pada Transformer, atau mengamati distribusi \texttt{processing\_seconds} untuk mengidentifikasi bottleneck pemrosesan. Kombinasi metrik ini juga memudahkan korelasi antara gejala yang terlihat di dashboard dengan peristiwa runtime pada sistem.
+Dengan penambahan metrik tersebut, peserta dapat melakukan pengamatan lintas node: misalnya membandingkan laju \texttt{frames\_out\_total} pada Capturer dengan \texttt{frames\_in\_total} pada Transformer, atau mengamati distribusi \texttt{stage\_seconds} untuk mengidentifikasi bottleneck pemrosesan. Kombinasi metrik ini juga memudahkan korelasi antara gejala yang terlihat di dashboard dengan peristiwa runtime pada sistem.
 
 
   \item \textbf{Penambahan Node Prometheus dan Grafana serta Konfigurasi Docker Compose}  
@@ -352,28 +408,32 @@ Dua node baru ditambahkan ke dalam arsitektur sistem, yaitu \textbf{Prometheus} 
 Berkas \texttt{docker-compose.yml} diperbarui untuk menyertakan layanan Prometheus dan Grafana, serta mendefinisikan relasi jaringan antar seluruh container. Dengan pendekatan ini, seluruh sistem (node aplikasi + observabilitas) dapat dijalankan secara terorkestrasi melalui satu perintah.
 
 
-Berikut cuplikan konfigurasi layanan \texttt{prometheus} dan \texttt{grafana} pada \texttt{docker-compose.yml}. Prometheus memuat konfigurasi \texttt{prometheus.yml} melalui \emph{volume mount}, sedangkan Grafana disiapkan untuk berjalan sebagai container visualisasi. Listing~\ref{lst:ch02-9} memuat isi berkasnya.
+Berikut cuplikan konfigurasi layanan \texttt{prometheus} dan \texttt{grafana} pada \texttt{docker-compose.yml}. Prometheus memuat konfigurasi \texttt{prometheus.yml} melalui \emph{volume mount}, sedangkan Grafana disiapkan untuk berjalan sebagai container visualisasi. Opsi \texttt{--log.level=warn} dan variabel \texttt{GF\_LOG\_LEVEL=error} hanya mengurangi pesan log kedua layanan. Listing~\ref{lst:ch02-9} memuat cuplikan berkasnya.
 
-\begin{lstlisting}[language=bash, caption={Isi berkas docker-compose.yml}, label={lst:ch02-9}]
+\begin{lstlisting}[language=bash, caption={Cuplikan berkas docker-compose.yml}, label={lst:ch02-9}]
 services:
+  # ...
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    ports:
-      - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--log.level=warn"
+    ports:
+      - "9090:9090"
     depends_on:
-      - capturer
       - broker
+      - capturer
       - transformer
-      - web
+      - web_server
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    environment:
+      - GF_LOG_LEVEL=error
     ports:
       - "3000:3000"
     depends_on:
@@ -387,8 +447,7 @@ Berkas \texttt{prometheus.yml} mendefinisikan interval scraping serta daftar tar
 
 \begin{lstlisting}[language=bash, caption={Isi berkas prometheus.yml}, label={lst:ch02-10}]
 global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
+  scrape_interval: 2s
 
 scrape_configs:
   - job_name: "capturer"
@@ -405,10 +464,19 @@ scrape_configs:
 
   - job_name: "web_server"
     static_configs:
-      - targets: ["web:9104"]
+      - targets: ["web_server:9104"]
 \end{lstlisting}
 
 Dengan konfigurasi ini, Prometheus secara periodik mengumpulkan metrik dari endpoint masing-masing node dan menyimpannya sebagai \emph{time-series}. Pengumpulan metrik dilakukan tanpa mengganggu alur data utama sistem.
+
+Setelah kedua berkas tersebut siap, masuk ke folder proyek dari root repositori, lalu bangun dan jalankan keenam container dengan perintah pada Listing~\ref{lst:ch02-11}. Opsi \texttt{-d} menjalankan container di latar belakang. Opsi \texttt{--build} perlu dipertahankan karena sesi 1 sampai 3 memakai nama image yang sama (\texttt{broker}, \texttt{capturer}, \texttt{transformer}, dan \texttt{web\_server}); tanpa opsi ini Docker dapat menjalankan image hasil build sesi lain. Jika pengguna sudah masuk grup \texttt{docker} atau memakai Docker Desktop, \texttt{sudo} dapat dihilangkan.
+
+\begin{lstlisting}[language=bash, caption={Membangun dan menjalankan seluruh container}, label={lst:ch02-11}]
+cd projects/session-02/python
+sudo docker compose up --build -d
+\end{lstlisting}
+
+Setelah itu, \texttt{sudo docker compose ps} harus menampilkan enam container, yaitu \texttt{broker}, \texttt{capturer}, \texttt{transformer}, \texttt{web\_server}, \texttt{prometheus}, dan \texttt{grafana}, yang statusnya diawali \texttt{Up}. Container sesi 1 dan 3 memakai port dan sebagian nama yang sama, sehingga perlu dihentikan dahulu dengan \texttt{sudo docker compose down} di folder sesi tersebut.
 
 
 
@@ -420,8 +488,8 @@ Konfigurasi data source dapat dilakukan melalui antarmuka Grafana:
   \item Masuk menggunakan kredensial default (umumnya \texttt{admin/admin}, kemudian diminta mengganti kata sandi).
   \item Pilih \texttt{Connections} $\rightarrow$ \texttt{Data sources} $\rightarrow$ \texttt{Add data source}.
   \item Pilih tipe \texttt{Prometheus}.
-  \item Isi URL menjadi \texttt{http://prometheus:9090}.
-  \item Klik \texttt{Save \& Test} untuk memastikan koneksi berhasil.
+  \item Pada bagian \texttt{Connection}, isikan alamat \texttt{http://prometheus:9090} ke kolom \texttt{Prometheus server URL}. Kolom lain dibiarkan seperti semula.
+  \item Klik \texttt{Save \& test} untuk memastikan koneksi berhasil. Grafana menjawab ``Successfully queried the Prometheus API.''
 \end{enumerate}
 
 Setelah data source aktif, metrik yang telah dikumpulkan Prometheus dapat divisualisasikan langsung melalui dashboard Grafana, sehingga peserta dapat melakukan observasi perilaku sistem secara \emph{bottom-up} berdasarkan data runtime.
@@ -507,7 +575,7 @@ Sedang (45--52 MB) \\
 \hline
 Web Server &
 Menyajikan hasil akhir ke pengguna melalui web &
-8.819 gambar dikirim ke pengguna &
+8.819 gambar diterima dari broker &
 Sangat rendah (\textasciitilde 0\%) &
 Tinggi (\textasciitilde 193 MB) \\
 \hline
@@ -524,7 +592,7 @@ Node \textbf{Broker} berfungsi sebagai perantara komunikasi berbasis XSUB/XPUB. 
 
 Node \textbf{Transformer} melakukan operasi pemrosesan yang lebih kompleks, yaitu dekode JPEG, transformasi citra (grayscale), dan enkode ulang. Aktivitas ini tercermin dari penggunaan CPU yang lebih tinggi dibandingkan broker, serta konsumsi memori yang moderat. Jumlah frame masuk dan keluar yang seimbang menunjukkan bahwa tidak terjadi kehilangan data selama proses transformasi.
 
-Node \textbf{Web Server} berfungsi sebagai komponen penyaji hasil akhir melalui HTTP/MJPEG. Konsumsi memori relatif lebih tinggi dibandingkan komponen lain, yang dapat dikaitkan dengan pengelolaan buffer streaming dan koneksi klien. Penggunaan CPU yang rendah pada saat \emph{scraping} metrik menunjukkan bahwa beban utama web server tidak selalu tercermin secara langsung dalam snapshot CPU tunggal, melainkan dipengaruhi oleh pola akses klien.
+Node \textbf{Web Server} berfungsi sebagai komponen penyaji hasil akhir melalui HTTP/MJPEG. Angka 8.819 pada tabel adalah jumlah frame yang diterima web server dari broker (\texttt{frames\_in\_total} dengan topic \texttt{processed}); web server tidak menghitung frame yang dikirim ke browser. Konsumsi memori relatif lebih tinggi dibandingkan komponen lain, yang dapat dikaitkan dengan pengelolaan buffer streaming dan koneksi klien. Penggunaan CPU yang rendah pada saat \emph{scraping} metrik menunjukkan bahwa beban utama web server tidak selalu tercermin secara langsung dalam snapshot CPU tunggal, melainkan dipengaruhi oleh pola akses klien.
 
 Secara keseluruhan, tabel ini menunjukkan bahwa observabilitas memungkinkan pemetaan peran fungsional setiap komponen ke karakteristik penggunaan sumber daya yang terukur.
 
@@ -568,12 +636,12 @@ Ukuran rata-rata gambar (KB) &
 98,6 &
 Tidak berubah \\
 \hline
-Waktu rata-rata gambar sampai ke pengguna (ms) &
+Waktu rata-rata gambar dari capture sampai web server (ms) &
 30,1 &
 30,2 &
 Hampir sama \\
 \hline
-Waktu terlama yang dirasakan pengguna (ms) &
+Waktu terlama gambar dari capture sampai web server (ms) &
 $\le$ 100 &
 $\le$ 100 &
 Tidak berubah \\

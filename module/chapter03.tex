@@ -211,7 +211,7 @@ Eksperimen ini menunjukkan bahwa kontrol keamanan runtime dapat dibuktikan secar
 
 Skenario eksperimen terdiri dari tiga tahap. Pertama, sistem dijalankan tanpa kontrol keamanan sehingga payload yang melewati broker dapat dibaca sebagai data mentah. Kedua, kontrol enkripsi payload ditambahkan tanpa mengubah arsitektur dasar sistem, melainkan hanya mengubah perilaku endpoint: produsen mengenkripsi sebelum publish dan konsumen mendekripsi setelah subscribe. Ketiga, dilakukan simulasi akses oleh pihak tidak berwenang (sniffer) yang hanya mampu mengamati lalu lintas pesan, untuk menunjukkan perbedaan antara data yang terlihat dan data yang terbaca.
 
-Titik observasi utama berada pada jalur komunikasi antar komponen, khususnya pada sisi broker/jaringan. Pada kondisi tanpa enkripsi, sniffer dapat menampilkan payload dalam bentuk yang bermakna (misalnya header dan bytes JPEG dapat dikenali). Pada kondisi terenkripsi, sniffer tetap dapat melihat adanya lalu lintas dan ukuran pesan, tetapi isi payload menjadi bytes acak yang tidak dapat ditafsirkan tanpa kunci. Dengan demikian, kontrol runtime yang diterapkan menghasilkan bukti perubahan perilaku sistem yang dapat diamati.
+Titik observasi utama berada pada jalur komunikasi antar komponen, khususnya pada sisi broker/jaringan. Pada kondisi tanpa enkripsi, sniffer dapat menampilkan payload dalam bentuk yang bermakna (misalnya header dan bytes JPEG dapat dikenali). Pada kondisi terenkripsi, sniffer tetap dapat melihat adanya lalu lintas dan ukuran pesan, tetapi isi payload menjadi token Fernet yang selalu diawali \texttt{gAAAAA}, sedangkan sisanya tampak acak dan tidak dapat ditafsirkan tanpa kunci. Dengan demikian, kontrol runtime yang diterapkan menghasilkan bukti perubahan perilaku sistem yang dapat diamati.
 
 Kontrol enkripsi diimplementasikan menggunakan pustaka \texttt{cryptography} (Fernet). Kunci enkripsi diperlakukan sebagai rahasia runtime dan diinjeksi melalui konfigurasi environment pada container, bukan ditanamkan di dalam kode. Hal ini mencerminkan prinsip DevSecOps: pemisahan antara kode, konfigurasi, dan rahasia.
 
@@ -219,60 +219,79 @@ Kontrol enkripsi diimplementasikan menggunakan pustaka \texttt{cryptography} (Fe
 
 Sebelum kontrol enkripsi payload diterapkan pada sistem, diperlukan kunci enkripsi yang akan berfungsi sebagai kebijakan keamanan runtime. Kunci ini tidak dihasilkan oleh aplikasi saat berjalan, melainkan dibuat terlebih dahulu sebagai bagian dari proses persiapan operasional. Dengan pendekatan ini, kebijakan keamanan dipisahkan secara tegas dari logika aplikasi dan dapat dikelola secara independen.
 
-Pada eksperimen ini, kunci enkripsi dihasilkan menggunakan pustaka \texttt{cryptography} dengan mekanisme Fernet. Proses generasi kunci dilakukan satu kali oleh operator atau administrator sistem, kemudian hasilnya didistribusikan ke komponen yang berwenang melalui konfigurasi runtime. Perintahnya ada pada Listing~\ref{lst:ch03-1}.
+Pada eksperimen ini, kunci enkripsi dihasilkan menggunakan pustaka \texttt{cryptography} dengan mekanisme Fernet. Proses generasi kunci dilakukan satu kali oleh operator atau administrator sistem, kemudian hasilnya didistribusikan ke komponen yang berwenang melalui konfigurasi runtime. Perintahnya, sesuai langkah 2 pada README proyek, ada pada Listing~\ref{lst:ch03-1}. Perintah ini dijalankan dari folder proyek sesi 3, yaitu \texttt{projects/session-03/python}, dengan Python dari virtual environment \texttt{projects/.venv} yang sudah berisi pustaka \texttt{cryptography}.
 
-\begin{lstlisting}[style=PythonStyle, caption={Generate Fernet key for payload encryption}, label={lst:ch03-1}]
-from cryptography.fernet import Fernet
-
-key = Fernet.generate_key()
-print(key.decode())
+\begin{lstlisting}[language=bash, breakatwhitespace=true, caption={Generate Fernet key into .env (README, step 2)}, label={lst:ch03-1}]
+cd projects/session-03/python
+../../.venv/bin/python -c "from cryptography.fernet import Fernet; print('PAYLOAD_KEY=' + Fernet.generate_key().decode())" > .env
 \end{lstlisting}
 
-Output dari proses ini berupa string berbasis Base64 yang merepresentasikan kunci simetris. Nilai kunci tersebut kemudian digunakan sebagai nilai variabel lingkungan \texttt{PAYLOAD\_KEY} pada layanan yang memproduksi atau mengonsumsi payload terenkripsi.
+Perintah ini tidak menampilkan kunci di layar, melainkan menulis satu baris ke berkas \texttt{.env}: \texttt{PAYLOAD\_KEY=} diikuti 44 karakter Base64 yang merepresentasikan kunci simetris. Git mengabaikan \texttt{.env}, sehingga kunci tidak pernah masuk ke repositori dan setiap salinan proyek membuat kuncinya sendiri. Nilai kunci tersebut kemudian digunakan sebagai nilai variabel lingkungan \texttt{PAYLOAD\_KEY} pada layanan yang memproduksi atau mengonsumsi payload terenkripsi.
 
-Pemisahan tahap generasi kunci dari tahap eksekusi sistem menegaskan bahwa kunci enkripsi merupakan artefak kebijakan keamanan, bukan bagian dari implementasi aplikasi. Dengan demikian, rotasi kunci, penggantian kebijakan, atau pembatasan akses dapat dilakukan tanpa perubahan kode maupun arsitektur sistem.
+Pemisahan tahap generasi kunci dari tahap eksekusi sistem menegaskan bahwa kunci enkripsi merupakan artefak kebijakan keamanan, bukan bagian dari implementasi aplikasi. Dengan demikian, rotasi kunci, penggantian kebijakan, atau pembatasan akses dapat dilakukan tanpa perubahan kode maupun arsitektur sistem. Untuk mengganti kunci, perintah yang sama dijalankan ulang sehingga \texttt{.env} tertimpa, lalu \texttt{sudo docker compose up -d} membuat ulang capturer, transformer, dan web server dengan kunci baru.
 
 
 \subsection*{Konfigurasi Kunci pada \texttt{docker-compose.yml}}
 
-Contoh berikut menunjukkan bahwa setiap layanan yang perlu memproduksi atau mengonsumsi payload diberi variabel \texttt{PAYLOAD\_KEY}. Broker tidak diberi kunci, karena broker diposisikan sebagai komponen netral yang tidak berwenang membaca isi data. Perintah lengkapnya ada pada Listing~\ref{lst:ch03-2}.
+Potongan \texttt{docker-compose.yml} pada Listing~\ref{lst:ch03-2} menunjukkan bahwa setiap layanan yang perlu memproduksi atau mengonsumsi payload diberi variabel \texttt{PAYLOAD\_KEY}. Nilainya tidak ditulis di berkas ini: Docker Compose mengisi \texttt{\$\{PAYLOAD\_KEY\}} dari berkas \texttt{.env} di folder yang sama dengan \texttt{docker-compose.yml}. Broker tidak diberi kunci, karena broker diposisikan sebagai komponen netral yang tidak berwenang membaca isi data. Bagian yang dilewati ditandai dengan \texttt{\# ...}.
 
-\begin{lstlisting}[language=bash, caption={Inject PAYLOAD\_KEY via docker-compose environment}, label={lst:ch03-2}]
+\begin{lstlisting}[language=bash, caption={docker-compose.yml (excerpt): PAYLOAD\_KEY comes from .env}, label={lst:ch03-2}]
+# PAYLOAD_KEY comes from .env in this folder. Git ignores .env, so every copy of
+# the repository creates its own (README, step 2). The broker gets no key.
 services:
-  transformer:
+
+  broker-session03:
     build:
       context: .
-      dockerfile: transformer/Dockerfile
+      dockerfile: broker/Dockerfile
+    image: broker:latest
+    container_name: broker-session03
     environment:
-      - PAYLOAD_KEY=RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
+      SERVICE: broker-session03
+      BROKER_BIND_HOST: 0.0.0.0
+      PUB_PORT: 5555
+      SUB_PORT: 5556
+      METRICS_PORT: 9102
     # ...
 
-  capturer:
+  capturer-session03:
     build:
       context: .
       dockerfile: capturer/Dockerfile
+    # ...
     environment:
-      - PAYLOAD_KEY=RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
+      # ...
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
     # ...
 
-  web:
+  transformer-session03:
     build:
       context: .
-      dockerfile: web/Dockerfile
+      dockerfile: transformer/Dockerfile
+    # ...
     environment:
-      - PAYLOAD_KEY=RmTnzrS0_DwulCzF6tj8qSOQpCmnOkRmKeezZcZA4T4=
+      # ...
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
     # ...
 
-  broker:
-    image: zmq-broker:latest
-    # intentionally no PAYLOAD_KEY here
+  web_server-session03:
+    build:
+      context: .
+      dockerfile: web_server/Dockerfile
+    # ...
+    environment:
+      # ...
+      PAYLOAD_KEY: ${PAYLOAD_KEY}
+    # ...
 \end{lstlisting}
+
+Dengan \texttt{.env} sudah tersedia, keenam container (broker, capturer, transformer, web server, Prometheus, dan Grafana) dibangun dan dijalankan dari folder yang sama dengan \texttt{sudo docker compose up --build -d}. Jika \texttt{.env} tidak ada, Compose memperingatkan bahwa variabel \texttt{PAYLOAD\_KEY} belum diset dan menggantinya dengan string kosong, lalu capturer, transformer, dan web server berhenti dengan pesan \texttt{Missing env var PAYLOAD\_KEY}.
 
 \subsection*{Dependensi Python pada Dockerfile}
 
-Berikut potongan Dockerfile yang menegaskan bahwa enkripsi adalah bagian dari runtime pipeline\index{pipeline} (bersama pyzmq, metrics, dll). Contoh ini merefleksikan kebutuhan node seperti capturer/transformer yang menggunakan OpenCV, observability, dan kontrol enkripsi. Listing~\ref{lst:ch03-3} memuat perintahnya.
+Berikut potongan \texttt{capturer/Dockerfile} yang menegaskan bahwa enkripsi adalah bagian dari runtime pipeline\index{pipeline} (bersama pyzmq, metrics, dll). Capturer adalah satu-satunya node yang memakai OpenCV (\texttt{opencv-python-headless}), yaitu untuk membaca video dan mengodekan frame menjadi JPEG, di samping observability dan kontrol enkripsi. Transformer memakai Pillow (\texttt{pillow}) untuk konversi grayscale, sedangkan web server memakai \texttt{bottle} dan \texttt{waitress}; keduanya juga memasang \texttt{cryptography}. Dockerfile broker tidak memasang \texttt{cryptography}, karena broker tidak pernah mengenkripsi atau mendekripsi. Listing~\ref{lst:ch03-3} memuat perintahnya.
 
-\begin{lstlisting}[language=bash, caption={Install deps including cryptography in Dockerfile}, label={lst:ch03-3}]
+\begin{lstlisting}[language=bash, caption={capturer/Dockerfile (excerpt): Python deps including cryptography}, label={lst:ch03-3}]
 # ---- python deps (capturer needs OpenCV + metrics + encryption)
 RUN pip install --no-cache-dir \
     pyzmq \
@@ -284,14 +303,24 @@ RUN pip install --no-cache-dir \
 
 \subsection*{Fungsi Enkripsi/Dekripsi (Shared Library)}
 
-Agar konsisten lintas layanan, praktik yang umum adalah membuat modul bersama (misalnya \texttt{shared/crypto.py}) yang membaca \texttt{PAYLOAD\_KEY} dari environment dan menyediakan fungsi \texttt{encrypt\_bytes} serta \texttt{decrypt\_bytes}. Perintahnya ada pada Listing~\ref{lst:ch03-4}.
+Agar konsisten lintas layanan, capturer, transformer, dan web server memakai modul bersama \texttt{shared/crypto.py} yang membaca \texttt{PAYLOAD\_KEY} dari environment dan menyediakan fungsi \texttt{encrypt\_bytes} serta \texttt{decrypt\_bytes}. Kunci dibaca satu kali, ketika modul diimpor saat node mulai berjalan. Jika \texttt{PAYLOAD\_KEY} kosong, \texttt{\_get\_key} melempar \texttt{RuntimeError} dengan pesan yang diawali \texttt{Missing env var PAYLOAD\_KEY}; jika nilainya bukan kunci Fernet yang sah, \texttt{Fernet} melempar \texttt{ValueError}. Dengan begitu, node langsung berhenti, bukan gagal pada setiap pesan. Isi berkasnya, tanpa docstring di bagian awal, ada pada Listing~\ref{lst:ch03-4}.
 
-\begin{lstlisting}[style=PythonStyle, caption={Shared crypto helpers using PAYLOAD\_KEY}, label={lst:ch03-4}]
+\begin{lstlisting}[style=PythonStyle, caption={shared/crypto.py (excerpt): shared crypto helpers using PAYLOAD\_KEY}, label={lst:ch03-4}]
+# ...
 import os
 from cryptography.fernet import Fernet
 
-_PAYLOAD_KEY = os.environ["PAYLOAD_KEY"].encode()
-_cipher = Fernet(_PAYLOAD_KEY)
+_KEY_ENV = "PAYLOAD_KEY"
+
+def _get_key() -> bytes:
+    k = os.getenv(_KEY_ENV, "").encode()
+    if not k:
+        raise RuntimeError(f"Missing env var {_KEY_ENV}. Put it in .env next to docker-compose.yml. Generate with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"")
+    return k
+
+# Read the key once, when the node starts, so a missing or malformed key stops
+# the node right away instead of failing on every message
+_cipher = Fernet(_get_key())
 
 def encrypt_bytes(data: bytes) -> bytes:
     return _cipher.encrypt(data)
@@ -302,30 +331,42 @@ def decrypt_bytes(token: bytes) -> bytes:
 
 \subsection*{Integrasi pada Transformer: Decrypt--Process--Encrypt}
 
-Pada node \emph{Transformer}, pesan masuk dari broker berada dalam bentuk terenkripsi. Transformer mendekripsi header dan JPEG, memprosesnya, lalu mengenkripsi kembali output sebelum dipublikasikan. Potongan berikut menegaskan perubahan perilaku runtime yang menjadi inti eksperimen. Perintah lengkapnya ada pada Listing~\ref{lst:ch03-5}.
+Pada node \emph{Transformer}, pesan masuk dari broker berada dalam bentuk terenkripsi. Transformer mendekripsi header dan JPEG, mengubah frame menjadi grayscale, lalu mengenkripsi kembali header dan JPEG keluaran sebelum dipublikasikan pada topik \texttt{processed}. Potongan \texttt{transformer/transformer.py} pada Listing~\ref{lst:ch03-5} menegaskan perubahan perilaku runtime yang menjadi inti eksperimen; bagian yang dilewati ditandai dengan \texttt{\# ...}. Pesan yang gagal didekripsi, misalnya karena dienkripsi dengan kunci lain atau diubah di tengah jalan, memicu exception. Transformer menghitungnya pada metrik \texttt{errors\_total}, membuang pesan tersebut, dan tetap berjalan.
 
-\begin{lstlisting}[style=PythonStyle, caption={Transformer decrypts input and encrypts output payload}, label={lst:ch03-5}]
-# receive encrypted parts from broker
-enc_header_b, enc_jpeg_in = recv_parts()
-
-# decrypt at runtime
-header_b = decrypt_bytes(enc_header_b)
-jpeg_in  = decrypt_bytes(enc_jpeg_in)
-
-# process (e.g., decode -> transform -> encode)
-out_header_b, jpeg_out = process_frame(header_b, jpeg_in)
-
-# encrypt again before publishing
-t_encsec = time.time()
-enc_out_header = encrypt_bytes(out_header_b)
-enc_jpeg_out   = encrypt_bytes(jpeg_out)
-
-send_parts(enc_out_header, enc_jpeg_out)
+\begin{lstlisting}[style=PythonStyle, caption={transformer/transformer.py (excerpt): decrypt input, encrypt output payload}, label={lst:ch03-5}]
+while True:
+    try:
+        # ...
+        topic, enc_header_b, enc_jpeg_in = sub.recv_multipart()
+        # ...
+        header_b = decrypt_bytes(enc_header_b)
+        jpeg_in = decrypt_bytes(enc_jpeg_in)
+        # ...
+        header = json.loads(header_b.decode("utf-8"))
+        # ...
+        img = jpeg_bytes_to_pil(jpeg_in).convert("RGB")
+        # ...
+        gray = to_grayscale(img)
+        # ...
+        jpeg_out = pil_to_jpeg_bytes(gray, quality=JPEG_QUALITY_OUT)
+        # ...
+        out_header_b = json.dumps(out_header).encode("utf-8")
+        # ...
+        enc_out_header = encrypt_bytes(out_header_b)
+        enc_jpeg_out = encrypt_bytes(jpeg_out)
+        # ...
+        pub.send_multipart([PUB_TOPIC, enc_out_header, enc_jpeg_out])
+        # ...
+    except Exception as e:
+        # Anyone who can reach the broker can publish on "raw". Count and drop
+        # a message that fails to decrypt or parse instead of stopping the node.
+        ERRORS.labels(OBS_SERVICE, OBS_INSTANCE, "transformer_main", type(e).__name__).inc()
+        continue
 \end{lstlisting}
 
 \subsection*{Kode Uji Lokal: Pastikan Enkripsi Berfungsi dan Kunci Valid}
 
-Pengujian berikut memastikan dua hal: payload terenkripsi tidak sama dengan payload asli, dan dekripsi hanya berhasil jika kunci benar. Ini adalah uji minimum yang membantu mahasiswa melihat konsep \emph{data terlihat tetapi tidak terbaca}. Listing~\ref{lst:ch03-6} memuat perintahnya.
+Pengujian berikut memastikan dua hal: payload terenkripsi tidak sama dengan payload asli, dan dekripsi hanya berhasil jika kunci benar. Ini adalah uji minimum yang membantu mahasiswa melihat konsep \emph{data terlihat tetapi tidak terbaca}. Skrip ini bukan bagian dari proyek dan membaca kunci dari variabel lingkungan \texttt{PAYLOAD\_KEY}. Karena itu, muat \texttt{.env} lebih dulu dengan \texttt{set -a; source .env; set +a} di terminal yang sama, seperti pada bagian \emph{Run without Docker} di README. Setelah itu, skrip dijalankan dengan \texttt{../../.venv/bin/python} dari folder yang sama, yaitu \texttt{projects/session-03/python}. Listing~\ref{lst:ch03-6} memuat perintahnya.
 
 \begin{lstlisting}[style=PythonStyle, caption={Quick test: encrypt/decrypt roundtrip}, label={lst:ch03-6}]
 import os
@@ -352,25 +393,70 @@ print("OK: encryption on, wrong key fails, correct key succeeds.")
 
 \subsection*{Validasi Observasional: Sniffer sebagai Representasi Ancaman}
 
-Validasi keamanan dilakukan melalui observasi pasif menggunakan sniffer sebagai representasi ancaman. Sniffer diposisikan sebagai pihak yang dapat mengamati lalu lintas pesan (misalnya dari sisi jaringan), tetapi tidak memiliki kunci \texttt{PAYLOAD\_KEY}. Pada kondisi tanpa enkripsi, sniffer akan memperoleh bytes yang bermakna (misalnya header atau potongan JPEG yang dapat dikenali). Setelah enkripsi diterapkan, sniffer tetap melihat payload, namun yang terlihat hanyalah token terenkripsi yang tidak dapat ditafsirkan.
+Validasi keamanan dilakukan melalui observasi pasif menggunakan sniffer sebagai representasi ancaman. Sniffer pada berkas \texttt{sniffer.py} diposisikan sebagai pihak luar yang dapat menjangkau broker: ia terhubung ke port subscriber broker (5556), sebagaimana program lain yang dapat menjangkau port tersebut, berlangganan ke semua topik, lalu mencetak bytes awal setiap bagian dari 10 pesan. Sniffer tidak memiliki kunci \texttt{PAYLOAD\_KEY} dan tidak pernah mencoba mendekripsi. Pada kondisi tanpa enkripsi, sniffer akan memperoleh bytes yang bermakna (misalnya header atau potongan JPEG yang dapat dikenali). Setelah enkripsi diterapkan, sniffer tetap melihat payload, namun yang terlihat hanyalah token terenkripsi yang tidak dapat ditafsirkan.
 
-Contoh berikut menunjukkan cara mencetak sebagian bytes payload untuk menegaskan perbedaan \emph{terlihat} versus \emph{terbaca} tanpa melakukan eksploitasi apa pun. Perintahnya ada pada Listing~\ref{lst:ch03-7}.
+Potongan \texttt{sniffer.py} pada Listing~\ref{lst:ch03-7} menunjukkan cara sniffer mencetak sebagian bytes setiap bagian pesan untuk menegaskan perbedaan \emph{terlihat} versus \emph{terbaca} tanpa melakukan eksploitasi apa pun. Untuk pesan tiga bagian, sniffer hanya memeriksa apakah header tampak seperti objek JSON dan apakah payload diawali \texttt{ffd8ff}, tanda tangan berkas JPEG.
 
-\begin{lstlisting}[style=PythonStyle, caption={Sniffer view: visible bytes, unreadable without key}, label={lst:ch03-7}]
-def hexdump(b: bytes, n: int = 32) -> str:
-    return b[:n].hex()
+\begin{lstlisting}[style=PythonStyle, caption={sniffer.py (excerpt): visible bytes, unreadable without key}, label={lst:ch03-7}]
+# ...
+BROKER_HOST = os.getenv("BROKER_HOST", "broker-session03")  # nama service di docker-compose
+SUB_PORT = int(os.getenv("SUB_PORT", "5556"))  # port SUB side (xpub bind)
+TOPIC = os.getenv("TOPIC", "")                 # "" = semua topic
+N = int(os.getenv("N", "10"))                  # berapa message
+# ...
+def main():
+    ctx = zmq.Context.instance()
+    s = ctx.socket(zmq.SUB)
+    # ...
+    s.setsockopt(zmq.SUBSCRIBE, TOPIC.encode("utf-8"))
+    s.connect(ENDPOINT)
+    # ...
+    for i in range(N):
+        try:
+            parts = s.recv_multipart()
+        # ...
+        print(f"--- msg {i} parts={len(parts)} ---")
 
-# captured payload (e.g., from subscribed wire data)
-captured = token  # in practice this comes from network capture
-print("Visible (first bytes):", hexdump(captured))
+        for idx, p in enumerate(parts):
+            head_hex = binascii.hexlify(p[:16]).decode()
+            print(f"  part[{idx}] len={len(p)} hex16={head_hex} utf8={preview_utf8(p)}")
 
-# attacker has no key -> cannot decrypt (demonstrated by using wrong key)
-from cryptography.fernet import InvalidToken
-try:
-    Fernet(Fernet.generate_key()).decrypt(captured)
-except InvalidToken:
-    print("Unreadable: decrypt failed without the correct key.")
+        # quick heuristics for the common 3-part pattern: [topic, header, jpeg]
+        if len(parts) >= 3:
+            header_part = parts[1]
+            payload_part = parts[2]
+            looks_json = is_json_object(header_part)
+            looks_jpeg = is_probably_jpeg(payload_part)
+
+            if looks_json:
+                print("  => header looks like JSON (PLAINTEXT)")
+            if looks_jpeg:
+                print("  => payload looks like JPEG (PLAINTEXT ffd8ff)")
+            if (not looks_json) and (not looks_jpeg):
+                print("  => header+payload do NOT look like JSON/JPEG (LIKELY ENCRYPTED)")
+        # ...
 \end{lstlisting}
+
+Dari folder \texttt{projects/session-03/python}, sniffer dijalankan dengan perintah \texttt{BROKER\_HOST=127.0.0.1 ../../.venv/bin/python sniffer.py}. Alamat \texttt{127.0.0.1} dapat dipakai karena \texttt{docker-compose.yml} membuka port 5556 broker ke mesin host. Untuk menjalankan sniffer yang sama dari dalam jaringan Compose, tanpa Python di host, gunakan \texttt{sudo bash sniffer.sh}. Keluarannya tampak seperti Listing~\ref{lst:ch03-8}, dengan baris panjang dipendekkan.
+
+\begin{lstlisting}[language=bash, caption={Output of sniffer.py with payload encryption (long lines shortened)}, label={lst:ch03-8}]
+[sniffer] endpoint=tcp://127.0.0.1:5556 subscribe=(all) messages=10
+[sniffer] Ctrl+C to stop
+
+--- msg 0 parts=3 ---
+  part[0] len=3 hex16=726177 utf8='raw'
+  part[1] len=376 hex16=6741414141414271764e6873714c3249 utf8='gAAAAABqvNhsqL2I4ZbxZhVvg9oGL6Jw...'
+  part[2] len=141028 hex16=6741414141414271764e687361587765 utf8='gAAAAABqvNhsaXwe2P0TTI58dwEsOGm9...'
+  => header+payload do NOT look like JSON/JPEG (LIKELY ENCRYPTED)
+
+--- msg 1 parts=3 ---
+  part[0] len=9 hex16=70726f636573736564 utf8='processed'
+  part[1] len=460 hex16=6741414141414271764e687330597554 utf8='gAAAAABqvNhs0YuTrDbUS9Z3sS6x9cqW...'
+  part[2] len=136184 hex16=6741414141414271764e68737a702d79 utf8='gAAAAABqvNhszp-ykZlalmYDbtqymQ65...'
+  => header+payload do NOT look like JSON/JPEG (LIKELY ENCRYPTED)
+\end{lstlisting}
+
+Bagian \texttt{part[0]}, yaitu topik (\texttt{raw} atau \texttt{processed}), tetap terbaca karena broker membutuhkannya untuk merutekan pesan. Bagian \texttt{part[1]} (header) dan \texttt{part[2]} (frame) adalah token Fernet. Token ini berupa teks Base64 dan selalu diawali \texttt{gAAAAA} (hex \texttt{674141414141}), yang mengodekan versi token dan awal timestamp. Nomor frame, timestamp di header, dan gambarnya sendiri tetap tidak terbaca tanpa kunci. Sniffer masih melihat bahwa pesan mengalir, seberapa sering, dan seberapa besar ukurannya, karena enkripsi hanya menutupi isi pesan. Karena berupa teks Base64, token juga sekitar sepertiga lebih besar daripada data di dalamnya: JPEG berukuran sekitar 100~KB melintas sebagai bagian berukuran sekitar 134~KB. Sebagai pembanding, pada pipeline sesi 2 yang tanpa enkripsi, sniffer yang sama mencetak \texttt{=> header looks like JSON (PLAINTEXT)} dan \texttt{=> payload looks like JPEG (PLAINTEXT ffd8ff)}, karena header terbaca sebagai JSON dan frame diawali \texttt{ffd8ff}.
 
 Dengan rangkaian eksperimen ini, bukti perubahan perilaku runtime menjadi jelas: aliran data tetap terjadi, broker tetap berfungsi sebagai perantara, dan observabilitas\index{observabilitas} sistem tetap berjalan, tetapi keterbacaan payload bagi pihak tidak berwenang dibatasi secara nyata. Hasil ini menegaskan bahwa kontrol keamanan runtime dapat diuji dan diverifikasi secara empiris melalui observasi, serta bahwa kunci enkripsi berperan sebagai kebijakan operasional yang menghubungkan DevSecOps dengan praktik operasi sehari-hari.
 
@@ -400,9 +486,9 @@ Melalui eksperimen dan validasi observasional, ditunjukkan bahwa penerapan enkri
 Kerjakan latihan berikut dengan studi kasus kontrol keamanan runtime.
 
 \begin{enumerate}
-  \item Jalankan sistem tanpa enkripsi, tangkap lalu lintas dengan sniffer, dan catat apa yang terbaca dari payload.
+  \item Jalankan sistem tanpa enkripsi (pipeline sesi 2, seperti pada langkah 7 README sesi 3), tangkap lalu lintas dengan \texttt{sniffer.py}, dan catat apa yang terbaca dari payload.
   \item Aktifkan enkripsi payload, ulangi penangkapan yang sama, dan bandingkan hasilnya dengan percobaan sebelumnya.
-  \item Jalankan konsumen dengan kunci yang salah, lalu catat pesan kesalahan yang muncul dan jelaskan mengapa kegagalan itu justru perlu terlihat.
+  \item Jalankan ulang web server dengan kunci yang salah (langkah 8 pada README). Node tidak mencetak pesan kesalahan apa pun, jadi amati metrik \texttt{errors\_total} dengan label \texttt{type="InvalidToken"} dan \texttt{where="web\_zmq\_receiver"} di \texttt{http://localhost:9104/metrics} serta jawaban \texttt{No frame yet} dari \texttt{http://localhost:8000/frame.jpg}, lalu jelaskan mengapa kegagalan itu justru perlu terlihat.
   \item Periksa di mana kunci enkripsi disimpan pada studi kasus ini, lalu usulkan cara pengelolaan kunci yang lebih aman untuk lingkungan produksi.
   \item Susun daftar kontrol keamanan tambahan pada lapisan lain, yaitu desain, implementasi, build, dan deployment, beserta risiko yang ditangani masing-masing.
 \end{enumerate}

@@ -149,7 +149,7 @@ terdiri atas empat node utama:
   \item \textbf{Transformer (Node-B):} Berlangganan data yang dihasilkan oleh
         Node-A dan menerapkan langkah pemrosesan sebelum mempublikasikan ulang
         hasilnya. Pada sistem contoh, pemrosesan ini berupa transformasi citra,
-        seperti konversi ke grayscale.
+        yaitu konversi ke grayscale.
   \item \textbf{Web Server (Node-C):} Berlangganan data yang telah diproses dan
         menyajikan keluaran melalui antarmuka web. Citra hasil pemrosesan
         disiarkan secara real time, sehingga perilaku runtime sistem dapat diamati
@@ -502,12 +502,12 @@ code
 
 \paragraph{Instalasi pada Ubuntu Linux}
 
-Pada Ubuntu, Visual Studio Code dapat diinstal menggunakan repository paket resmi.
-Jalankan perintah berikut di terminal (Listing~\ref{lst:ch01-12}):
+Pada Ubuntu, Visual Studio Code dapat diinstal melalui Snap Store, yang memuat
+paket resmi dari Microsoft. Repository bawaan Ubuntu tidak menyediakan paket
+\texttt{code}. Jalankan perintah berikut di terminal (Listing~\ref{lst:ch01-12}):
 
-\begin{lstlisting}[language=bash, caption={Memperbarui indeks paket (2)}, label={lst:ch01-12}]
-sudo apt update
-sudo apt install code
+\begin{lstlisting}[language=bash, caption={Memasang Visual Studio Code melalui Snap}, label={lst:ch01-12}]
+sudo snap install code --classic
 \end{lstlisting}
 
 Setelah terinstal, editor dapat dijalankan dari menu aplikasi atau langsung dari
@@ -597,12 +597,14 @@ Compose telah tersedia.
 
 \subsubsection{Instalasi Docker pada Ubuntu Linux}
 
-Pada Ubuntu, Docker dapat diinstal menggunakan repository paket Docker. Jalankan
-perintah berikut di terminal (Listing~\ref{lst:ch01-15}):
+Pada Ubuntu, Docker dapat diinstal dari repository paket bawaan Ubuntu. Paket
+\texttt{docker.io} berisi Docker Engine, \texttt{docker-compose-v2} menyediakan
+perintah \texttt{docker compose}, dan \texttt{docker-buildx} menyediakan plugin
+build berbasis BuildKit untuk membangun image. Jalankan perintah berikut di terminal (Listing~\ref{lst:ch01-15}):
 
-\begin{lstlisting}[language=bash, caption={Memperbarui indeks paket (3)}, label={lst:ch01-15}]
+\begin{lstlisting}[language=bash, caption={Memasang Docker dan Docker Compose}, label={lst:ch01-15}]
 sudo apt update
-sudo apt install docker.io docker-compose-plugin
+sudo apt install docker.io docker-compose-v2 docker-buildx
 \end{lstlisting}
 
 Setelah instalasi, layanan Docker perlu dijalankan dan diaktifkan (Listing~\ref{lst:ch01-16}):
@@ -638,8 +640,8 @@ agar perubahan izin berlaku.
 Docker Compose digunakan untuk mendefinisikan dan menjalankan sistem contoh
 multi-container sebagai satu kesatuan. Setiap node pada sistem didefinisikan
 sebagai sebuah \emph{service} di dalam berkas konfigurasi Compose, termasuk
-\emph{image} yang digunakan, environment variable, konfigurasi jaringan, serta
-ketergantungan urutan startup.
+folder tempat \emph{image}-nya dibangun, environment variable, konfigurasi
+jaringan, serta ketergantungan urutan startup.
 
 Dengan Docker Compose, seluruh sistem dapat dijalankan, dihentikan, dan
 dikonfigurasi ulang menggunakan sedikit perintah. Pendekatan ini menekankan
@@ -694,8 +696,10 @@ diskalakan, sekaligus menyoroti tantangan praktis yang muncul pada tiap tahap
 Pengembangan dimulai pada level kode, di mana setiap node sistem diimplementasikan
 sebagai program Python yang berdiri sendiri. Skrip terpisah dibuat untuk broker,
 Node~A (capturer), Node~B (transformer), dan Node~C (web server). Pada tahap ini,
-endpoint komunikasi, port, dan parameter eksekusi umumnya masih ditanam langsung
-di dalam kode atau diberikan melalui argumen command line.
+endpoint komunikasi, port, dan parameter eksekusi masih bertumpu pada nilai bawaan
+yang ditanam langsung di dalam kode. Setiap nilai dibaca dari environment
+variable, dan nilai bawaan tersebut dipakai bila variabelnya tidak diatur
+(misalnya \texttt{PUB\_PORT} bernilai 5555).
 
 Fase ini menetapkan kebenaran fungsional pada level komponen individual. Setiap
 node dapat dijalankan secara mandiri, dan perilaku runtime dasar dapat
@@ -706,7 +710,8 @@ diverifikasi secara terisolasi.
 Setelah implementasi selesai, sistem dijalankan dengan cara memulai setiap proses
 Python secara manual melalui command line. Node dijalankan dalam urutan tertentu
 agar endpoint komunikasi sudah tersedia ketika dibutuhkan. Environment variable
-atau parameter command line digunakan untuk mengatur koneksi dan perilaku eksekusi.
+yang diberikan bersama setiap perintah digunakan untuk mengatur koneksi dan
+perilaku eksekusi.
 
 Meskipun pendekatan ini memberi kontrol dan transparansi yang tinggi, kompleksitas
 operasional ikut meningkat. Diperlukan banyak terminal, urutan startup harus
@@ -742,8 +747,8 @@ sehingga skalabilitas dan kemudahan penggunaan masih terbatas.
 
 Docker Compose diperkenalkan untuk mengotomatisasi eksekusi seluruh sistem.
 Setiap node didefinisikan sebagai service dalam satu berkas konfigurasi, termasuk
-image, environment variable, port yang diekspos, serta dependensi terhadap service
-lain.
+folder tempat image-nya dibangun, environment variable, port yang diekspos, serta
+dependensi terhadap service lain.
 
 Dengan Docker Compose, sistem multi-node dapat dijalankan, dihentikan, dan
 dikonfigurasi ulang menggunakan sedikit perintah. Pendekatan ini menghilangkan
@@ -753,7 +758,7 @@ Docker Compose menjadi puncak alur pengembangan pada bab ini, menyediakan model
 eksekusi yang reprodusibel sekaligus efisien secara operasional.
 
 \section{Eksekusi Awal Sistem}
-\subsection{Menjalankan Container yang Sudah Disediakan}
+\subsection{Menjalankan Container dari Definisi yang Disediakan}
 \label{sec:initial_system_execution}
 
 Sebelum menjalankan sistem, kode sumber perlu diperoleh secara lokal. Implementasi
@@ -766,7 +771,10 @@ Kode sumber dapat diperoleh melalui antarmuka grafis maupun melalui command line
 Melalui peramban, repositori dapat diunduh sebagai arsip terkompresi dengan
 menekan tombol \texttt{Code} pada halaman repositori dan memilih opsi
 \texttt{Download ZIP} dari tab \texttt{Local}. Setelah unduhan selesai, arsip
-perlu diekstrak ke direktori kerja lokal.
+perlu diekstrak ke direktori kerja lokal. Hasil ekstraksinya berupa folder
+\texttt{advanced-software-engineering-main}; ubah namanya menjadi
+\texttt{advanced-software-engineering} agar sesuai dengan path yang digunakan
+pada bab ini.
 
 Alternatifnya, repositori dapat di-\emph{clone} menggunakan Git. Dari terminal,
 jalankan perintah berikut untuk mengambil seluruh isi repositori (Listing~\ref{lst:ch01-19}):
@@ -781,22 +789,28 @@ repositori:
 
 \texttt{advanced-software-engineering/projects/session-01/python/}
 
-Seluruh perintah pada subbagian ini harus dijalankan dari direktori tersebut,
-karena di situlah tersimpan kode sumber Python, definisi container, dan berkas
-konfigurasi yang dibutuhkan untuk menjalankan sistem.
+Seluruh perintah \texttt{docker compose} pada bab ini harus dijalankan dari
+direktori tersebut, karena di situlah tersimpan kode sumber Python, definisi
+container, dan berkas konfigurasi yang dibutuhkan untuk menjalankan sistem.
 
-Pada tahap ini, eksekusi menggunakan image container yang sudah disediakan
-(\emph{prebuilt}) alih-alih memanggil skrip Python satu per satu secara manual.
-Mode eksekusi ini mengasumsikan bahwa Docker dan Docker Compose sudah terpasang
-dan terkonfigurasi sebagaimana dijelaskan pada
+Pada tahap ini, eksekusi menggunakan definisi container yang sudah disediakan
+alih-alih memanggil skrip Python satu per satu secara manual. Image container-nya
+tidak disediakan dalam bentuk jadi (\emph{prebuilt}): berkas
+\texttt{docker-compose.yml} hanya memuat entri \texttt{build}, sehingga pada
+eksekusi pertama setiap image dibangun secara lokal dari \texttt{Dockerfile} di
+folder masing-masing node. Proses ini memerlukan akses internet untuk mengunduh
+base image Python dan paket-paket yang dibutuhkan. Mode eksekusi ini
+mengasumsikan bahwa Docker dan Docker Compose sudah terpasang dan terkonfigurasi
+sebagaimana dijelaskan pada
 Bagian~\ref{sec:installation_and_environment_preparation}.
 
 Untuk menjalankan sistem menggunakan konfigurasi container yang tersedia, masuk
-ke direktori proyek lalu jalankan perintah berikut (Listing~\ref{lst:ch01-20}):
+ke direktori proyek dari direktori tempat repositori di-\emph{clone} atau
+diekstrak, lalu jalankan perintah berikut (Listing~\ref{lst:ch01-20}):
 
-\begin{lstlisting}[language=bash, caption={Berpindah ke direktori proyek}, label={lst:ch01-20}]
+\begin{lstlisting}[language=bash, caption={Berpindah ke direktori proyek dan menjalankan sistem}, label={lst:ch01-20}]
 cd advanced-software-engineering/projects/session-01/python
-docker compose up
+sudo docker compose up --build
 \end{lstlisting}
 
 Perintah ini akan menyalakan seluruh komponen yang dibutuhkan, termasuk broker,
@@ -804,12 +818,18 @@ Node~A (capturer), Node~B (transformer), dan Node~C (web server), sesuai definis
 di berkas Compose. Setup jaringan, environment variable, dan urutan startup
 container ditangani secara otomatis.
 
+Dengan opsi \texttt{--build}, Compose membangun image terlebih dahulu sebelum
+container dinyalakan. Opsi yang sama juga membangun ulang image setelah kode
+sebuah node diubah; tanpa opsi ini, Compose tetap memakai image lama. Awalan \texttt{sudo}
+mengikuti README proyek dan tidak diperlukan pada Windows atau jika pengguna
+sudah ditambahkan ke grup \texttt{docker}.
+
 Selama eksekusi, log runtime dari seluruh container akan ditampilkan ke terminal,
 sehingga aktivitas sistem dapat diamati secara langsung. Setelah startup selesai,
 sistem mulai memproses data dan menghasilkan keluaran yang dapat diamati tanpa
 memerlukan koordinasi manual.
 
-Menjalankan sistem menggunakan container yang sudah disediakan membentuk baseline
+Menjalankan sistem menggunakan definisi container yang sudah disediakan membentuk baseline
 yang konsisten untuk mengamati perilaku runtime. Manajemen dependensi lokal dan
 orkestrasi proses diabstraksikan, sehingga fokus tetap pada eksekusi, interaksi
 antar komponen, dan keluaran sistem yang tampak, bukan pada kompleksitas setup.
@@ -827,7 +847,7 @@ Langkah verifikasi pertama adalah memeriksa apakah seluruh container yang
 dibutuhkan sedang berjalan. Dari direktori proyek, jalankan perintah berikut (Listing~\ref{lst:ch01-21}):
 
 \begin{lstlisting}[language=bash, caption={Memeriksa container yang berjalan}, label={lst:ch01-21}]
-docker compose ps
+sudo docker compose ps
 \end{lstlisting}
 
 Keluaran perintah seharusnya menampilkan seluruh service yang didefinisikan pada
@@ -844,12 +864,16 @@ Log dari seluruh container akan tampil otomatis ketika sistem dijalankan dengan
 log dapat diperiksa dengan (Listing~\ref{lst:ch01-22}):
 
 \begin{lstlisting}[language=bash, caption={Memeriksa container yang berjalan (2)}, label={lst:ch01-22}]
-docker compose logs
+sudo docker compose logs
 \end{lstlisting}
 
-Keluaran log seharusnya menunjukkan bahwa tiap node berhasil berjalan dan
-membangun koneksi ke broker. Pesan yang menandakan keberhasilan binding atau
-koneksi ke endpoint komunikasi mengonfirmasi bahwa komunikasi antar node aktif.
+Keluaran log seharusnya menunjukkan bahwa tiap node berhasil berjalan. Broker
+mencetak alamat kedua port yang di-\emph{bind}, sedangkan capturer, transformer,
+dan web server mencetak endpoint broker serta topik yang mereka gunakan. Karena
+ZeroMQ menyambung koneksi secara asinkron, pesan startup ini belum membuktikan
+bahwa data mengalir. Bukti bahwa komunikasi antar node aktif adalah baris
+\texttt{FPS$\approx$10.0 \ldots} yang dicetak web server kira-kira sekali per
+detik selama frame terus diterima.
 
 \subsubsection{Mengamati Keluaran Melalui Web}
 
@@ -928,10 +952,10 @@ prinsip desain yang sistematis, sehingga sistem dapat dijelaskan dan diprediksi.
 
 \section{Latihan}
 
-Kerjakan latihan berikut dengan sistem contoh pada \texttt{projects/session-01}.
+Kerjakan latihan berikut pada sistem contoh di \texttt{projects/session-01/python}.
 
 \begin{enumerate}
-  \item Jalankan seluruh node dengan \texttt{docker compose up}, lalu catat urutan pesan startup setiap container. Jelaskan mengapa broker perlu hidup lebih dahulu daripada node lain.
+  \item Jalankan seluruh node dengan \texttt{sudo docker compose up --build}, lalu catat urutan pesan startup setiap container. Jelaskan mengapa broker perlu hidup lebih dahulu daripada node lain.
   \item Ubah nilai \texttt{JPEG\_QUALITY\_OUT} pada transformer menjadi 10, lalu menjadi 95. Catat perbedaan ketajaman gambar pada peramban dan perkirakan pengaruhnya terhadap kebutuhan bandwidth.
   \item Jalankan dua instans web server pada dua port berbeda. Jelaskan mengapa keduanya menerima aliran data yang sama tanpa saling mengganggu.
   \item Hentikan container transformer ketika sistem sedang berjalan. Catat yang terlihat pada peramban, lalu hidupkan kembali dan catat berapa lama tampilan pulih.

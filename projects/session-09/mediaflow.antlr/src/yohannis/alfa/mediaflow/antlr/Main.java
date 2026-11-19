@@ -10,8 +10,8 @@ import org.antlr.v4.runtime.tree.Trees;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        String inputPath = args.length > 0 ? args[0] : "input/test3.mediaflow";
-        CharStream input = CharStreams.fromFileName(inputPath);
+        String path = args.length > 0 ? args[0] : "input/test.mediaflow";
+        CharStream input = CharStreams.fromFileName(path);
         MediaFlowLexer lexer = new MediaFlowLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MediaFlowParser parser = new MediaFlowParser(tokens);

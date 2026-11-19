@@ -216,8 +216,8 @@ sudo docker compose down
 ----------------------------------------------------------------------
 
 - Broker logs show ports bound
-- Capturer publishes frames
-- Transformer logs FPS
+- Capturer and transformer log their topics and endpoints at startup, then stay quiet
+- Web server logs `FPS≈10.0` about once per second
 - Web server shows live MJPEG stream
 
 ----------------------------------------------------------------------

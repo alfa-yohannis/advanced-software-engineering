@@ -186,10 +186,10 @@
 \begin{frame}{Langkah Implementasi Observabilitas}
 	\vspace{20pt}
 	\begin{enumerate}
-		\item Pasang \texttt{prometheus-client} dan siapkan endpoint \texttt{/metrics} pada setiap node aplikasi.
+		\item Pasang \texttt{prometheus-client} dan \texttt{psutil}, lalu siapkan endpoint \texttt{/metrics} pada setiap node aplikasi.
 		\item Definisikan \textbf{shared library metrik} (Counter, Gauge, Histogram) agar konsisten lintas node.
 		\item Inisialisasi server metrik pada setiap node dengan port berbeda saat startup.
-		\item Instrumentasikan kode runtime (capturer, broker, transformer, web) untuk mencatat throughput dan latensi.
+		\item Instrumentasikan kode runtime (capturer, broker, transformer, web\_server) untuk mencatat throughput dan latensi.
 		\item Tambahkan layanan \textbf{Prometheus} dan \textbf{Grafana} ke \texttt{docker-compose.yml}.
 		\item Konfigurasikan \texttt{prometheus.yml}: target scraping berbasis nama service Docker.
 		\item Hubungkan Grafana ke Prometheus sebagai data source.
@@ -201,11 +201,12 @@
 \begin{frame}[fragile]{Setup Prometheus}
 	\vspace{20pt}
 	\begin{lstlisting}[language=bash, basicstyle=\ttfamily\scriptsize]
-pip install prometheus-client
-	\end{lstlisting}
+pip install prometheus-client psutil
+\end{lstlisting}
 	
 	\vspace{6pt}
 	\begin{itemize}
+		\item Di proyek, kedua paket ini dipasang oleh \texttt{Dockerfile} setiap node; \texttt{psutil} mengisi \texttt{process\_cpu\_percent} dan \texttt{process\_rss\_bytes}.
 		\item Prometheus dijalankan sebagai container terpisah.
 		\item Setiap node aplikasi mengekspor endpoint \texttt{/metrics}.
 		\item Prometheus melakukan scraping metrik secara periodik.
@@ -218,38 +219,38 @@ pip install prometheus-client
 	\begin{columns}[t]
 		\column{0.5\textwidth}
 		\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize]
-# shared/metrics2.py
-from prometheus_client import Counter, Gauge, Histogram
-
-frames_in_total = Counter(
+from prometheus_client import Counter, Gauge, Histogram, start_http_server
+# ...
+FRAMES_IN = Counter(
     "frames_in_total",
-    "Total frames received",
-    ["service"]
+    "Frames received (events/messages)",
+    ["service", "instance", "topic"],
 )
-
-frames_out_total = Counter(
+FRAMES_OUT = Counter(
     "frames_out_total",
-    "Total frames produced",
-    ["service"]
+    "Frames sent (events/messages)",
+    ["service", "instance", "topic"],
 )
-		\end{lstlisting}
-		
-		\column{0.5\textwidth}
-		\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize, firstnumber=15]
-queue_size = Gauge(
-    "queue_size",
-    "Approximate queue size",
-    ["service", "queue"]
-)
+# ...
+\end{lstlisting}
 
-processing_seconds = Histogram(
-    "processing_seconds",
-    "Processing latency (seconds)",
-    ["service", "stage"]
+		\column{0.5\textwidth}
+		\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize, firstnumber=14]
+STAGE_SECONDS = Histogram(
+    "stage_seconds",
+    "Stage latency in seconds",
+    ["service", "instance", "stage"],
+    # ...
 )
-		\end{lstlisting}
+# ...
+MJPEG_CLIENTS = Gauge(
+    "mjpeg_clients",
+    "Active MJPEG clients",
+    ["service", "instance"],
+)
+\end{lstlisting}
 	\vspace{6pt}
-	{\footnotesize Definisi metrik dibagi per tipe namun tetap dalam satu shared library}
+	{\footnotesize Cuplikan \texttt{shared/observability.py}: definisi metrik dibagi per tipe namun tetap dalam satu shared library}
 	\end{columns}
 	
 
@@ -259,39 +260,43 @@ processing_seconds = Histogram(
 \begin{frame}[fragile]{Inisialisasi Server Metrik}
 	\vspace{20pt}
 	\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize]
-from prometheus_client import start_http_server
-from shared.metrics2 import frames_in_total
+from shared.observability import (  # noqa: E402
+    init as obs_init,
+    SERVICE as OBS_SERVICE,
+    INSTANCE as OBS_INSTANCE,
+    # ...
+)
+# ...
+METRICS_PORT = validate_port(getenv_int("METRICS_PORT", 9101), "METRICS_PORT")
+# ...
+def main() -> int:
+    # Start Prometheus metrics
+    obs_init(service="capturer", metrics_port=METRICS_PORT)
+\end{lstlisting}
 
-SERVICE = "capturer"
-
-def init_metrics_server(port: int):
-    start_http_server(port)
-
-init_metrics_server(9101)
-	\end{lstlisting}
-	
 	\vspace{6pt}
 	\begin{itemize}
 		\item Setiap node menjalankan endpoint metrik pada port berbeda.
 		\item Endpoint \texttt{/metrics} diaktifkan saat startup node.
-		\item Pola inisialisasi sama untuk Capturer, Broker, Transformer, dan Web.
+		\item Pola inisialisasi sama untuk Capturer, Broker, Transformer, dan Web Server.
 	\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{Penggunaan Metrik Runtime}
 	\vspace{20pt}
 	\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize]
-frames_in_total.labels(service=SERVICE).inc()
+FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, sub_topic_str).inc()
+# ...
+t_dec = time.time()
+img = jpeg_bytes_to_pil(jpeg_in).convert("RGB")
+STAGE_SECONDS.labels(
+    OBS_SERVICE, OBS_INSTANCE, "transformer_decode"
+).observe(time.time() - t_dec)
+\end{lstlisting}
 
-with processing_seconds.labels(
-        service=SERVICE,
-        stage="decode"
-    ).time():
-    process_frame()
-	\end{lstlisting}
-	
 	\vspace{6pt}
 	\begin{itemize}
+		\item Cuplikan \texttt{transformer/transformer.py}: nilai label diisi berurutan, yaitu \texttt{service}, \texttt{instance}, lalu \texttt{topic} atau \texttt{stage}.
 		\item Counter merepresentasikan volume dan throughput.
 		\item Histogram menangkap latensi pemrosesan.
 		\item Perubahan metrik dikorelasikan dengan perilaku runtime sistem.
@@ -304,23 +309,25 @@ with processing_seconds.labels(
 	
 	\textbf{Capturer (Node A)}
 	\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize]
-from time import time
-from shared.metrics2 import (frames_out_total, processing_seconds)
+t_enc = time.time()
+ok2, jpg = cv2.imencode(".jpg", frame, encode_params)
+STAGE_SECONDS.labels(
+    OBS_SERVICE, OBS_INSTANCE, "capturer_encode_jpeg"
+).observe(time.time() - t_enc)
+# ...
+FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, topic_str).inc()
+\end{lstlisting}
 
-t0 = time()
-# capture + publish frame
-frames_out_total.labels(service="capturer").inc()
-processing_seconds.labels(service="capturer", stage="capture_publish").observe(time() - t0)
-	\end{lstlisting}
-	
 	\textbf{Broker}
 	\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize]
-from shared.metrics2 import (frames_in_total, frames_out_total)
-
-# menerima raw / processed
-frames_in_total.labels(service="broker").inc()
-frames_out_total.labels(service="broker").inc()
-	\end{lstlisting}
+TOPIC_XSUB = "xsub_in"
+TOPIC_XPUB = "xpub_out"
+TOPIC_SUBS = "subs"
+# ...
+FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, TOPIC_XSUB).inc()
+# ...
+FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, TOPIC_XPUB).inc()
+\end{lstlisting}
 \end{frame}
 
 
@@ -329,25 +336,25 @@ frames_out_total.labels(service="broker").inc()
 	
 	\textbf{Transformer (Node B)}
 	\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize]
-from time import time
-from shared.metrics2 import (frames_in_total, frames_out_total, processing_seconds)
-# saat menerima raw
-frames_in_total.labels(service="transformer").inc()
+FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, sub_topic_str).inc()
+# ...
+STAGE_SECONDS.labels(
+    OBS_SERVICE, OBS_INSTANCE, "transformer_grayscale"
+).observe(time.time() - t_tr)
+# ...
+FRAMES_OUT.labels(OBS_SERVICE, OBS_INSTANCE, pub_topic_str).inc()
+\end{lstlisting}
 
-t0 = time()
-# transform frame
-frames_out_total.labels(service="transformer").inc()
-processing_seconds.labels(service="transformer", stage="transform").observe(time() - t0)
-	\end{lstlisting}
-	
-	\textbf{Web Server (Node C)}
+	\textbf{Web Server (Node C)} {\footnotesize\texttt{e2e\_seconds}: dari capture sampai frame tiba di Node C}
 	\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize]
-from shared.metrics2 import (frames_in_total, frames_out_total)
-
-# menerima processed dari broker
-frames_in_total.labels(service="web_server").inc()
-frames_out_total.labels(service="web_server").inc()
-	\end{lstlisting}
+MJPEG_CLIENTS.labels(OBS_SERVICE, OBS_INSTANCE).inc()
+# ...
+MJPEG_CLIENTS.labels(OBS_SERVICE, OBS_INSTANCE).dec()
+# ...
+FRAMES_IN.labels(OBS_SERVICE, OBS_INSTANCE, SUB_TOPIC_STR).inc()
+# ...
+E2E_SECONDS.labels(OBS_SERVICE, OBS_INSTANCE).observe(time.time() - float(ts_cap))
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Docker Compose: Prometheus dan Grafana}
@@ -355,35 +362,37 @@ frames_out_total.labels(service="web_server").inc()
 	\begin{columns}[t]
 		\column{0.5\textwidth}
 		\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize]
-services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    ports:
-      - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--log.level=warn"
+    ports:
+      - "9090:9090"
     depends_on:
-      - capturer
       - broker
+      - capturer
       - transformer
-      - web
-		\end{lstlisting}
-		
+      - web_server
+\end{lstlisting}
+
 		\column{0.5\textwidth}
 		\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize]
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    environment:
+      - GF_LOG_LEVEL=error
     ports:
       - "3000:3000"
     depends_on:
       - prometheus
-		\end{lstlisting}
+\end{lstlisting}
 	\vspace{6pt}
-	{\footnotesize Prometheus mengumpulkan metrik runtime; Grafana menyajikan visualisasi dari data yang sama dalam jaringan Docker Compose (docker-compose.yml)}
+	{\footnotesize Prometheus mengumpulkan metrik runtime; Grafana menyajikan visualisasi dari data yang sama dalam jaringan Docker Compose (cuplikan docker-compose.yml)}
 	\end{columns}
 	
 
@@ -395,8 +404,7 @@ services:
 		\column{0.5\textwidth}
 		\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize]
 global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
+  scrape_interval: 2s
 
 scrape_configs:
   - job_name: "capturer"
@@ -406,7 +414,7 @@ scrape_configs:
   - job_name: "broker"
     static_configs:
       - targets: ["broker:9102"]
-		\end{lstlisting}
+\end{lstlisting}
 		
 		\column{0.5\textwidth}
 		\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize]
@@ -416,8 +424,8 @@ scrape_configs:
 
   - job_name: "web_server"
     static_configs:
-      - targets: ["web:9104"]
-		\end{lstlisting}
+      - targets: ["web_server:9104"]
+\end{lstlisting}
 	\vspace{6pt}
 	{\footnotesize Target scraping menggunakan nama service Docker Compose, bukan \texttt{localhost}}
 	\end{columns}
@@ -429,15 +437,15 @@ scrape_configs:
 \begin{frame}[fragile]{Grafana: Koneksi ke Prometheus}
 	\vspace{20pt}
 	\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize]
-Data Source Type : Prometheus
-URL              : http://prometheus:9090
-Access           : Server (default)
-	\end{lstlisting}
-	
+Data Source Type      : Prometheus
+Prometheus server URL : http://prometheus:9090
+\end{lstlisting}
+
 	\vspace{6pt}
 	\begin{itemize}
 		\item Grafana berjalan dalam jaringan Docker Compose yang sama.
 		\item Alamat Prometheus diakses via nama service.
+		\item Kolom lain dibiarkan seperti semula; \textbf{Save \& test} menjawab ``Successfully queried the Prometheus API.''
 		\item Setelah koneksi aktif, metrik dapat divisualisasikan melalui dashboard.
 	\end{itemize}
 	

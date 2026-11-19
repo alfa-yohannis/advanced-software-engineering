@@ -1,5 +1,5 @@
-# Tanpa name, Compose memakai nama folder "compose" sebagai nama proyek,
-# padahal session 5, 6, dan 7 sama-sama punya folder bernama compose.
+# Without a name, Compose calls the project "compose" after this folder, and
+# sessions 5 and 7 have a folder with the same name.
 name: session-06
 
 services:
@@ -8,9 +8,9 @@ services:
     ports:
       - "6379:6379"
 
+  # The official minio/minio image is no longer on Docker Hub. Silo is a community
+  # fork of the MinIO server that keeps its S3 API, MINIO_* settings and start command.
   minio:
-    # Image resmi minio/minio sudah tidak ada di Docker Hub. Silo adalah fork 
-    # komunitas server MinIO yang mempertahankan S3 API, variabel MINIO_*, dan perintah jalannya.
     image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     command: server /data --console-address ":9001"
     environment:

@@ -86,11 +86,11 @@ resource "docker_container" "redis" {
 }
 
 # MinIO
+# The official minio/minio image is no longer on Docker Hub. Silo is a community
+# fork of the MinIO server that keeps its S3 API, MINIO_* settings and start command.
 resource "docker_container" "minio" {
   # ✅ unique container name
   name    = "${local.prefix}-minio"
-  # Image resmi minio/minio sudah tidak ada di Docker Hub. Silo adalah fork 
-  # komunitas server MinIO yang mempertahankan S3 API, variabel MINIO_*, dan perintah jalannya.
   image   = "pgsty/silo:RELEASE.2026-09-16T00-00-00Z"
   restart = "unless-stopped"
 
@@ -257,4 +257,14 @@ resource "docker_container" "worker" {
     docker_container.minio,
     docker_container.api,
   ]
+
+  # With mount_models, the host folder replaces /models in the container. If the
+  # folder is missing, Docker creates it empty, and the empty folder hides the
+  # voice that the image contains. Every job would then fail.
+  lifecycle {
+    precondition {
+      condition     = !var.mount_models || fileexists("${local.models_dir}/${basename(var.piper_model_path)}")
+      error_message = "mount_models is true, but ${local.models_dir} has no ${basename(var.piper_model_path)}. Download the voice into app/models first (see the README)."
+    }
+  }
 }

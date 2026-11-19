@@ -112,9 +112,15 @@ def read_attendance_data(file_path: str) -> str:
         rename_map = {v: k for k, v in col_mapping.items()}
         df = df.rename(columns=rename_map)
 
-        # Convert date column to consistent YYYY-MM-DD string format
-        # dayfirst=True handles DD/MM/YYYY input; format="mixed" allows various formats
-        df["tanggal"] = pd.to_datetime(df["tanggal"], dayfirst=True, format="mixed").dt.strftime("%Y-%m-%d")
+        # Convert date column to consistent YYYY-MM-DD string format.
+        # ISO dates (YYYY-MM-DD) are parsed as such first, because dayfirst=True
+        # would read 2026-02-04 as 2 April. The other values are parsed with
+        # dayfirst=True, which handles DD/MM/YYYY; format="mixed" allows various formats.
+        tanggal = pd.to_datetime(df["tanggal"].astype(str).str.strip().str[:10], format="%Y-%m-%d", errors="coerce")
+        other = tanggal.isna()
+        if other.any():
+            tanggal[other] = pd.to_datetime(df.loc[other, "tanggal"], dayfirst=True, format="mixed")
+        df["tanggal"] = tanggal.dt.strftime("%Y-%m-%d")
 
         # Normalize kelompok_kelas: treat "-" and empty/NaN as None (no specific class group)
         if "kelompok_kelas" in df.columns:

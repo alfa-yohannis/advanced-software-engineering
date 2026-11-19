@@ -12,8 +12,8 @@ resources:
 {% if include_pdb %}  - pdb-api.yaml
   - pdb-web.yaml
 {% endif %}
-patches:
-  - path: patch-images.yaml
-  - path: patch-hpa-worker.yaml
-{% if include_replicas_patch %}  - path: patch-replicas.yaml
+patchesStrategicMerge:
+  - patch-images.yaml
+  - patch-hpa-worker.yaml
+{% if include_replicas_patch %}  - patch-replicas.yaml
 {% endif %}

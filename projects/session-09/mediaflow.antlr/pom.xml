@@ -54,9 +54,10 @@
 					<mainClass>yohannis.alfa.mediaflow.antlr.Main</mainClass>
 					<!-- exec:java runs in Maven's own JVM, so it keeps the directory
 					     Maven was started in. Pass an absolute path so the command
-					     works from the project folder and from session-09. -->
+					     works from the project folder and from session-09. Override
+					     it with -Dexec.args=<file>. -->
 					<arguments>
-						<argument>${project.basedir}/input/test3.mediaflow</argument>
+						<argument>${project.basedir}/input/test.mediaflow</argument>
 					</arguments>
 				</configuration>
 			</plugin>

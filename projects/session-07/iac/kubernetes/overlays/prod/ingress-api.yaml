@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: tts.local
+    - host: prod.tts.local
       http:
         paths:
           - path: /api(/|$)(.*)

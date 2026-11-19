@@ -1,62 +1,114 @@
-# The MediaFlow metamodel
+# The MediaFlow metamodel and its first models
 
 Code for session 8 (Model-Driven Software Engineering) of IT30213 Advanced Software Engineering & DevOps. Sessions 1 to 7 built a text-to-speech system by writing its code and its infrastructure by hand. From here on the course works one level up: the domain is described once as a metamodel, and everything else is derived from it.
 
-This session holds that metamodel. MediaFlow describes a media processing pipeline as a directed graph: resources are files going in and out, transformers scale or transcode what passes through them, ports are the connection points on each node, and edges carry media from one port to another. Sessions 9 to 13 reuse this metamodel without changing it, which is the point: a textual DSL, a visual editor, two model-to-model transformations, a model-to-text generator and a validator all sit on the same twelve classes.
+This session holds that metamodel, the Java code that EMF generated from it, and two models that conform to it. MediaFlow describes a media processing pipeline as a graph: resources such as video files, transformers such as a scaler or a transcoder, ports on each node, and edges from port to port. Sessions 9 to 13 build on this metamodel without changing it: a textual and a visual syntax, transformations into UML and into text, and validation rules.
 
 ## How the pieces fit together
 
 ```
-metamodels/mediaflow.emf ──Emfatic──> metamodels/mediaflow.ecore ──┬──> metamodels/mediaflow.genmodel ──EMF codegen──> src/mediaflow/
-                                                                   │
-                                                                   └──EcoreTools──> representations.aird (class diagram)
-
-models/flow1.model  }  instances that conform to the .ecore and are
-models/flow2.model  }  loaded through the generated Java classes
+metamodels/mediaflow.emf ----Emfatic----> metamodels/mediaflow.ecore <----Ecore Tools---- representations.aird
+     (the metamodel as text)                 (the metamodel)                 ("mediaflow class diagram")
+                                                    |
+                                     metamodels/mediaflow.genmodel
+                                                    | EMF code generator
+                                                    v
+                                         src/mediaflow/**/*.java
+                                                    |
+models/flow1.model, models/flow2.model --loaded by--+--> tools/CheckModels.java (check-models.sh)
 ```
 
-| File | What it holds |
-|---|---|
-| `metamodels/mediaflow.emf` | The metamodel in Emfatic, the textual syntax for Ecore. This is the file to edit; it reviews well in git, unlike the XML. |
-| `metamodels/mediaflow.ecore` | The same metamodel as Ecore XML, generated from the Emfatic file. Every later session resolves the namespace `mediaflow` against this file. |
-| `metamodels/mediaflow.genmodel` | The code generation settings: output into `/mediaflow/src`, package prefix `Mediaflow`, compliance level 21. |
-| `src/mediaflow/` | The Java API that EMF generates: interfaces, `impl` classes, the factory, the package and the `util` switch and adapter factory. |
-| `models/flow1.model` | A linear pipeline: one input resource, one scaler, one output resource. |
-| `models/flow2.model` | A branching pipeline: one scaler feeding an H.264 and a VP9 transcoder, each with its own output resource. |
-| `representations.aird` | The EcoreTools class diagram of the metamodel, the source of the figure in chapter 8. |
-| `mediaflow_class_diagram.svg` | That diagram exported for the book. |
-| `plugin.xml` | Registers the generated `MediaflowPackage` under the namespace URI `mediaflow`, so other plug-ins can use the metamodel without a file path. |
+The metamodel has twelve classifiers: the three enumerations `MediaType`, `Backend` and `Direction`, and these nine classes:
 
-The twelve classifiers are three enumerations (`MediaType`, `Backend`, `Direction`) and nine classes. `NamedElement` is the abstract parent that carries `name`. `Graph` contains `nodes` and `edges`. `Node` is abstract and splits into `Resource` and the abstract `Transformer`, which splits again into `Scaler` and `Transcoder`. `Port` has a `direction` and an `owner`; `Edge` references a source and a target `Port`. Separating the nodes from the flow between them is what makes the later validation and transformation rules short.
+| Class | Kind | Features |
+|---|---|---|
+| `NamedElement` | abstract | `name` |
+| `Graph` | | contains `nodes` and `edges` |
+| `Node` | abstract, a `NamedElement` | contains `ports` |
+| `Resource` | a `Node` | `mediaType` (enum `MediaType`), `uri`, `external` |
+| `Transformer` | abstract, a `Node` | `backend` (enum `Backend`: FFMPEG, GSTREAMER, CUSTOM), `command`, `replicas` |
+| `Scaler` | a `Transformer` | `width`, `height` |
+| `Transcoder` | a `Transformer` | `videoCodec`, `audioCodec`, `container`, `bitrate` |
+| `Port` | a `NamedElement` | `direction` (enum `Direction`: IN, OUT), reference `owner` to a `Node` |
+| `Edge` | a `NamedElement` | references `source` and `target`, each to a `Port` |
+
+Separating the nodes from the flow between them is what keeps the validation and transformation rules of the later sessions short.
+
+The two models:
+
+| Model | Nodes | Ports | Edges | Pipeline |
+|---|---|---|---|---|
+| `flow1.model` | 3: 2 `Resource`, 1 `Scaler` | 4 | 2 | A straight line: `input_video`, `scaler_720`, `output_video`. |
+| `flow2.model` | 6: 3 `Resource`, 1 `Scaler`, 2 `Transcoder` | 10 | 5 | A branch: `input_master`, `scaler_1080`, then `transcoder_h264` to `output_mp4` and `transcoder_vp9` to `output_webm`. |
 
 ```
-mediaflow/              the Eclipse plug-in project (import this one)
-├── metamodels/         Emfatic source, Ecore, genmodel
-├── models/             the two instance models
-├── src/mediaflow/      generated Java
-├── META-INF/           the OSGi manifest
-└── representations.aird  the Sirius/EcoreTools diagram
+mediaflow/                          an Eclipse plug-in project
+  metamodels/mediaflow.ecore        the metamodel
+  metamodels/mediaflow.emf          the same metamodel in Emfatic, a textual notation for Ecore
+  metamodels/mediaflow.genmodel     settings of the EMF code generator: code goes to /mediaflow/src, prefix Mediaflow, Java 21
+  src/mediaflow/                    generated interfaces, one per class, plus MediaflowPackage and MediaflowFactory
+  src/mediaflow/impl/               generated implementations
+  src/mediaflow/util/               generated MediaflowSwitch and MediaflowAdapterFactory
+  models/flow1.model, flow2.model   two models, stored as XMI
+  representations.aird              a Sirius session that holds the class diagram of the metamodel
+  mediaflow_class_diagram.svg       that class diagram as an image, the figure in chapter 8
+  plugin.xml                        registers the generated package under its namespace URI, mediaflow
+  tools/CheckModels.java            loads models with the generated code and prints them
+  check-models.sh                   compiles the generated code and runs CheckModels outside Eclipse
+  META-INF/, build.properties, .project, .classpath   plug-in settings for Eclipse (PDE)
 ```
-
-A `mediaflow.backup` folder may sit next to it on your machine. It is ignored by git and is not part of the session.
 
 ## Before you start
 
-- Eclipse with the modeling tools. This session was last checked with Eclipse Platform 4.39 (2026-03). The project declares `JavaSE-21` as its execution environment, so register a JDK 21 in **Preferences > Java > Installed JREs** if Eclipse reports a missing one.
-- Three features from the Eclipse Modeling package: **EMF** (SDK), **Emfatic**, and **EcoreTools**. Without Emfatic the `.emf` file opens as plain text; without EcoreTools the `representations.aird` diagram will not open.
-- For the command-line check in step 5, a JDK and the path to your Eclipse `plugins` folder. Nothing else: there is no Maven or Gradle build here, because the project is an Eclipse plug-in and resolves its dependencies through `META-INF/MANIFEST.MF`.
+- A JDK, version 21 or newer. `javac -version` should print a version number. This guide was tested with OpenJDK 27.0.1.
+- An Eclipse installation with EMF. The script in step 3 does not start Eclipse. It only takes the EMF jars from the `plugins` folder of the installation. For step 5 you also need Ecore Tools, Sirius and Emfatic. The Eclipse Modeling Tools package contains EMF, Ecore Tools and Sirius. Add Emfatic with Help > Install New Software and the update site `https://download.eclipse.org/emfatic/update`. Steps 2 to 4 were tested with the plugins of Eclipse 4.39 (2026-03): EMF 2.42 and its code generator 2.45.
 
-Sessions 9 to 13 each carry their own copy of this metamodel, so this folder is the only place to change it when you are following chapter 8.
+## Step 1. Go to the project folder
 
-## Step 1. Import the project
+```bash
+cd projects/session-08/mediaflow
+```
 
-In Eclipse: **File > Import > Existing Projects into Workspace**, select `projects/session-08`, and import the `mediaflow` project. Import it as an existing project rather than copying it into the workspace, so your edits land in the repository.
+Run every command in this guide from this folder.
 
-The project has three natures: Java, PDE plug-in, and Sirius modeling. Eclipse needs all three, and they come from the `.project` file in the repository.
+## Step 2. Tell the script where Eclipse is
 
-## Step 2. Read the metamodel in Emfatic
+Set `ECLIPSE_HOME` to the Eclipse folder that contains `plugins`, then check that EMF is there:
 
-Open `metamodels/mediaflow.emf`. The whole domain is 68 lines:
+```bash
+export ECLIPSE_HOME=$HOME/eclipse/modeling-2026-03/eclipse
+ls "$ECLIPSE_HOME"/plugins/org.eclipse.emf.ecore_*.jar
+```
+
+Use the path of your own installation. On macOS it ends in `Eclipse.app/Contents/Eclipse`. `ls` should print one or more paths that end in `.jar`. `export` lasts until you close the terminal, so repeat it in every new terminal. Sessions 11 to 13 use the same variable for their scripts, so you can set it once in your shell profile.
+
+## Step 3. Load the models with the generated code
+
+```bash
+./check-models.sh
+```
+
+```
+models/flow1.model: graph flow1, 3 nodes {Resource=2, Scaler=1}, 4 ports, 2 edges
+  edge_input_video_to_scaler_720: input_video.input_video_out (OUT) -> scaler_720.scaler_720_video_in (IN)
+  edge_scaler_720_to_output_video: scaler_720.scaler_720_video_out (OUT) -> output_video.output_video_in (IN)
+  EMF validation: OK
+models/flow2.model: graph flow2, 6 nodes {Resource=3, Scaler=1, Transcoder=2}, 10 ports, 5 edges
+  edge_input_to_scaler: input_master.input_master_out (OUT) -> scaler_1080.scaler_1080_in (IN)
+  edge_scaler_to_h264: scaler_1080.scaler_1080_out_h264 (OUT) -> transcoder_h264.transcoder_h264_in (IN)
+  edge_scaler_to_vp9: scaler_1080.scaler_1080_out_vp9 (OUT) -> transcoder_vp9.transcoder_vp9_in (IN)
+  edge_h264_to_output: transcoder_h264.transcoder_h264_out (OUT) -> output_mp4.output_mp4_in (IN)
+  edge_vp9_to_output: transcoder_vp9.transcoder_vp9_out (OUT) -> output_webm.output_webm_in (IN)
+  EMF validation: OK
+```
+
+The script compiles the 27 generated Java files in `src/` together with `tools/CheckModels.java` into `target/classes`, which Git ignores, and runs `CheckModels`. That takes a second or two. A clean compile also shows that the metamodel, the genmodel and the generated code still agree, which is worth knowing after a regeneration. The generated code needs only three EMF jars: `org.eclipse.emf.common`, `org.eclipse.emf.ecore` and `org.eclipse.emf.ecore.xmi`.
+
+`CheckModels` uses the generated code the way any Java program would: `MediaflowPackage.eINSTANCE` registers the metamodel under its namespace URI, `mediaflow`, and the loaded model consists of objects of the generated classes, such as `Graph`, with methods such as `getNodes()` and `getEdges()`.
+
+## Step 4. Compare the models with the metamodel
+
+Open `metamodels/mediaflow.emf` in any editor. The whole metamodel is 68 lines of Emfatic, for example:
 
 ```
 class Graph extends NamedElement {
@@ -75,79 +127,64 @@ class Resource extends Node {
 }
 ```
 
-`val` is containment and `ref` is a plain reference. `Graph` owns its nodes and edges, a `Node` owns its ports, but `Port.owner` and `Edge.source`/`Edge.target` only point at elements owned elsewhere. That distinction decides what gets copied when a model is transformed, and it is why the edges in the XMI carry identifiers instead of nested elements.
+`val` is containment and `ref` is a plain reference. A `Graph` owns its nodes and edges, and a `Node` owns its ports, but `Port.owner`, `Edge.source` and `Edge.target` only point at elements owned elsewhere. That decides what gets copied when a model is transformed, and it is why the edges in the XMI files point at ports through identifiers instead of containing them.
 
-## Step 3. Regenerate the Ecore and the Java code
+Every line of the output of step 3 comes from the model, typed by the metamodel:
 
-Both generated artefacts are already in the repository, so this step is only needed after you change the Emfatic file.
+- The node counts per class are the numbers in the table of models above. A model can only contain classes that the metamodel defines, and only concrete ones: `Resource`, `Scaler` and `Transcoder`, never `Node` or `Transformer`.
+- An edge joins two ports, not two nodes, because `Edge.source` and `Edge.target` are references to `Port`. The node in front of each port is the node that contains it.
+- `(OUT)` and `(IN)` are values of the enum `Direction`. A port without a direction in the XMI file has the default, `IN`, which is the first literal of the enum.
+- `EMF validation: OK` means the model satisfies what the metamodel states: the types, the multiplicities, and references that point at existing objects. EMF does not know domain rules such as "an edge goes from an OUT port to an IN port". Session 13 adds such rules.
 
-Right-click `metamodels/mediaflow.emf` and choose **Generate Ecore Model**. Emfatic overwrites `mediaflow.ecore`.
+To see the generated code, open `src/mediaflow/Scaler.java`: it has `getWidth()`, `setWidth(int)`, `getHeight()` and `setHeight(int)` for the two attributes of `Scaler`, and inherits the rest from `Transformer`. On `scaler_720` in `flow1.model` the command is `scale=1080:720`, with `width` 1080 and `height` 720 to match.
 
-Then open `metamodels/mediaflow.genmodel`, right-click the root **Mediaflow** node, and choose **Generate Model Code**. EMF writes into `src/mediaflow/` as the genmodel's `modelDirectory` says. The genmodel keeps `mediaflow.ecore` as its `foreignModel`, so reload it from the Ecore file first if you added or removed a class:
+## Step 5 (optional). Work with the metamodel in Eclipse
 
-right-click the root node, **Reload...**, then pick **Ecore model** and the same `.ecore` file.
+1. In Eclipse, choose File > Import > General > Existing Projects into Workspace, select `projects/session-08/mediaflow`, and leave "Copy projects into workspace" unticked, so your edits land in the repository. The project has three natures, Java, PDE plug-in and Sirius modeling, and they come from its `.project` file.
+2. Double-click `metamodels/mediaflow.ecore` to see the metamodel as a tree. Double-click `representations.aird` and open the diagram `mediaflow class diagram` to see it as a class diagram, the one in chapter 8. This diagram comes from the viewpoints of Ecore Tools, not from a Sirius definition of your own. A diagram editor for MediaFlow models themselves is session 10.
+3. Open `metamodels/mediaflow.emf`, the Emfatic version. After a change there, right-click the file and choose Generate Ecore Model to write `mediaflow.ecore` again.
+4. Open `metamodels/mediaflow.genmodel`, right-click the root and choose Generate Model Code to write `src/` again. If you added or removed a class, first right-click the root, choose Reload..., then Ecore model and the same `mediaflow.ecore`. With the files as they are, nothing changes: the code in `src/` is exactly what the EMF code generator 2.45 writes from this genmodel.
+5. Right-click `models/flow1.model` and choose Open With > Sample Reflective Ecore Model Editor. The tree shows a `Graph` named `flow1` with its three nodes and two edges, and the Properties view shows the attributes of the selected element. On an `Edge`, `source` and `target` offer only ports, because the metamodel types them as `Port`. To add an element, right-click the `Graph`, choose New Child and pick the class. Validate on the context menu runs the same structural checks of EMF as step 3. If Eclipse reports `Package with uri 'mediaflow' not found` instead, register the metamodel first (with Epsilon installed: right-click `mediaflow.ecore` > Register EPackages), or start a second Eclipse with the plug-in (Run As > Eclipse Application) and open the model there.
+6. This project contains the model code only. To get an editor made for MediaFlow, open the genmodel and run Generate Edit Code and Generate Editor Code. EMF creates the projects `mediaflow.edit` and `mediaflow.editor` next to this one, which is how sessions 9 and 11 are set up.
 
-## Step 4. Open the models
-
-This project ships the model code only, not the `.edit` and `.editor` plug-ins, so there is no MediaFlow-specific editor yet. Right-click `models/flow1.model` and choose **Open With > Sample Reflective Ecore Model Editor**, which builds its tree from `mediaflow.ecore` directly. To get the generated editor instead, open the genmodel and run **Generate Edit Code** and **Generate Editor Code**; EMF creates the `mediaflow.edit` and `mediaflow.editor` projects beside this one, which is how sessions 9 and 11 are set up.
-
-Either way the tree shows a `Graph` root named `flow1`:
-
-```
-Graph flow1
-├── Resource input_video      port input_video_out (OUT)
-├── Resource output_video     port output_video_in (IN)
-├── Scaler scaler_720         ports scaler_720_video_in (IN), scaler_720_video_out (OUT)
-├── Edge edge_input_video_to_scaler_720
-└── Edge edge_scaler_720_to_output_video
-```
-
-Three nodes, four ports, two edges. `flow2.model` has six nodes, ten ports and five edges, with the scaler fanning out to two transcoders.
-
-Select an element and use the **Properties** view to see its attributes. On `scaler_720` the command is `scale=1080:720`, with `width` 1080 and `height` 720 to match. On an `Edge`, `source` and `target` offer only ports, because the metamodel types them as `Port`.
-
-To add an element: right-click the `Graph` root, **New Child**, and pick the class. Edges are created the same way, then wired by picking a source and target port in the Properties view. **Validate** on the context menu runs EMF's own structural checks; the domain rules that catch a reversed edge or a missing URI arrive in session 13.
-
-## Step 5. Check the generated code outside Eclipse
-
-The generated Java compiles against three EMF bundles and nothing else, which is worth confirming after a regeneration:
-
-```bash
-cd projects/session-08/mediaflow
-PLUGINS=/data1/programs/eclipse/plugins        # adjust to your install
-javac -d bin \
-  -cp "$(ls $PLUGINS/org.eclipse.emf.{common,ecore,ecore.xmi}_*.jar | tr '\n' ':')" \
-  $(find src -name '*.java')
-```
-
-A silent run means the metamodel, the genmodel and the generated code still agree. It writes 29 class files into `bin/`, which `.gitignore` already keeps out of the repository. Sessions 12 and 13 use the same `PLUGINS` variable for their runners, so setting it once in your shell profile saves repeating it.
-
-## Step 6. Open the class diagram
-
-Double-click `representations.aird`. Under **mediaflow class diagram** is the EcoreTools diagram of the metamodel itself: the inheritance from `NamedElement`, the containment from `Graph` into `nodes` and `edges`, and the references on `Port.owner`, `Edge.source` and `Edge.target`. It is the figure printed in chapter 8, exported to `mediaflow_class_diagram.svg`.
-
-This diagram comes from the EcoreTools viewpoints, not from a hand-written Sirius definition. Building a diagram editor for the MediaFlow models themselves is session 10.
+The project is a plug-in that later sessions copy. Sessions 8 to 13 each have a project named `mediaflow`, and a workspace holds only one project of a name. Use a separate workspace for each session.
 
 ## Changing the settings
 
+`check-models.sh` takes model files as arguments. Without arguments, it checks the two models in `models/`. To check a model of your own, for example for the exercises in chapter 8:
+
+```bash
+cp models/flow1.model models/my-flow.model
+# edit models/my-flow.model
+./check-models.sh models/my-flow.model
+```
+
+The script exits with status 1 when a model cannot be loaded or EMF reports an error.
+
 | What to change | Where |
 |---|---|
-| A class, attribute, enumeration or relation | `metamodels/mediaflow.emf`, then regenerate as in step 3 |
-| Where the Java lands, or the package prefix | `metamodels/mediaflow.genmodel` |
-| The namespace URI | the `@namespace` annotation at the top of the `.emf` file, then the `uri` in `plugin.xml`, then every later session that resolves `mediaflow` |
-| The example pipelines | `models/flow1.model` and `models/flow2.model`, through the tree editor |
-| Which folders ship in the built plug-in | `build.properties` |
+| A class, an attribute, an enumeration or a reference | `metamodels/mediaflow.emf`, then generate the Ecore model and the code again (step 5, points 3 and 4) |
+| Where the Java code goes, or the prefix of the generated classes | `metamodels/mediaflow.genmodel` |
+| The namespace URI | the `@namespace` annotation at the top of the `.emf` file, then the `uri` in `plugin.xml`, then every later session that refers to `mediaflow` |
+| The example pipelines | `models/flow1.model` and `models/flow2.model`, in a text editor or the tree editor of step 5 |
+| Which folders go into the built plug-in | `build.properties` |
 
-Changing the metamodel breaks the sessions that depend on it. The grammars in session 9, the Sirius mappings in session 10, the ATL and ETL rules in session 11, the EGL templates in session 12 and the EVL constraints in session 13 all name these classes and attributes directly.
+After a change to the metamodel, generate the code again before you run the script. The script compiles whatever is in `src/`. The model files only store the namespace URI `mediaflow`, so a model that uses a removed class or attribute no longer loads.
+
+A change to the metamodel also breaks the sessions that depend on it. The grammars of session 9, the Sirius mappings of session 10, the ATL and ETL rules of session 11, the EGL templates of session 12 and the EVL constraints of session 13 all name these classes and attributes. Sessions 9 to 13 each carry their own copy of this project, so a change here does not reach them by itself.
 
 ## Troubleshooting
 
 | Problem | What to do |
 |---|---|
-| `metamodels/mediaflow.emf` opens without syntax colouring, and **Generate Ecore Model** is missing | The Emfatic feature is not installed. Add it from the Eclipse Modeling tools, then reopen the file. |
-| `representations.aird` opens empty, or Eclipse asks for a viewpoint | EcoreTools is not installed. The diagram uses the viewpoints in `org.eclipse.emf.ecoretools.design`. |
-| The project shows a red marker on `META-INF/MANIFEST.MF` about the execution environment | No JDK 21 is registered. Add one under **Preferences > Java > Installed JREs**, or lower `Bundle-RequiredExecutionEnvironment` to the JDK you have. |
-| `models/flow1.model` opens as raw XML | Eclipse is using the plain XML editor. Right-click, **Open With > Sample Reflective Ecore Model Editor**, or generate the editor plug-ins as in step 4. |
-| A model refuses to load with "package not registered" | The namespace URI is the bare name `mediaflow`, not a URL. Either run inside Eclipse with this plug-in in the workspace, or load the `.ecore` first and register its `EPackage`, which is what the runners in sessions 11 to 13 do. |
-| **Generate Model Code** writes nothing | The genmodel's `modelDirectory` is `/mediaflow/src`, an absolute workspace path. It only resolves if the project is named `mediaflow` in the workspace. |
-| `javac` in step 5 reports `cannot find symbol` on EMF classes | The `PLUGINS` path is wrong, or your Eclipse ships the EMF bundles under different version suffixes. Check with `ls $PLUGINS/org.eclipse.emf.ecore_*.jar`. |
+| `ECLIPSE_HOME is not set` | Do step 2 in this terminal. |
+| `.../plugins does not exist` | `ECLIPSE_HOME` points to the wrong folder. It must be the folder that contains `plugins`. |
+| `... cannot be loaded: org.eclipse.emf.ecore.xmi.FeatureNotFoundException: Feature 'widht' not found. (file:..., 9, 153)` | The model uses an attribute that the metamodel does not define, here a misspelled `width`. The two numbers are the line and the column. |
+| `... cannot be loaded: org.eclipse.emf.ecore.xmi.UnresolvedReferenceException: Unresolved reference '_doesNotExist'.` | An edge or a port points at an `xmi:id` that no element of the file has. |
+| `... cannot be loaded: org.eclipse.emf.ecore.xmi.PackageNotFoundException: Package with uri 'mediaflw' not found.` | The `xmlns:mediaflow` of the file is not the namespace URI of the metamodel. It must be `mediaflow`. |
+| Eclipse says `Package with uri 'mediaflow' not found` when you open a model | The metamodel is not registered in this Eclipse. See step 5, point 5. |
+| `metamodels/mediaflow.emf` opens without syntax colouring, and Generate Ecore Model is missing | Emfatic is not installed. Install it as in "Before you start", then open the file again. |
+| `representations.aird` opens empty, or Eclipse asks for a viewpoint | Ecore Tools is not installed. The diagram uses its viewpoints. |
+| A red marker on `META-INF/MANIFEST.MF` about the execution environment | No JDK 21 or newer is registered in Eclipse. Add one under Preferences > Java > Installed JREs. |
+| A model opens as raw XML | Eclipse used its XML editor. Right-click the file and choose Open With > Sample Reflective Ecore Model Editor. |
+| Generate Model Code writes nothing | The `modelDirectory` of the genmodel is `/mediaflow/src`, a path in the workspace. It only works when the project is called `mediaflow` in the workspace. |

@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: minio
-          # Image resmi minio/minio sudah tidak ada di Docker Hub. Silo adalah fork 
-          # komunitas server MinIO yang mempertahankan S3 API, variabel MINIO_*, dan perintah jalannya.
+          # The official minio/minio image is no longer on Docker Hub. Silo is a community
+          # fork of the MinIO server that keeps its S3 API, MINIO_* settings and start command.
           image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
           args: ["server", "/data"]
           volumeMounts:

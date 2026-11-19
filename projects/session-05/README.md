@@ -80,7 +80,15 @@ Compose and the dev environment use the same ports, so run one or the other, not
   ```
 
   On Ubuntu, if `python3 -m venv` fails, run `sudo apt install python3-venv` first.
-- The staging environment mounts `app/models` into the worker, so the two voice files `en_GB-alan-medium.onnx` and `en_GB-alan-medium.onnx.json` have to be there. They are in the repository, and Terraform stops with a clear message if they are missing.
+- The staging environment mounts `app/models` into the worker, so the two voice files `en_GB-alan-medium.onnx` and `en_GB-alan-medium.onnx.json` have to be there. Git ignores that folder, because a voice is about 60 MB, so a fresh clone does not have it. Download the files once, from the place the worker image gets them, by running these commands in `projects/session-05`:
+
+  ```bash
+  mkdir -p app/models
+  curl -fL -o app/models/en_GB-alan-medium.onnx https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/medium/en_GB-alan-medium.onnx
+  curl -fL -o app/models/en_GB-alan-medium.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/medium/en_GB-alan-medium.onnx.json
+  ```
+
+  Without them, Terraform stops the staging environment with a clear message.
 
 The Docker commands below use `sudo docker`. If your user is in the `docker` group, or you use Docker Desktop, leave out `sudo`.
 
@@ -186,8 +194,10 @@ cd ../app
 
 ```
 ......................................                                   [100%]
-38 passed in 1.18s
+38 passed, 1 warning in 0.62s
 ```
+
+The warning is a `DeprecationWarning` from Starlette's test client, a package that FastAPI installs. It does not affect the tests.
 
 ## Step 6. Run the integration tests
 
@@ -322,12 +332,12 @@ Compose keeps its settings as environment variables in `compose/docker-compose.y
 | Variable | Where | Value in dev | Meaning |
 |---|---|---|---|
 | `worker_replicas` | `*.tfvars` | 1 | Number of worker containers. Terraform names them `tts-<env>-worker-0`, `-1`, and so on. |
-| `mount_models` | `*.tfvars` | `false` | `true` mounts `app/models` into the worker as `/models`, so you can swap the voice without rebuilding the image. The repository also has `id_ID-news_tts-medium.onnx` for Indonesian. |
+| `mount_models` | `*.tfvars` | `false` | `true` mounts `app/models` into the worker as `/models`, so you can swap the voice without rebuilding the image. For an Indonesian voice, download `id_ID-news_tts-medium.onnx` and its `.json` into `app/models` from the same Hugging Face repository (`.../resolve/main/id/id_ID/news_tts/medium/`) and point `piper_model_path` at it. |
 | `mp3_bucket` | `*.tfvars` | `tts-dev` | Bucket for the MP3 files. The worker creates it on the first upload. |
 | `internal_token` | `*.tfvars` | `changeme-dev` | The worker sends it in the header `X-Internal-Token` when it reports a job. The API answers 401 if the two differ. |
 | `ports` | `<env>/main.tf` | the table above | The host ports of the six containers. |
 | `piper_length_scale` | `<env>/main.tf` | `"1.0"` | Speaking rate. A higher value is slower. |
-| `piper_model_path`, `piper_model_config_path` | `<env>/main.tf` | `/models/en_GB-alan-medium.onnx` | The voice the worker uses inside the container. |
+| `piper_model_path` | `<env>/main.tf` | `/models/en_GB-alan-medium.onnx` | The voice the worker uses inside the container. Piper reads the voice's settings from the `.json` file next to it. The module default applies, because no environment sets it. `piper_model_config_path` only becomes the variable `PIPER_MODEL_CONFIG_PATH`, which the worker does not read. |
 | `minio_root_user`, `minio_root_password` | `prod/production.tfvars` | `minioadmin` | The MinIO login. In `dev` and `staging` these sit in `main.tf`; `prod` marks them as `sensitive` so Terraform does not print them. |
 
 After an edit, run `terraform plan -var-file=...` first. It tells you whether Terraform will change a container in place or destroy and recreate it, which is the habit this session is about. Then `terraform apply -var-file=...`.
@@ -340,7 +350,7 @@ The token `changeme-dev`, the login `minioadmin` and the published ports of Redi
 |---|---|
 | `port is already allocated` or `address already in use` | Another program or another session's containers hold one of the ports. Port 8080 is a frequent one. Run `sudo docker ps` and `ss -ltn` to find out what has it, stop that, and try again. Compose and the dev environment cannot run at the same time. |
 | Terraform: `permission denied while trying to connect to the Docker daemon socket` | Your user is not in the `docker` group. Add it as described in "Before you start" and log out and in again. |
-| Terraform: `mount_models is true, but ... has no en_GB-alan-medium.onnx` | The voice files are missing from `app/models`. Without them Docker would create an empty folder and hide the voice inside the image, so the module refuses to start the worker. Restore the files, or set `mount_models = false`. |
+| Terraform: `mount_models is true, but ... has no en_GB-alan-medium.onnx` | The voice files are missing from `app/models`. Without them Docker would create an empty folder and hide the voice inside the image, so the module refuses to start the worker. Download the files as shown in "Before you start", or set `mount_models = false`. |
 | `terraform plan` wants to create things that already run | The state file of that environment is gone or belongs to another machine. Run `terraform destroy -var-file=...` if the containers are still around, or remove them with `sudo docker rm -f`, then apply again. |
 | The page shows `ERROR` and the message "Create job failed" | The page was opened on the web port (8080, 18080, 28080) instead of the gateway port. Use 8088, 18088 or 28088. If it happens there, check `sudo docker ps` and the logs of the API. |
 | A job stays `QUEUED` | No worker is running, or the worker reads another queue. Check `sudo docker logs tts-dev-worker-0`: the `QUEUE:` line has to match the `APP_ENV` of the API. |

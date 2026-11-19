@@ -59,8 +59,10 @@ cat > "$MCP_CONFIG_FILE" <<EOF
 EOF
 trap "rm -f '$MCP_CONFIG_FILE'" EXIT
 
-# Use --prompt-interactive (-i) to pass the initial prompt and stay in chat mode.
-claude --mcp-config "$MCP_CONFIG_FILE" --dangerously-skip-permissions -i "
+# Claude CLI has no -i option: a prompt given as an argument starts chat mode
+# with that prompt. It has to come before --mcp-config, which takes every
+# argument that follows it as another config file.
+claude "
 I need to fill Berita Acara Perkuliahan on SIAKAD.
 The schedule files are in: ${SCHEDULE_DIR}
 Credentials and URLs are pre-configured in config.json — just call login_siakad without arguments.
@@ -73,4 +75,4 @@ IMPORTANT RULES:
 - After saving, verify 'Sukses update topik pembahasan' message appears.
 
 Please start by listing all schedule files, then launch browser and login to SIAKAD.
-"
+" --mcp-config "$MCP_CONFIG_FILE" --dangerously-skip-permissions

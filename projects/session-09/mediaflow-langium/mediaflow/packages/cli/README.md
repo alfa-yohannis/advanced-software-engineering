@@ -5,13 +5,12 @@ Check [this part](https://langium.org/docs/learn/minilogo/customizing_cli/) of t
 ## What's in the folder?
 
 - [package.json](./package.json) - The manifest file of your cli package.
-- [tsconfig.src.json](./tsconfig.src.json) - The package specific TypeScript compiler configuration extending the [base config](../../tsconfig.json).
-- [tsconfig.json](./tsconfig.json) - TypeScript compiler configuration options required for proper functionality of VSCode.
-- [bin/cli.js](bin/cli/cli.js) - Script referenced in the [package.json](./package.json) and used to execute the command-line interface.
-- [src/cli/main.ts](src/cli/main.ts) - The entry point of the command line interface (CLI) of your language.
-- [src/cli/generator.ts](src/cli/generator.ts) - The code generator used by the CLI to write output files from DSL documents.
-- [src/cli/util.ts](src/cli/util.ts) - Utility code for the CLI.
+- [tsconfig.json](./tsconfig.json) - The package specific TypeScript compiler configuration extending the [base config](../../tsconfig.json).
+- [bin/cli.js](bin/cli.js) - Script referenced in the [package.json](./package.json) and used to execute the command-line interface.
+- [src/main.ts](src/main.ts) - The entry point of the command line interface (CLI) of your language.
+- [src/generator.ts](src/generator.ts) - The code generator used by the CLI to write an ELK graph in JSON from a DSL document.
+- [src/util.ts](src/util.ts) - Utility code for the CLI.
 
 ## Instructions
 
-Run `node ./bin/cli` to see options for the CLI; `node ./bin/cli generate <file>` generates code for a given DSL file.
+Build the workspace first (`npm run langium:generate` and `npm run build` in the workspace root). Run `node ./bin/cli.js --help` to see options for the CLI; `node ./bin/cli.js generate <source> <destination>` writes the ELK JSON of a DSL file, or of every DSL file in a folder, to `<destination>`.

@@ -1,0 +1,6 @@
+# Packages of the three MCP servers. They use FastMCP from the mcp 1.x SDK;
+# mcp 2.0 renamed that API, so mcp stays below 2.
+mcp[cli]==1.30.0
+playwright==1.65.2
+pandas==3.1.1
+openpyxl==3.1.5

@@ -1,0 +1,13 @@
+mp3_bucket     = "{{ mp3_bucket }}"
+internal_token = "{{ internal_token }}"
+
+{% if minio_root_user_from_var %}
+minio_root_user = "{{ minio_root_user }}"
+
+{% endif %}
+{% if minio_root_password_from_var %}
+# MinIO's default, for this lab only. Change it in real production.
+minio_root_password = "{{ minio_root_password }}"
+
+{% endif %}
+worker_replicas = {{ worker_replicas }}

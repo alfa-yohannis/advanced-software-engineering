@@ -69,16 +69,21 @@ resource "terraform_data" "deploy" {
     command     = <<-EOT
       set -euo pipefail
 
+      # Send every kubectl command to the Minikube profile's cluster, whatever
+      # context kubectl happens to have selected.
+      kubectl() { command kubectl --context "${var.minikube_profile}" "$@"; }
+
       minikube -p "${var.minikube_profile}" status >/dev/null
       minikube -p "${var.minikube_profile}" addons enable ingress >/dev/null
 
-      eval "$(minikube -p '${var.minikube_profile}' docker-env)"
+      # Build the images inside the cluster, so the pods find them without a
+      # registry. Unlike docker-env, this works with every Minikube container
+      # runtime, including containerd, which recent Minikube versions use by default.
+      minikube -p "${var.minikube_profile}" image build -t ${var.image_registry_prefix}-api:${local.image_tag} app/services/api
+      minikube -p "${var.minikube_profile}" image build -t ${var.image_registry_prefix}-web:${local.image_tag} app/services/web
+      minikube -p "${var.minikube_profile}" image build -t ${var.image_registry_prefix}-worker:${local.image_tag} app/services/worker
 
-      docker build -t ${var.image_registry_prefix}-api:${local.image_tag} app/services/api
-      docker build -t ${var.image_registry_prefix}-web:${local.image_tag} app/services/web
-      docker build -t ${var.image_registry_prefix}-worker:${local.image_tag} app/services/worker
-
-      kubectl get namespace tts >/dev/null 2>&1 || kubectl create namespace tts
+      kubectl create namespace tts --dry-run=client -o yaml | kubectl apply -f -
 
       kubectl -n tts create configmap tts-config \
         --from-literal=APP_ENV="${var.env}" \
@@ -107,7 +112,7 @@ resource "terraform_data" "deploy" {
     interpreter = ["/bin/bash", "-lc"]
     command     = <<-EOT
       set -euo pipefail
-      kubectl delete -k "${self.input.project_root}/iac/kubernetes/overlays/${self.input.k8s_overlay}" --ignore-not-found=true
+      kubectl --context "${self.input.minikube_profile}" delete -k "${self.input.project_root}/iac/kubernetes/overlays/${self.input.k8s_overlay}" --ignore-not-found=true
     EOT
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
-import subprocess
 import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List
@@ -91,12 +91,30 @@ def render_records(
         render_template(template_env, record["template"], context, output_root / output_rel)
 
 
+# Files that Terraform itself writes into an environment folder. Without them
+# Terraform forgets what it deployed, so regeneration must leave them alone.
+TERRAFORM_WORKING_FILES = {".terraform", ".terraform.lock.hcl", "terraform.tfstate", "terraform.tfstate.backup"}
+
+
 def clean_output_root(output_root: Path) -> None:
-    # Keep generation idempotent while preserving unrelated files.
-    for subdir in ["terraform", "kubernetes"]:
-        target = output_root / subdir
-        if target.exists():
-            shutil.rmtree(target)
+    # Remove what the previous run generated, so that files whose template or
+    # environment is gone do not linger. Unrelated files outside the two
+    # subfolders and Terraform's working files stay.
+    kubernetes = output_root / "kubernetes"
+    if kubernetes.exists():
+        shutil.rmtree(kubernetes)
+
+    terraform = output_root / "terraform"
+    if terraform.exists():
+        # Deepest paths first, so a folder is checked after its contents.
+        for path in sorted(terraform.rglob("*"), reverse=True):
+            if TERRAFORM_WORKING_FILES.intersection(path.relative_to(terraform).parts):
+                continue
+            if path.is_dir():
+                if not any(path.iterdir()):
+                    path.rmdir()
+            else:
+                path.unlink()
 
 
 def format_terraform(output_root: Path) -> None:
@@ -123,6 +141,7 @@ def generate(paths: Paths, output_root: Path) -> None:
         undefined=StrictUndefined,
         trim_blocks=True,
         lstrip_blocks=True,
+        keep_trailing_newline=True,
     )
 
     output_root.mkdir(parents=True, exist_ok=True)
