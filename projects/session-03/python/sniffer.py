@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# Jalankan perintah berikut untuk sniffing dari host (port 5556 broker dibuka ke host):
+# Run this command to sniff from the host (the broker publishes port 5556 to the host):
 #
 # BROKER_HOST=127.0.0.1 SUB_PORT=5556 N=10 ../../.venv/bin/python sniffer.py
 #
-# Atau dari dalam jaringan Docker Compose, tanpa Python di host:
+# Or from inside the Docker Compose network, without Python on the host:
 #
 # bash sniffer.sh
 #
@@ -15,11 +15,11 @@ import time
 import binascii
 import zmq
 
-BROKER_HOST = os.getenv("BROKER_HOST", "broker-session03")  # nama service di docker-compose
-SUB_PORT = int(os.getenv("SUB_PORT", "5556"))  # port SUB side (xpub bind)
-TOPIC = os.getenv("TOPIC", "")                 # "" = semua topic
-N = int(os.getenv("N", "10"))                  # berapa message
-TIMEOUT_SEC = int(os.getenv("TIMEOUT_SEC", "10"))  # berhenti bila tidak ada message
+BROKER_HOST = os.getenv("BROKER_HOST", "broker-session03")  # service name in docker-compose
+SUB_PORT = int(os.getenv("SUB_PORT", "5556"))  # port of the SUB side (xpub bind)
+TOPIC = os.getenv("TOPIC", "")                 # "" = every topic
+N = int(os.getenv("N", "10"))                  # how many messages
+TIMEOUT_SEC = int(os.getenv("TIMEOUT_SEC", "10"))  # stop when no message arrives
 
 ENDPOINT = f"tcp://{BROKER_HOST}:{SUB_PORT}"
 
@@ -29,7 +29,7 @@ def is_probably_jpeg(b: bytes) -> bool:
 def is_json_object(b: bytes) -> bool:
     try:
         return isinstance(json.loads(b), dict)
-    except ValueError:  # termasuk UnicodeDecodeError dan JSONDecodeError
+    except ValueError:  # includes UnicodeDecodeError and JSONDecodeError
         return False
 
 def preview_utf8(b: bytes, limit: int = 120) -> str:
@@ -43,7 +43,7 @@ def main():
     ctx = zmq.Context.instance()
     s = ctx.socket(zmq.SUB)
     s.setsockopt(zmq.LINGER, 0)
-    # ZMQ tidak melapor bila host salah atau broker mati, recv() hanya menunggu
+    # ZMQ does not report a wrong host or a dead broker; recv() just waits
     s.setsockopt(zmq.RCVTIMEO, TIMEOUT_SEC * 1000)
 
     s.setsockopt(zmq.SUBSCRIBE, TOPIC.encode("utf-8"))

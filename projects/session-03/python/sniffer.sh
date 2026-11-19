@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Jalankan sniffer.py di dalam jaringan Docker Compose, sebagai pihak yang bisa
-# menjangkau broker tetapi tidak punya PAYLOAD_KEY. Container memakai image
-# broker (sudah berisi pyzmq). Jalankan pipeline dulu, lalu:
+# Runs sniffer.py inside the Docker Compose network, as a party that can reach
+# the broker but does not have PAYLOAD_KEY. The container uses the broker's
+# image, which already contains pyzmq. Start the pipeline first, then:
 #
-#   sudo bash sniffer.sh        # 10 message
-#   sudo N=4 bash sniffer.sh    # 4 message
+#   sudo bash sniffer.sh        # 10 messages
+#   sudo N=4 bash sniffer.sh    # 4 messages
 #
 cd "$(dirname "$0")" || exit 1
 
