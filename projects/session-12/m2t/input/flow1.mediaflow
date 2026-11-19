@@ -1,4 +1,4 @@
-graph demo {
+graph flow1 {
   resource inputVideo [mediaType=VIDEO] uri="file:///home/alfa/videos/input.mp4" 
   external=true {
     port inputOut OUT
