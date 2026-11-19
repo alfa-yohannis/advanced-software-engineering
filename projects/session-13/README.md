@@ -237,7 +237,7 @@ Generated output/elk/flow2.json and output/tables/flow2.tables.html
 2. Right-click `evl_broken-direction.launch` and choose Run As > evl_broken-direction. The four `evl_*.launch` configurations run `mediaflow.evl` on one model each, through Epsilon's own launcher. They load the metamodel from the file `/mediaflow/metamodels/mediaflow.ecore`, so it does not have to be registered. Epsilon lists the failed rules in its Validation view.
 3. Right-click `MediaflowEvlValidationRunner.launch` or `MediaflowOclValidationRunner.launch` and choose Run As. The Console shows the report for the whole `input` folder, as in step 6.
 
-The projects are set to Java 25 (`JavaSE-25` in `META-INF/MANIFEST.MF` and `.classpath`). If Eclipse reports that no JRE matches `JavaSE-25`, add a JDK 25 or newer under Window > Preferences > Java > Installed JREs.
+The projects are set to Java 21 (`JavaSE-21` in `META-INF/MANIFEST.MF` and `.classpath`), and `pom.xml` compiles for Java 17. If Eclipse reports that no JRE matches `JavaSE-21`, add a JDK 21 or newer under Window > Preferences > Java > Installed JREs.
 
 Sessions 8 to 13 each have a project named `mediaflow`, and a workspace holds only one project of a name. Use a separate workspace for each session.
 
@@ -290,7 +290,7 @@ The OCL runner finds invariants with a pattern instead of a full OCL parser, so 
 | `... has no org.eclipse.epsilon.evl.engine jar` | Epsilon is not installed in that Eclipse. Install it as described in "Before you start". |
 | `... has no org.eclipse.ocl.ecore jar` or `... has no lpg.runtime.java jar` | The classic Ecore OCL is missing. It comes with the Eclipse Modeling Tools package. In another Eclipse, install OCL from the release update site under Help > Install New Software. |
 | `Permission denied` when you start a script | The script lost its executable bit, for example after a copy. Run `chmod +x *.sh`, or start it with `bash run-evl-validation.sh`. |
-| `No .xmi inputs found at ...` | The path is wrong or holds no `.xmi` file. The runner exits with 0 in this case, so a check like the one in step 7 would let the generator run. Check the path. |
+| `No .xmi inputs found at ...` | The path is wrong or holds no `.xmi` file. The runner exits with 2, so a check like the one in step 7 stops there. Check the path. |
 | `EVL parse failed:` | `mediaflow.evl`, or the rule file you passed, has a syntax error. The message names the line. |
 | `No OCL invariants found in ...` | The OCL runner found no invariant in the `context` and `inv` layout described above. |
 | `Could not parse invariant ... in context ...` | An OCL expression does not compile against the metamodel, for example because it names a feature that does not exist. The message names the invariant. |

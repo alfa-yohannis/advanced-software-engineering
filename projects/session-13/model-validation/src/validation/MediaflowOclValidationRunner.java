@@ -49,8 +49,9 @@ public class MediaflowOclValidationRunner {
 
         List<Path> inputs = collectInputs(Paths.get(inputPath));
         if (inputs.isEmpty()) {
-            System.out.println("No .xmi inputs found at " + inputPath);
-            return;
+            // Fail, so that a check such as "validate && generate" stops when the path is wrong.
+            System.err.println("No .xmi inputs found at " + inputPath);
+            System.exit(2);
         }
 
         List<OclInvariant> invariants = parseInvariants(Paths.get(oclPath));

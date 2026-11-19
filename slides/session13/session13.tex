@@ -785,6 +785,7 @@ for (OclInvariant inv : invariants) {
 \begin{frame}[fragile]{Skrip Eksekusi}
 \vspace{2pt}
 \begin{lstlisting}[language=shell, basicstyle=\ttfamily\scriptsize]
+export ECLIPSE_HOME=$HOME/eclipse/modeling-2026-03/eclipse
 cd projects/session-13/model-validation
 
 ./run-evl-validation.sh input/valid
@@ -839,20 +840,18 @@ Dua model valid lolos tanpa false positive; dua model invalid memicu seluruh kat
 
 \begin{frame}[fragile]{Contoh Output EVL}
 \vspace{2pt}
-\begin{lstlisting}[language=shell, basicstyle=\ttfamily\tiny]
+\begin{lstlisting}[language=shell, basicstyle=\ttfamily\tiny, breaklines=true]
+Running EVL validation over 1 graph(s)
+
 == input/invalid/broken-direction.xmi ==
-1. ERROR HasExternalEntryAndExit on Graph 'brokenDirection':
-   Graph 'brokenDirection' must have at least one external entry resource and one external exit resource.
-2. ERROR ConnectsOutputToInput on Edge 'e2':
-   Edge 'e2' must connect an OUT port to an IN port.
-3. ERROR UriIsDeclared on Resource 'outputVideo':
-   Resource 'outputVideo' must declare a URI.
-4. ERROR CommandIsDeclared on Scaler 'resize720':
-   Transformer 'resize720' must declare the command it will execute.
-5. ERROR ReplicasArePositive on Scaler 'resize720':
-   Transformer 'resize720' must request at least one replica.
-6. ERROR DimensionsArePositive on Scaler 'resize720':
-   Scaler 'resize720' must have positive width and height.
+1. ERROR HasExternalEntryAndExit on Graph 'brokenDirection': Graph 'brokenDirection' must have at least one external entry resource and one external exit resource.
+2. ERROR ConnectsOutputToInput on Edge 'e2': Edge 'e2' must connect an OUT port to an IN port.
+3. ERROR UriIsDeclared on Resource 'outputVideo': Resource 'outputVideo' must declare a URI.
+4. ERROR UriUsesKnownScheme on Resource 'outputVideo': Resource 'outputVideo' URI should use file://, s3://, http:// or https://.
+5. ERROR CommandIsDeclared on Scaler 'resize720': Transformer 'resize720' must declare the command it will execute.
+6. ERROR ReplicasArePositive on Scaler 'resize720': Transformer 'resize720' must request at least one replica.
+7. ERROR TransformersHaveInputAndOutputFlow on Scaler 'resize720': Transformer 'resize720' must have incoming and outgoing edges.
+8. ERROR DimensionsArePositive on Scaler 'resize720': Scaler 'resize720' must have positive width and height.
 Displayed 8 error(s), 0 warning(s), 8 total issue(s).
 \end{lstlisting}
 

@@ -674,7 +674,7 @@ for (OclInvariant invariant : invariants) {
 
 \subsection{Skrip Eksekusi}
 
-Proyek menyediakan skrip shell agar runner dapat dijalankan dari terminal tanpa konfigurasi manual di Eclipse. Perintahnya ada pada Listing~\ref{lst:ch13-run-commands}.
+Proyek menyediakan skrip shell agar runner dapat dijalankan dari terminal tanpa konfigurasi manual di Eclipse. Skrip mengambil jar Epsilon dan EMF dari instalasi Eclipse, sehingga variabel \texttt{ECLIPSE\_HOME} harus menunjuk ke folder Eclipse yang berisi \texttt{plugins/}. Perintahnya ada pada Listing~\ref{lst:ch13-run-commands}.
 
 \begin{lstlisting}[
   language=bash,
@@ -682,6 +682,7 @@ Proyek menyediakan skrip shell agar runner dapat dijalankan dari terminal tanpa 
   label={lst:ch13-run-commands},
   basicstyle=\ttfamily\scriptsize
 ]
+export ECLIPSE_HOME=$HOME/eclipse/modeling-2026-03/eclipse   # folder Eclipse yang berisi plugins/
 cd projects/session-13/model-validation
 
 ./run-evl-validation.sh input/valid
@@ -756,26 +757,23 @@ Listing~\ref{lst:ch13-output-example} memperlihatkan potongan output EVL untuk m
   language=bash,
   caption={Potongan output validasi EVL pada model \texttt{broken-direction.xmi}},
   label={lst:ch13-output-example},
-  basicstyle=\ttfamily\scriptsize
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true
 ]
+Running EVL validation over 1 graph(s)
+
 == input/invalid/broken-direction.xmi ==
-1. ERROR HasExternalEntryAndExit on Graph 'brokenDirection':
-   Graph 'brokenDirection' must have at least one external entry resource and one external exit resource.
-2. ERROR ConnectsOutputToInput on Edge 'e2':
-   Edge 'e2' must connect an OUT port to an IN port.
-3. ERROR UriIsDeclared on Resource 'outputVideo':
-   Resource 'outputVideo' must declare a URI.
-4. ERROR UriUsesKnownScheme on Resource 'outputVideo':
-   Resource 'outputVideo' URI should use file://, s3://, http:// or https://.
-5. ERROR CommandIsDeclared on Scaler 'resize720':
-   Transformer 'resize720' must declare the command it will execute.
-6. ERROR ReplicasArePositive on Scaler 'resize720':
-   Transformer 'resize720' must request at least one replica.
-7. ERROR TransformersHaveInputAndOutputFlow on Scaler 'resize720':
-   Transformer 'resize720' must have incoming and outgoing edges.
-8. ERROR DimensionsArePositive on Scaler 'resize720':
-   Scaler 'resize720' must have positive width and height.
+1. ERROR HasExternalEntryAndExit on Graph 'brokenDirection': Graph 'brokenDirection' must have at least one external entry resource and one external exit resource.
+2. ERROR ConnectsOutputToInput on Edge 'e2': Edge 'e2' must connect an OUT port to an IN port.
+3. ERROR UriIsDeclared on Resource 'outputVideo': Resource 'outputVideo' must declare a URI.
+4. ERROR UriUsesKnownScheme on Resource 'outputVideo': Resource 'outputVideo' URI should use file://, s3://, http:// or https://.
+5. ERROR CommandIsDeclared on Scaler 'resize720': Transformer 'resize720' must declare the command it will execute.
+6. ERROR ReplicasArePositive on Scaler 'resize720': Transformer 'resize720' must request at least one replica.
+7. ERROR TransformersHaveInputAndOutputFlow on Scaler 'resize720': Transformer 'resize720' must have incoming and outgoing edges.
+8. ERROR DimensionsArePositive on Scaler 'resize720': Scaler 'resize720' must have positive width and height.
 Displayed 8 error(s), 0 warning(s), 8 total issue(s).
+
+Validation summary: 8 error(s), 0 warning(s).
 \end{lstlisting}
 
 \noindent Output tersebut menunjukkan manfaat pesan EVL: setiap error memiliki constraint name, target instance, dan pesan yang ditulis khusus untuk pemodel. Misalnya, error \texttt{HasExternalEntryAndExit} muncul karena edge salah arah membuat resource output tidak lagi menjadi exit boundary yang sah.
