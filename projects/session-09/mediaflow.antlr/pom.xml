@@ -19,6 +19,14 @@
 				<groupId>org.antlr</groupId>
 				<artifactId>antlr4-maven-plugin</artifactId>
 				<version>4.13.2</version>
+				<executions>
+					<!-- Generate the lexer, parser and visitor during every build. -->
+					<execution>
+						<goals>
+							<goal>antlr4</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
 					<sourceDirectory>${project.basedir}/antlr</sourceDirectory>
 					<includes>
@@ -39,6 +47,11 @@
 				<version>3.2.0</version>
 				<configuration>
 					<mainClass>yohannis.alfa.mediaflow.antlr.Main</mainClass>
+					<!-- exec:java runs in the folder Maven was started from, so pass an
+					     absolute path. Override it with -Dexec.args=<file>. -->
+					<arguments>
+						<argument>${project.basedir}/input/test.mediaflow</argument>
+					</arguments>
 				</configuration>
 			</plugin>
 		</plugins>
