@@ -245,7 +245,18 @@ per job seconds : min 16.1, median 113.4, max 176.7
 throughput      : 0.11 jobs/second
 ```
 
-Here is what the two watch windows showed while that ran, sampled every five seconds:
+Each job there synthesises the client's built-in sentence four times over, 511 characters, which comes out as an MP3 of about 240 KB. `long_text_test.txt` in this folder is a longer passage to use when you want every job to cost more:
+
+```bash
+python3 app/client/load_client.py \
+  --base-url http://$(minikube ip) --host dev.tts.local \
+  --jobs 20 --concurrency 20 \
+  --text-file long_text_test.txt --repeat 1
+```
+
+That gives 576 characters a job and MP3 files of about 278 KB. Keep `--repeat 1` with a file this size: the API rejects anything over 2000 characters, and the client stops before submitting rather than letting twenty jobs fail one at a time.
+
+Here is what the two watch windows showed while the 20-job run went through, sampled every five seconds:
 
 ```
 17:29:39  cpu 199%  desired 5  running 1

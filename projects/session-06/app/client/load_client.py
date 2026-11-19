@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import pathlib
 import statistics
 import sys
 import threading
@@ -51,6 +52,10 @@ def call(url: str, host: str | None, timeout: float, method: str = "GET",
             return response.status, response.read()
     except urllib.error.HTTPError as error:
         return error.code, error.read()
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        # Nothing answered at all: no ingress yet, wrong host, cluster down.
+        # Report it as status 0 so the caller can say so instead of crashing.
+        return 0, str(error).encode()
 
 
 def submit(base_url: str, text: str, host: str | None, timeout: float) -> str:
@@ -116,6 +121,8 @@ def main() -> int:
                         help="repeat the text this many times per job, to lengthen "
                              "synthesis (default: %(default)s)")
     parser.add_argument("--text", default=DEFAULT_TEXT, help="text to synthesise")
+    parser.add_argument("--text-file", default=None,
+                        help="read the text from this file instead of --text")
     parser.add_argument("--check-mp3", action="store_true",
                         help="download each MP3 and report its size")
     parser.add_argument("--timeout", type=float, default=30.0,
@@ -127,12 +134,27 @@ def main() -> int:
     args = parser.parse_args()
 
     args.base_url = args.base_url.rstrip("/")
-    text = " ".join([args.text] * max(1, args.repeat))
+
+    source = args.text
+    if args.text_file:
+        source = " ".join(pathlib.Path(args.text_file).read_text().split())
+    text = " ".join([source] * max(1, args.repeat))
+
+    # The API rejects anything over 2000 characters with a 422, so say so here
+    # rather than letting every job fail one by one.
+    if len(text) > 2000:
+        print(f"the text is {len(text)} characters, and the API accepts 2000. "
+              f"Lower --repeat or use a shorter text.", file=sys.stderr)
+        return 2
 
     status, body = call(f"{args.base_url}/api/healthz", args.host, args.timeout)
     if status != 200:
+        detail = body.decode(errors="replace").strip()[:200]
         print(f"the API is not answering on {args.base_url}/api/healthz "
-              f"(status {status})", file=sys.stderr)
+              f"(status {status}): {detail}", file=sys.stderr)
+        if args.host:
+            print(f"check that the ingress is ready and that {args.host} is the "
+                  f"host it serves: kubectl get ingress -n tts", file=sys.stderr)
         return 2
     log(f"api says {body.decode().strip()}")
     log(f"submitting {args.jobs} job(s), {args.concurrency} at a time, "
