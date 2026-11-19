@@ -160,7 +160,7 @@
 		\column{0.45\textwidth}
 		\vspace{-23pt}
 		\centering
-		\scalebox{0.62}{%
+		\scalebox{0.6}{%
 		\begin{tikzpicture}[
 		  background rectangle/.style={fill=white},
 		  show background rectangle,
@@ -198,7 +198,7 @@
 		\node[deploybox, below=of result] (deploywf) {Deploy Workflow\\\texttt{deploy-local.yml}};
 		\node[runnerbox, right=14mm of deploywf] (self) {Self-hosted Runner\\Linux, X64};
 
-		\node[deploybox, below=of deploywf] (checkout) {Checkout Code\\branch: \texttt{main}};
+		\node[deploybox, below=of deploywf] (checkout) {Checkout Code\\commit yang diuji (\texttt{head\_sha})};
 		\node[deploybox, below=of checkout] (deploy) {Docker Compose Deploy\\\texttt{down} $\rightarrow$ \texttt{up -d --build}};
 		\node[eventbox, right=14mm of deploy] (running) {Local Stack Running\\\texttt{http://localhost:8088}};
 
@@ -211,7 +211,7 @@
 		\draw[arrow] (unit) -- (integ);
 		\draw[arrow] (integ) -- (result);
 
-		\draw[dottedarrow] (result) -- node[right]{\texttt{workflow\_run} (success)} (deploywf);
+		\draw[dottedarrow] (result) -- node[right]{\texttt{workflow\_run} (success, push ke \texttt{main})} (deploywf);
 		\draw[dottedarrow] (deploywf) -- (self);
 
 		\draw[arrow] (deploywf) -- (checkout);
@@ -376,13 +376,13 @@ git --version
 \begin{frame}[fragile]{Demo (2/6): Repository dan GitHub CLI}
 	\vspace{4pt}
 	\begin{itemize}
-		\item Repository modul digunakan sebagai basis praktikum.
+		\item Fork repository modul ke akun Anda; CI/CD berjalan di fork tersebut.
 		\item GitHub CLI mempermudah autentikasi dan observasi workflow.
 	\end{itemize}
 
 	\vspace{4pt}
 	\begin{lstlisting}[language=bash]
-git clone https://github.com/alfa-yohannis/advanced-software-engineering.git
+git clone https://github.com/<akun-anda>/advanced-software-engineering.git
 cd advanced-software-engineering
 
 sudo apt install -y gh
@@ -400,7 +400,7 @@ gh auth status
 
 	\vspace{4pt}
 	\begin{lstlisting}[language=bash]
-sudo apt install -y docker.io docker-compose-plugin
+sudo apt install -y docker.io docker-compose-v2
 sudo usermod -aG docker $USER
 # logout & login kembali
 
@@ -418,12 +418,12 @@ docker compose version
 
 	\vspace{4pt}
 	\begin{lstlisting}[language=bash]
-mkdir actions-runner && cd actions-runner
+mkdir ~/actions-runner && cd ~/actions-runner
 
 curl -O -L https://github.com/actions/runner/releases/download/v2.331.0/actions-runner-linux-x64-2.331.0.tar.gz
 tar xzf actions-runner-linux-x64-2.331.0.tar.gz
 
-./config.sh --url https://github.com/alfa-yohannis/advanced-software-engineering \
+./config.sh --url https://github.com/<akun-anda>/advanced-software-engineering \
             --token <TOKEN>
 ./run.sh
 	\end{lstlisting}
@@ -445,7 +445,7 @@ git push origin main
 
 gh workflow list
 gh run list --workflow "CI Tests (session-04)"
-gh run list --workflow "CI Tests (session-04) --branch main --limit 1 --json databaseId --jq '.[0].databaseId'
+gh run list --workflow "CI Tests (session-04)" --branch main --limit 1 --json databaseId --jq '.[0].databaseId'
 gh run watch --exit-status
 	\end{lstlisting}
 \end{frame}

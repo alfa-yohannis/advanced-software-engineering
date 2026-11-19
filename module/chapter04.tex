@@ -130,7 +130,7 @@ Gambar~\ref{fig:cicd-workflow-session-04} menampilkan diagram workflow CI/CD pad
 \node[deploybox, below=of result] (deploywf) {Deploy Workflow\\\texttt{deploy-local.yml}};
 \node[runnerbox, right=14mm of deploywf] (self) {Self-hosted Runner\\Linux, X64};
 
-\node[deploybox, below=of deploywf] (checkout) {Checkout Code\\branch: \texttt{main}};
+\node[deploybox, below=of deploywf] (checkout) {Checkout Code\\commit yang diuji (\texttt{head\_sha})};
 \node[deploybox, below=of checkout] (deploy) {Docker Compose Deploy\\\texttt{down} $\rightarrow$ \texttt{up -d --build}};
 \node[eventbox, right=14mm of deploy] (running) {Local Stack Running\\\texttt{http://localhost:8088}};
 
@@ -143,7 +143,7 @@ Gambar~\ref{fig:cicd-workflow-session-04} menampilkan diagram workflow CI/CD pad
 \draw[arrow] (unit) -- (integ);
 \draw[arrow] (integ) -- (result);
 
-\draw[dottedarrow] (result) -- node[right]{\texttt{workflow\_run} (success)} (deploywf);
+\draw[dottedarrow] (result) -- node[right]{\texttt{workflow\_run} (success, push ke \texttt{main})} (deploywf);
 \draw[dottedarrow] (deploywf) -- (self);
 
 \draw[arrow] (deploywf) -- (checkout);
@@ -371,8 +371,10 @@ berhasil diproses dan berkas MP3 telah tersedia. Berkas audio hasil sintesis
 dapat diakses melalui endpoint MP3 yang disediakan oleh layanan web. Perintahnya ada pada Listing~\ref{lst:ch04-4}.
 
 \begin{lstlisting}[language=bash, caption={Menguji layanan dengan curl (3)}, label={lst:ch04-4}]
-# open the speech file (add -o output.mp3 to save the file)
+# check that the speech file exists (-I asks for the headers only)
 curl -I http://localhost:8088/mp3/98627818-6d12-4d85-84ad-7f6d777d8e54.mp3
+# download it
+curl -o output.mp3 http://localhost:8088/mp3/98627818-6d12-4d85-84ad-7f6d777d8e54.mp3
 \end{lstlisting}
 
 URL MP3 tersebut tidak hanya dapat diakses melalui \texttt{curl}, tetapi
@@ -462,24 +464,27 @@ https://github.com/alfa-yohannis/advanced-software-engineering
 
   Repository ini berisi struktur proyek per sesi, contoh aplikasi berbasis
   layanan terdistribusi, serta konfigurasi CI/CD yang akan digunakan
-  sepanjang perkuliahan. Mahasiswa tidak perlu membuat repository baru,
-  tetapi langsung menggunakan repository ini sebagai basis pembelajaran.
+  sepanjang perkuliahan. Workflow CI/CD hanya berjalan pada repository yang
+  menerima push Anda, sehingga setiap mahasiswa bekerja pada \textit{fork}
+  miliknya sendiri. Buat fork melalui tombol \textbf{Fork} pada halaman
+  repository tersebut, lalu buka tab \textbf{Actions} pada fork dan aktifkan
+  workflow-nya, karena GitHub menonaktifkan workflow pada fork yang baru dibuat.
 
-  \item \textbf{Melakukan clone repository ke komputer lokal}
+  \item \textbf{Melakukan clone fork ke komputer lokal}
 
   Proses \textit{clone} digunakan untuk menyalin seluruh isi repository dari
   GitHub ke lingkungan lokal agar dapat dijalankan, dimodifikasi, dan diuji.
   Clone repository dilakukan dengan perintah berikut (Listing~\ref{lst:ch04-9}):
 
   \begin{lstlisting}[language=bash, caption={Menyalin repositori}, label={lst:ch04-9}]
-git clone https://github.com/alfa-yohannis/advanced-software-engineering.git
+git clone https://github.com/<akun-anda>/advanced-software-engineering.git
 cd advanced-software-engineering
 git remote -v
   \end{lstlisting}
 
-  Jika URL repository GitHub tampil pada hasil perintah
-  \texttt{git remote -v}, maka proses clone berhasil dan lingkungan lokal
-  telah terhubung dengan repository GitHub.
+  Ganti \texttt{<akun-anda>} dengan nama akun GitHub Anda. Jika URL fork Anda
+  tampil pada hasil perintah \texttt{git remote -v}, maka proses clone berhasil
+  dan lingkungan lokal telah terhubung dengan fork tersebut.
 
 
 \item \textbf{Menginstal GitHub CLI (\texttt{gh})}
@@ -556,10 +561,11 @@ docker compose version
 \end{lstlisting}
 
 Jika perintah tersebut belum tersedia, Docker Compose plugin dapat diinstal
-menggunakan \texttt{apt} (Listing~\ref{lst:ch04-16}):
+menggunakan \texttt{apt}. Pada Ubuntu paketnya bernama \texttt{docker-compose-v2};
+repository resmi Docker menamainya \texttt{docker-compose-plugin} (Listing~\ref{lst:ch04-16}):
 
-\begin{lstlisting}[language=bash, caption={Memasang paket -y docker-compose-plugin}, label={lst:ch04-16}]
-sudo apt install -y docker-compose-plugin
+\begin{lstlisting}[language=bash, caption={Memasang paket docker-compose-v2}, label={lst:ch04-16}]
+sudo apt install -y docker-compose-v2
 docker compose version
 \end{lstlisting}
 
@@ -572,10 +578,10 @@ aplikasi multi-service menggunakan file \texttt{docker-compose.yml}.
 GitHub Actions runner dijalankan sebagai proses mandiri pada mesin lokal
 atau server. Oleh karena itu, langkah pertama adalah menyiapkan direktori
 khusus untuk runner agar file biner dan konfigurasi tidak tercampur dengan
-kode proyek. Direktori ini umumnya diletakkan pada home directory pengguna. Listing~\ref{lst:ch04-17} memuat perintahnya.
+kode proyek. Direktori ini diletakkan di luar folder repository, misalnya pada home directory pengguna, karena runner menyalin repository ke subfolder \texttt{\_work} miliknya sendiri. Listing~\ref{lst:ch04-17} memuat perintahnya.
 
-\begin{lstlisting}[language=bash, caption={Perintah mkdir actions-runner \&\& cd actions-runner}, label={lst:ch04-17}]
-mkdir actions-runner && cd actions-runner
+\begin{lstlisting}[language=bash, caption={Perintah mkdir \textasciitilde/actions-runner \&\& cd \textasciitilde/actions-runner}, label={lst:ch04-17}]
+mkdir ~/actions-runner && cd ~/actions-runner
 \end{lstlisting}
 
 Setelah perintah ini dijalankan, seluruh proses instalasi dan konfigurasi
@@ -641,7 +647,7 @@ dengan memasukkan URL repository dan token registrasi yang telah dibuat. Listing
 
 \begin{lstlisting}[language=bash, caption={Potongan kode pada Tutorial (2)}, label={lst:ch04-21}]
 ./config.sh \
-  --url https://github.com/alfa-yohannis/advanced-software-engineering \
+  --url https://github.com/<akun-anda>/advanced-software-engineering \
   --token <TOKEN>
 \end{lstlisting}
 
