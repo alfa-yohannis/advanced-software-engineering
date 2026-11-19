@@ -568,6 +568,8 @@ module/module
 projects/session-09/module
 projects/session-09/slides
 projects/session-14/tasks
+# Holds a SIAKAD login; config.example.json is the template.
+projects/session-14/config.json
 *.codex
 projects/session-12/mediaflow/slides
 projects/session-11/m2m/module

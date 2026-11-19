@@ -70,14 +70,14 @@ cat > "$SCRIPT_DIR/.gemini/settings.json" <<GEMINI_MCP_EOF
 {
   "mcpServers": {
     "siakad-browser": {
-      "command": "$SCRIPT_DIR/mcp-servers/browser-automation/run.sh",
+      "command": "./mcp-servers/browser-automation/run.sh",
       "args": [],
       "env": {
         "DISPLAY": ":0"
       }
     },
     "shared-state": {
-      "command": "$SCRIPT_DIR/agents/run_shared_state.sh",
+      "command": "./agents/run_shared_state.sh",
       "args": []
     }
   }

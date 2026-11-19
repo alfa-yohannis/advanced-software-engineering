@@ -1,207 +1,106 @@
-# SIAKAD Attendance Auto-Filler
+# SIAKAD attendance filler with two AI agents
 
-A multi-agent system that automates filling **Berita Acara Perkuliahan** (lecture attendance reports) on [SIAKAD Pradita University](https://siakad.pradita.ac.id). The system uses two AI agents — **Claude** as the orchestrator/planner and **Gemini** as the browser worker — communicating through a shared task queue via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
+Code for session 14 (Multi-Agent Software Systems) of IT30213 Advanced Software Engineering & DevOps. It fills in the Berita Acara Perkuliahan, the lecture attendance report, on [SIAKAD Pradita University](https://siakad.pradita.ac.id). For every lecture you list in a schedule file, it logs in, opens the attendance page, finds the class on that date, and types in the topic and the description. Two AI agents share the work. Claude Code, the orchestrator, reads the schedule and writes one task per lecture into a task queue. Gemini CLI, the browser worker, then works through the queue in a real browser window. The agents reach the schedule, the queue and the browser through three MCP servers written in Python.
 
----
+The full run works on the real SIAKAD with your own account: it logs in with your password and saves attendance reports. Steps 1 to 5 stay on your machine and change nothing on SIAKAD. Try the full run with a schedule of one lecture first (step 6).
 
-## Table of Contents
+## How the pieces fit together
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Sequence Diagram](#sequence-diagram)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Preparing Schedule Data](#preparing-schedule-data)
-- [Running the System](#running-the-system)
-- [Troubleshooting](#troubleshooting)
+```
+Phase 1  claude -p --[siakad-csv-reader]--> schedule-data/*.csv
+                   --[shared-state]-------> tasks/task_001.json ... tasks/task_NNN.json
 
----
+Phase 2  gemini    --[shared-state]-------> tasks/*.json, one task after the other
+                   --[siakad-browser]-----> Chromium window --> https://siakad.pradita.ac.id
+```
 
-## Overview
-
-Filling attendance reports on SIAKAD is a repetitive task: for each lecture session, you must log in, navigate to the attendance page, select a date, click the correct class row, and fill in the topic and description. This system automates the entire process using:
-
-- **Claude CLI** (Anthropic) as the **Orchestrator Agent** — reads schedule data from CSV files, plans the execution order, dispatches tasks, and monitors progress.
-- **Gemini CLI** (Google) as the **Browser Worker Agent** — controls a real browser via Playwright, logs into SIAKAD, navigates pages, fills forms, and validates results using its strong visual understanding.
-- **MCP Servers** as the tool layer — three Python-based MCP servers provide the tools that agents call:
-  - `siakad-csv-reader` — reads and parses schedule CSV/Excel files
-  - `siakad-browser` — Playwright browser automation (login, navigate, click, fill, screenshot)
-  - `shared-state` — task queue for inter-agent communication via JSON files
-
----
-
-## Architecture
+`run_multiagents.sh` runs the two phases one after the other. Claude runs first, creates all tasks and exits: `task_001` logs in, one `fill_attendance` task follows per lecture, and the last task closes the browser. Gemini then reads all tasks in order and works through them. The agents never talk to each other directly. The only thing they share is the folder `tasks/`, with one JSON file per task, which the shared-state server reads and writes for both.
 
 ![Architecture](figures/architecture.svg)
 
----
+![Sequence of one run](figures/sequence.svg)
 
-## Sequence Diagram
+An MCP server is a small program that an AI agent starts and talks to over stdin and stdout, using the Model Context Protocol. Each server offers tools, which the agent calls with arguments:
 
-![Sequence Diagram](figures/sequence.svg)
+| Server | Launcher | Tools | What it does |
+|---|---|---|---|
+| `siakad-csv-reader` | `mcp-servers/csv-reader/run.sh` | 4: `list_schedule_files`, `read_attendance_data`, `get_attendance_for_date`, `list_attendance_dates` | Reads the CSV and Excel files in `schedule-data/`, accepts several spellings of the column names, and returns every date as `YYYY-MM-DD`. |
+| `shared-state` | `agents/run_shared_state.sh` | 7: `create_task`, `get_task`, `update_task`, `list_tasks`, `get_next_pending_task`, `get_all_tasks_ordered`, `clear_tasks` | The task queue: one JSON file per task in `tasks/`, with a status that goes from `pending` to `in_progress` to `completed` or `failed`. |
+| `siakad-browser` | `mcp-servers/browser-automation/run.sh` | 17: `launch_browser`, `login_siakad`, `navigate_to_daftar_hadir`, `set_semester`, `set_date_picker`, `get_schedule_list`, `find_schedule_row`, `click_absensi_button`, `fill_attendance_form`, `submit_attendance_form`, `take_screenshot` and six helpers | Drives a visible Chromium window with Playwright. It reads the SIAKAD addresses and your login from `config.json`. |
 
----
+The four start scripts combine the agents and servers differently:
 
-## Project Structure
+| Script | Agents | MCP servers | You take part |
+|---|---|---|---|
+| `run_multiagents.sh` | Claude (orchestrator), then Gemini (worker) | Claude: CSV reader and task queue. Gemini: browser and task queue. | no |
+| `run_claude_only.sh` | Claude does everything | all three | no |
+| `run_gemini_only.sh` | Gemini does everything | browser and CSV reader | no |
+| `run_claude_interactive.sh` | Claude in chat mode | all three | yes, you guide it step by step |
 
 ```
-session-11/
-├── README.md                          # This file
-├── CLAUDE.md                          # Instructions for Claude CLI
-├── GEMINI.md                          # Instructions for Gemini CLI
-├── config.json                        # Credentials, URLs, and settings
-│
-├── schedule-data/                     # Schedule CSV files (one per course)
-│   └── advanced_software_engineering_and_devops.csv
-│
-├── mcp-servers/                       # MCP tool servers
-│   ├── browser-automation/
-│   │   ├── server.py                  # Playwright browser automation (15 tools)
-│   │   └── run.sh                     # Launcher script
-│   └── csv-reader/
-│       ├── server.py                  # CSV/Excel reader (4 tools)
-│       └── run.sh                     # Launcher script
-│
-├── agents/                            # Multi-agent components
-│   ├── shared_state.py                # Task queue MCP server (6 tools)
-│   ├── run_shared_state.sh            # Launcher script
-│   ├── orchestrator_prompt.md         # Claude orchestrator instructions
-│   └── worker_prompt.md               # Gemini worker instructions
-│
-├── tasks/                             # Task queue files (created at runtime)
-│
-├── .claude/settings.json              # Claude CLI MCP config
-├── .gemini/settings.json              # Gemini CLI MCP config
-│
-├── run_multiagents.sh                 # Multi-agent mode (Claude + Gemini)
-├── run_claude_only.sh                 # Single-agent mode (Claude only)
-├── run_claude_interactive.sh          # Interactive single-agent mode (Claude)
-└── run_gemini_only.sh                 # Single-agent mode (Gemini only)
+config.example.json                 the SIAKAD addresses and a placeholder login; copy it to config.json
+config.json                         your own copy with your login (Git ignores it)
+requirements.txt                    the Python packages of the three servers
+schedule-data/                      one schedule file per course (CSV or Excel)
+mcp-servers/csv-reader/             server.py and run.sh of siakad-csv-reader
+mcp-servers/browser-automation/     server.py and run.sh of siakad-browser
+agents/shared_state.py              the shared-state server, started by agents/run_shared_state.sh
+agents/orchestrator_prompt.md       Claude's instructions in the multi-agent mode
+agents/worker_prompt.md             Gemini's instructions in the multi-agent mode
+CLAUDE.md, GEMINI.md                short instructions that each CLI reads when it starts in this folder
+.claude/settings.json, .gemini/settings.json   MCP settings for the CLIs (see step 6)
+run_multiagents.sh, run_claude_only.sh, run_gemini_only.sh, run_claude_interactive.sh   the four modes
+check_mcp_servers.py                starts the three servers and checks them without SIAKAD (step 5)
+tasks/                              the task queue, created at run time (Git ignores it)
+figures/                            the two diagrams above, as Mermaid, PlantUML, SVG and PDF
 ```
 
----
+## Before you start
 
-## Prerequisites
+- Python 3.10 or newer and the virtual environment in `projects/.venv`, one folder up from this README. `python3 --version` should print a version number. This guide was tested with Python 3.12.3. If you don't have the environment yet, create it from this folder:
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Python | >= 3.10 | Runtime for MCP servers |
-| Node.js | >= 18 | Required by Gemini CLI |
-| Claude CLI | >= 2.0 | Orchestrator agent |
-| Gemini CLI | >= 0.30 | Browser worker agent |
-| Chromium | (auto-installed) | Browser for Playwright |
+  ```bash
+  python3 -m venv ../.venv
+  ```
 
----
+  On Ubuntu, if `python3 -m venv` fails, run `sudo apt install python3-venv` first.
+- Node.js 18 or newer with npm, for the two CLIs. `node --version` should print a version number. Tested with Node.js 22.23.4.
+- Claude Code, the Claude CLI. Install it with `npm install -g @anthropic-ai/claude-code`, then run `claude` once and log in with a Claude account or an Anthropic API key. `claude --version` should print a version number. Tested with 2.1.328.
+- Gemini CLI. Install it with `npm install -g @google/gemini-cli`, then run `gemini` once and log in with your Google account. `gemini --version` should print a version number. Tested with 0.40.1.
+- A desktop session. The browser server opens a visible Chromium window on the X display `:0`, so that you can watch it work.
+- A lecturer account on SIAKAD, for step 6 and later.
+- Internet access and about 1 GB of disk space. pip downloads the packages, and Playwright downloads Chromium, which takes about 700 MB once it is unpacked.
 
-## Installation
-
-### 1. Install Python (if not already installed)
-
-Download from [python.org](https://www.python.org/downloads/) or use your system package manager:
+## Step 1. Go to the project folder
 
 ```bash
-# Ubuntu/Debian
-sudo apt update && sudo apt install python3 python3-venv python3-pip
-
-# macOS (via Homebrew)
-brew install python@3.12
-
-# Verify
-python3 --version   # Should be >= 3.10
+cd projects/session-14
 ```
 
-### 2. Install Node.js (if not already installed)
+Run every command in this guide from this folder.
 
-Download from [nodejs.org](https://nodejs.org/) or use nvm:
+## Step 2. Install the Python packages and Chromium
 
 ```bash
-# Using nvm (recommended)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-nvm install 20
-nvm use 20
-
-# Verify
-node --version   # Should be >= 18
-npm --version
+../.venv/bin/pip install -r requirements.txt
+../.venv/bin/playwright install chromium
 ```
 
-### 3. Install Claude CLI
+```
+Successfully installed ... mcp-1.30.0 ... openpyxl-3.1.5 pandas-3.1.1 ... playwright-1.65.2 ...
+```
 
-Follow the official installation guide at [claude.ai/download](https://claude.ai/download):
+`requirements.txt` keeps `mcp` below version 2. The servers use FastMCP from the 1.x SDK, and mcp 2.0 renamed that API, so with mcp 2 every server stops at once with `No module named 'mcp.server.fastmcp'`.
+
+The three launchers start the servers with `../.venv/bin/python`, seen from this folder. To use another Python, set the variable `SIAKAD_PYTHON` to its path before you start an agent.
+
+## Step 3. Put your login into `config.json`
 
 ```bash
-# npm (global install)
-npm install -g @anthropic-ai/claude-code
-
-# Verify
-claude --version
+cp config.example.json config.json
 ```
 
-You will need an Anthropic API key or Claude Pro/Max subscription. Run `claude` and follow the authentication prompts.
-
-### 4. Install Gemini CLI
-
-Follow the official installation guide at [github.com/google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli):
-
-```bash
-# npm (global install)
-npm install -g @anthropic-ai/gemini-cli
-
-# Verify
-gemini --version
-```
-
-You will need to authenticate with Google. Run `gemini` and follow the OAuth prompts.
-
-### 5. Create Python virtual environment and install dependencies
-
-```bash
-# Create virtual environment
-python3 -m venv ~/venv
-
-# Activate it
-source ~/venv/bin/activate
-
-# Install Python dependencies
-pip install "mcp[cli]" playwright pandas openpyxl
-
-# Install Chromium browser for Playwright
-playwright install chromium
-```
-
-### 6. Clone/navigate to the project
-
-```bash
-cd /path/to/session-11
-```
-
-### 7. Register Gemini MCP servers (first time only)
-
-Claude's MCP servers are configured via `.claude/settings.json` (already included).
-Gemini needs its servers registered for use with `gemini` CLI.
-
-> **Note**: The provided `run_*.sh` scripts automatically register these servers for you using `--scope project`. If you want to run them manually:
-
-```bash
-cd /path/to/session-11
-
-# Browser automation (used by Worker and Gemini-Only modes)
-gemini mcp add --scope project siakad-browser ./mcp-servers/browser-automation/run.sh -e DISPLAY=:0
-
-# Shared state queue (used by Worker mode)
-gemini mcp add --scope project shared-state ./agents/run_shared_state.sh
-
-# CSV reader (used by Gemini-Only mode)
-gemini mcp add --scope project siakad-csv-reader ./mcp-servers/csv-reader/run.sh
-```
-
----
-
-## Configuration
-
-Edit `config.json` with your SIAKAD credentials and URLs:
+Open `config.json` and replace `username` and `password` with your SIAKAD login:
 
 ```json
 {
@@ -215,146 +114,134 @@ Edit `config.json` with your SIAKAD credentials and URLs:
 }
 ```
 
-> **Note**: Keep `config.json` out of version control if you commit this project. Add it to `.gitignore`.
+The browser server reads this file when it starts, and `login_siakad` uses the login unless an agent passes another one. Git ignores `config.json`, so your password stays on your machine. Never commit it: a password that was ever pushed stays in the history of the repository, and a public repository shows it to everyone.
 
----
+## Step 4. Write the schedule
 
-## Preparing Schedule Data
+Put one CSV or Excel file per course into `schedule-data/`. Use lowercase letters and underscores in the file name, such as `advanced_software_engineering_and_devops.csv`. The example file has the 15 sessions of this course:
 
-Place one CSV file per course in the `schedule-data/` directory. Use lowercase filenames with underscores for spaces (e.g., `advanced_software_engineering_and_devops.csv`).
-
-### CSV Format
-
-| Column | Required | Description |
-|--------|----------|-------------|
-| `no` | No | Session number (for reference) |
-| `semester` | No | Semester name (e.g., `2025/2026 GENAP`) |
-| `tanggal` | Yes | Date in `YYYY-MM-DD` format |
-| `mata_kuliah` | Yes | Course name (must match what appears on SIAKAD) |
-| `kelompok_kelas` | No | Class group (e.g., `Kelas A`, `Kelas B`, or `-` if N/A) |
-| `topik` | Yes | Lecture topic |
-| `deskripsi` | Yes | Lecture description |
-
-### Example
-
-```csv
+```
 no,semester,tanggal,mata_kuliah,kelompok_kelas,topik,deskripsi
-1,2026-01-21,Advanced Software Engineering & DevOps,-,General Lecture,"Overview of course objectives and introduction to DevOps"
-2,2026-01-28,Advanced Software Engineering & DevOps,-,Docker-based Software System,"Building software systems using Docker containers"
+1,2025/2026 GENAP,2026-01-21,Advanced Software Engineering & DevOps,-,Session-01: General Lecture,"Overview of course objectives, ..."
+2,2025/2026 GENAP,2026-01-28,Advanced Software Engineering & DevOps,-,Session-02: Docker-based Software System,"Building and demonstrating ..."
 ```
 
-### Multiple classes on the same date
+| Column | Required | Meaning |
+|---|---|---|
+| `no` | no | Number of the session, only for you. |
+| `semester` | no | The semester as SIAKAD shows it, such as `2025/2026 GENAP`. |
+| `tanggal` | yes | Date of the lecture, as `YYYY-MM-DD` or `DD/MM/YYYY`. |
+| `mata_kuliah` | yes | Name of the course, exactly as SIAKAD shows it. |
+| `kelompok_kelas` | no | The class group, such as `Kelas A`. `-` or an empty cell means the course has one group. |
+| `topik` | yes | The topic to fill in. |
+| `deskripsi` | yes | The description to fill in. |
 
-If you teach the same course to different class groups, create separate files or include all groups in one file:
+The CSV reader also accepts `date`, `course`, `kelas`, `topic` and `description` as column names. If you teach the same course to two groups on one date, write one row per group.
 
-```csv
-no,semester,tanggal,mata_kuliah,kelompok_kelas,topik,deskripsi
-1,2026-01-21,Pemrograman Berorientasi Objek,Kelas A,Introduction to OOP,"Class, object, encapsulation"
-2,2026-01-21,Pemrograman Berorientasi Objek,Kelas B,Introduction to OOP,"Class, object, encapsulation"
-```
+## Step 5. Check the MCP servers without SIAKAD
 
----
-
-## Running the System
-
-### Option 1: Multi-Agent Mode (Recommended)
-
-Runs Claude as orchestrator and Gemini as browser worker. Best for reliability — Claude plans while Gemini's visual capabilities handle the browser.
+`check_mcp_servers.py` starts each server through its launcher and talks to it over stdio, as the agents do. It reads the schedule with the CSV reader, and creates, updates and deletes two tasks in the queue. It does not open the browser, and it does not contact SIAKAD.
 
 ```bash
-cd /path/to/session-11
-./run_multiagents.sh
+../.venv/bin/python check_mcp_servers.py
 ```
 
-What happens:
-1. Gemini starts in the background, polling for tasks
-2. Claude reads all CSV files and dispatches tasks one by one
-3. Gemini picks up each task: logs in, fills forms, takes screenshots
-4. Claude monitors progress and reports a summary when done
+```
+siakad-csv-reader: 4 tools
+  read_attendance_data, list_schedule_files, get_attendance_for_date, list_attendance_dates
+  advanced_software_engineering_and_devops.csv: 15 records
+    2026-01-21  Session-01: General Lecture
+    2026-01-28  Session-02: Docker-based Software System
+    2026-02-04  Session-03: Observability in Software Systems
+    ...
+shared-state: 7 tools
+  create_task, get_task, update_task, list_tasks, get_next_pending_task, get_all_tasks_ordered, clear_tasks
+  Cleared 0 task(s).
+  Task 'task_001' created with type 'login' and status 'pending'.
+  Task 'task_002' created with type 'close_browser' and status 'pending'.
+  Task 'task_001' updated to status 'completed'.
+  next pending task: task_002 (close_browser)
+  Cleared 2 task(s).
+siakad-browser: 17 tools
+  launch_browser, login_siakad, navigate_to_daftar_hadir, set_date_picker, set_semester, click_search_or_filter, get_schedule_list, find_schedule_row, click_absensi_button, fill_attendance_form, submit_attendance_form, take_screenshot, get_page_html, run_js, click_element, fill_input, close_browser
+```
 
-### Option 2: Single-Agent Mode
+The lines that start with `INFO:mcp.server.lowlevel.server` come from the servers themselves, one per request. To check another schedule file, pass its path: `../.venv/bin/python check_mcp_servers.py schedule-data/<file>.csv`. Each date must come out as you meant it, because that is the date the agents will open on SIAKAD.
 
-Runs Claude only with all MCP servers. Simpler but Claude handles both planning and browser automation.
+## Step 6. Run the two agents
+
+Start with a schedule of one lecture, so that a mistake costs one form. Put a copy of your CSV with only the header and one row into its own folder, and pass the folder to the script:
 
 ```bash
-./run_claude_only.sh
+mkdir -p ~/siakad-one
+head -2 schedule-data/advanced_software_engineering_and_devops.csv > ~/siakad-one/test.csv
+./run_multiagents.sh ~/siakad-one
 ```
 
-### Option 3: Interactive Mode
+Without an argument the script uses `schedule_dir` from `config.json`, which is `schedule-data/`. It then:
 
-Launches Claude in chat mode so you can guide it step by step. Useful for testing or when you want manual control.
+1. deletes the old tasks in `tasks/`, prints the schedule folder and the files it found;
+2. writes `.gemini/settings.json`, which gives Gemini the browser server and the task queue;
+3. starts Claude with `claude -p`, its instructions from `agents/orchestrator_prompt.md`, and a temporary MCP configuration (`--mcp-config`) with the CSV reader and the task queue. `--dangerously-skip-permissions` lets Claude call these tools without asking you. Claude reads the schedule, creates the tasks and exits, and the script prints `Phase 1 complete: N task(s) created.` For one lecture the prompt asks for 3 tasks: login, the lecture, and closing the browser;
+4. starts Gemini with `gemini --yolo --model gemini-3-flash-preview --prompt ...`, its instructions from `agents/worker_prompt.md`. `--yolo` lets Gemini call the tools without asking. A Chromium window opens on the left of the screen. Gemini logs in, opens the attendance page, chooses the semester and the date, finds the row of the course, opens its form, types the topic and the description, saves, and checks for SIAKAD's message `Sukses update topik pembahasan`;
+5. prints `Done. All agents finished.`
+
+Gemini's prompt asks it to explain each step before it calls a tool, so its output is a log of the run. Check the result on SIAKAD itself, and look at the tasks:
 
 ```bash
-./run_claude_interactive.sh
+cat tasks/*.json
 ```
 
-Then type prompts like:
+Each task ends as `completed` or `failed`, with a `result` or an `error`. When a tool fails, the browser server saves a screenshot to `/tmp`, for example `/tmp/siakad_absensi_debug.png`, and `take_screenshot` saves there as well.
+
+## Step 7. The other modes
+
+```bash
+./run_claude_only.sh ~/siakad-one
+./run_gemini_only.sh ~/siakad-one
+./run_claude_interactive.sh ~/siakad-one
+```
+
+In the two single-agent modes one agent reads the schedule and drives the browser, without a task queue. The interactive mode starts Claude in chat mode with all three servers and a first prompt. Then you guide it, for example:
+
 ```
 > List all schedule files
-> Launch browser and login
-> Fill attendance for 2026-01-21
+> Launch the browser and log in
+> Fill the attendance for 2026-01-21
 > Take a screenshot
 ```
 
-### Option 4: Gemini-Only Mode
+Chapter 14 compares the modes: the split into an orchestrator and a worker keeps each agent's instructions and context small, at the price of two CLIs and a queue.
 
-Runs Gemini only with all MCP servers. Gemini handles both reading the schedule and browser automation.
+## Changing the settings
 
-```bash
-./run_gemini_only.sh
-```
+| Setting | Where | Meaning |
+|---|---|---|
+| `username`, `password` | `config.json` | Your SIAKAD login. |
+| `login_url`, `daftar_hadir_url` | `config.json` | The SIAKAD pages the browser server opens. |
+| `schedule_dir` | `config.json` | The schedule folder that the scripts use when you give them no folder. |
+| schedule folder | first argument of each `run_*.sh` | Overrides `schedule_dir` for one run. |
+| `--model gemini-3-flash-preview` | `run_multiagents.sh`, `run_gemini_only.sh` | The Gemini model. The comment above the command lists others. |
+| `DISPLAY` | `.claude/settings.json`, `.gemini/settings.json` and the `run_*.sh` scripts | The X display on which the browser window opens. |
+| `SIAKAD_PYTHON` | environment variable | The Python the three launchers start, instead of `../.venv/bin/python`. |
+| `agents/*.md` | prompt files | What the orchestrator and the worker are told to do. |
 
-### Custom schedule directory
-
-All scripts accept an optional path argument:
-
-```bash
-./run_multiagents.sh /path/to/my/schedules
-./run_claude_only.sh /path/to/my/schedules
-./run_gemini_only.sh /path/to/my/schedules
-```
-
----
+The scripts give the CLIs their MCP servers themselves: Claude through a temporary file passed with `--mcp-config`, and Gemini through `.gemini/settings.json`, which `run_multiagents.sh` and `run_gemini_only.sh` write before they start Gemini. `.claude/settings.json` lists the three servers as well, but the scripts do not rely on it.
 
 ## Troubleshooting
 
-### Browser doesn't open
-
-Make sure the `DISPLAY` environment variable is set correctly in your config. Check with:
-```bash
-echo $DISPLAY
-```
-Update the value in `.gemini/settings.json` and `.claude/settings.json` if needed.
-
-### Playwright can't find Chromium
-
-Re-install the browser:
-```bash
-source ~/venv/bin/activate
-playwright install chromium
-```
-
-### MCP server fails to start
-
-Test each server individually:
-```bash
-source ~/venv/bin/activate
-python mcp-servers/csv-reader/server.py      # Should hang (waiting for stdin), Ctrl+C to exit
-python mcp-servers/browser-automation/server.py
-python agents/shared_state.py
-```
-
-### Form selectors don't match
-
-The SIAKAD page structure may change. If the agent can't find form fields:
-1. Use `take_screenshot` to see the current page
-2. Use `get_page_html` to inspect the HTML
-3. Use `click_element` and `fill_input` with specific CSS selectors
-
-### Task stuck in "in_progress"
-
-If a task gets stuck, clear the queue and restart:
-```bash
-rm -f tasks/*.json
-./run_multiagents.sh
-```
+| Problem | What to do |
+|---|---|
+| `No module named 'mcp.server.fastmcp'` | mcp 2.x is installed. Run the `pip install -r requirements.txt` command from step 2 again, which installs mcp 1.30.0. |
+| `No module named 'mcp'`, `'pandas'` or `'playwright'` | The packages are not in the Python the launchers start. Do step 2, or point `SIAKAD_PYTHON` at the Python that has them. |
+| `.../.venv/bin/python: No such file or directory` | The environment `projects/.venv` does not exist. Create it as described in "Before you start". |
+| `Permission denied` when a script or launcher starts | The executable bit got lost, for example when the folder was copied from Windows. Run `chmod +x run_*.sh mcp-servers/*/run.sh agents/run_shared_state.sh`. |
+| `FileNotFoundError: ... config.json` | Do step 3. The browser server stops without that file. |
+| `Executable doesn't exist at .../chromium...` | Run `../.venv/bin/playwright install chromium`. |
+| Chromium does not start, with `Missing X server or $DISPLAY` | Run the scripts in a desktop session, and set `DISPLAY` to its display (see "Changing the settings"). |
+| Chromium does not start, with a message about missing libraries | Install them with `sudo ../.venv/bin/playwright install-deps chromium`. |
+| `Error: Claude orchestrator failed`, or `No tasks were created` | Read Claude's output above the message. `claude` must be logged in (run it once without arguments), and step 5 must work. |
+| Gemini has no `siakad-browser` or `shared-state` tools | Start `gemini` once in this folder and type `/mcp`. It lists the servers from `.gemini/settings.json` and whether they started. Run step 5 to see a launcher's error. |
+| A task stays `in_progress` | The worker stopped in the middle. Start the script again: it deletes the old tasks first. |
+| The agent cannot find a field or a button | SIAKAD's page changed. Ask the agent, for example in the interactive mode, to call `take_screenshot` and `get_page_html`, then to use `click_element` and `fill_input` with the selectors it finds. |
+| The wrong date opens on SIAKAD | Check the dates with step 5. Write them as `YYYY-MM-DD` or `DD/MM/YYYY`. A value such as `02/04/2026` is read as 2 April. |

@@ -7,7 +7,7 @@
 # This script runs in single-agent mode where Gemini handles everything
 # (reading CSV, browser automation, form filling) using its tools.
 #
-# For multi-agent mode (Claude + Gemini), use ./run_multiagent.sh instead.
+# For multi-agent mode (Claude + Gemini), use ./run_multiagents.sh instead.
 
 # Resolve paths relative to this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -49,14 +49,14 @@ cat > "$SCRIPT_DIR/.gemini/settings.json" <<GEMINI_MCP_EOF
 {
   "mcpServers": {
     "siakad-browser": {
-      "command": "$SCRIPT_DIR/mcp-servers/browser-automation/run.sh",
+      "command": "./mcp-servers/browser-automation/run.sh",
       "args": [],
       "env": {
         "DISPLAY": ":0"
       }
     },
     "siakad-csv-reader": {
-      "command": "$SCRIPT_DIR/mcp-servers/csv-reader/run.sh",
+      "command": "./mcp-servers/csv-reader/run.sh",
       "args": []
     }
   }

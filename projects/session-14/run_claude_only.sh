@@ -44,7 +44,7 @@ cd "$SCRIPT_DIR"
 
 # Generate MCP config file with absolute paths.
 # Claude CLI resolves .claude/settings.json from the git root, which may not
-# be session-11/. We use --mcp-config to pass a temp config file explicitly.
+# be session-14/. We use --mcp-config to pass a temp config file explicitly.
 MCP_CONFIG_FILE=$(mktemp /tmp/claude_mcp_XXXXXX.json)
 cat > "$MCP_CONFIG_FILE" <<EOF
 {
