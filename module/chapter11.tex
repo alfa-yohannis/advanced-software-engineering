@@ -259,9 +259,11 @@ m2m/
 |-- src/m2m/
 |   |-- MediaflowToActivityATLRunner.java   # Runner ATL (EMFTVM)
 |   +-- MediaflowToActivityETLRunner.java   # Runner ETL (Epsilon)
+|-- tools/
+|   +-- CompileAtl.java                     # Kompilasi ATL di luar Eclipse
 |-- transformer/
 |   |-- mediaflow2activity.atl              # Aturan transformasi ATL
-|   |-- mediaflow2activity.emftvm           # Bytecode ATL terkompilasi
+|   |-- mediaflow2activity.emftvm           # Bytecode ATL hasil kompilasi (diabaikan Git)
 |   +-- mediaflow2activity.etl              # Aturan transformasi ETL
 |-- input/
 |   |-- flow1.mediaflow                     # Model input (textual DSL)
@@ -272,7 +274,9 @@ m2m/
 |   |-- activity1atl.uml                    # Output ATL dari flow1
 |   |-- activity1etl.uml                    # Output ETL dari flow1
 |   |-- activity2atl.uml                    # Output ATL dari flow2
-|   +-- activity2etl.uml                    # Output ETL dari flow2
+|   |-- activity2etl.uml                    # Output ETL dari flow2
+|   +-- *.notation, output.di, output.aird  # Diagram Papyrus atas output
+|-- run-m2m.sh                              # Menjalankan ATL dan ETL di luar Eclipse
 |-- META-INF/MANIFEST.MF                    # Dependensi OSGi/Eclipse
 +-- .project                               # Konfigurasi proyek Eclipse
 \end{lstlisting}

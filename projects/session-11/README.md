@@ -48,7 +48,6 @@ m2m/                                    the M2M project, an Eclipse plug-in proj
   output/output.aird, .di, .notation    Papyrus and Sirius session files
   *.launch                              Eclipse launch configurations (step 6)
   META-INF/, build.properties           plug-in settings for Eclipse (PDE)
-  org/eclipse/m2m/atl/emftvm/impl/resource/EMFTVMResourceFactoryImpl.class  a copy of a class of the EMFTVM jar, not used
 mediaflow/                              the metamodel project: metamodels/mediaflow.ecore and the code EMF generated from it
 mediaflow.edit/, mediaflow.editor/, mediaflow.tests/  the EMF edit, editor and test projects of session 8
 mediaflow.xtext.parent/                 the Xtext projects of the textual MediaFlow syntax of session 9
@@ -145,8 +144,7 @@ These are the numbers in the table of models above. Open `output/activity2etl.um
 ```
     <node xmi:type="uml:OpaqueAction" xmi:id="__yEZ8OP4EfGjkJtVDhDoGQ" name="resize720" incoming="__yGPIOP4EfGjkJtVDhDoGQ" outgoing="__yGPIeP4EfGjkJtVDhDoGQ __yGPIuP4EfGjkJtVDhDoGQ">
       <language>shell</language>
-      <body>ffmpeg -i input.mp4 -vf scale=1280:720 
-      scaled.mp4</body>
+      <body>ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4</body>
 ```
 
 `resize720` has two outgoing control flows, one to each transcoder. The line break in the command comes from the model: the XMI stores it as `&#xA;`.
@@ -181,14 +179,14 @@ git checkout -- output
 
 ## Step 6 (optional). Run the transformations in Eclipse
 
-1. In Eclipse, choose File > Import > General > Existing Projects into Workspace. Select `projects/session-11` as the root directory, tick `mediaflow` and `m2m`, and leave "Copy projects into workspace" unticked. The runners reach the metamodel through `../mediaflow`, so both projects have to stay side by side. Do not import `example` into the same workspace: it is also named `mediaflow`, and it is meant for the second Eclipse that session 9's Xtext editor runs in.
+1. In Eclipse, choose File > Import > General > Existing Projects into Workspace. Select `projects/session-11` as the root directory, tick `mediaflow` and `m2m`, and leave "Copy projects into workspace" unticked. The runners reach the metamodel through `../mediaflow`, so both projects have to stay side by side. Leave `example` out: it is meant for the second Eclipse that session 9's Xtext editor runs in.
 2. When the workspace builds, the ATL builder compiles `mediaflow2activity.atl` into `mediaflow2activity.emftvm`, because the first line of the file is `-- @atlcompiler emftvm`.
 3. Right-click `MediaflowToActivityATLRunner.launch` or `MediaflowToActivityETLRunner.launch` and choose Run As. Without arguments, the ATL runner turns `flow1.xmi` into `output/activity1atl.uml`, and the ETL runner turns `flow2.xmi` into `output/activity2etl.uml`.
 4. `mediaflow2activity1.launch` and `mediaflow2activity2.launch` run the ETL file through Epsilon's own launcher, on `flow1.xmi` and `flow2.xmi`. They look the MediaFlow metamodel up by its namespace URI, `mediaflow`, so register it first: right-click `mediaflow/metamodels/mediaflow.ecore` and choose Register EPackages.
 5. To see a result as a diagram, open `output/activity1atl.notation` or `output/activity2atl.notation` with Papyrus, using the versions from Git (see the end of step 5).
 6. To make the XMI input from the textual model again, also import `mediaflow.xtext.parent/mediaflow.xtext` and `mediaflow.ecore.generator` (Xtext must be installed, see session 9's guide), then right-click `mediaflow.ecore.generator/ExportToXmi.launch` and choose Run As. It reads `mediaflow.ecore.generator/input/flow2.mediaflow` and writes `mediaflow.ecore.generator/output/flow2.xmi`, which is the same as `m2m/input/flow2.xmi`. For `flow1`, change the two file names at the top of `ExportToXmi.java`.
 
-The `m2m` project is set to Java 25 (`JavaSE-25` in `META-INF/MANIFEST.MF`). If Eclipse reports that no JRE matches `JavaSE-25`, add a JDK 25 or newer under Window > Preferences > Java > Installed JREs.
+The projects are set to Java 21 (`JavaSE-21` in `META-INF/MANIFEST.MF`). If Eclipse reports that no JRE matches `JavaSE-21`, add a JDK 21 or newer under Window > Preferences > Java > Installed JREs.
 
 Sessions 8 to 13 each have a project named `mediaflow`, and a workspace holds only one project of a name. Use a separate workspace for each session.
 

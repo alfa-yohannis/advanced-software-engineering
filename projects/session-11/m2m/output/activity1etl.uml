@@ -7,8 +7,7 @@
     <node xmi:type="uml:ActivityFinalNode" xmi:id="_IF6jQDZREfGIpLCZP0GkXA" name="outputVideo" incoming="_IGB4ATZREfGIpLCZP0GkXA"/>
     <node xmi:type="uml:OpaqueAction" xmi:id="_IF_bwDZREfGIpLCZP0GkXA" name="resize720" incoming="_IGB4ADZREfGIpLCZP0GkXA" outgoing="_IGB4ATZREfGIpLCZP0GkXA">
       <language>shell</language>
-      <body>ffmpeg -i input.mp4 -vf scale=1280:720 
-      scaled.mp4</body>
+      <body>ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4</body>
     </node>
   </packagedElement>
 </uml:Model>

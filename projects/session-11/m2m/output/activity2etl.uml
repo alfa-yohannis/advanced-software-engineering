@@ -11,8 +11,7 @@
     <node xmi:type="uml:ActivityFinalNode" xmi:id="__x5a0OP4EfGjkJtVDhDoGQ" name="outputVideo2" incoming="__yGPJOP4EfGjkJtVDhDoGQ"/>
     <node xmi:type="uml:OpaqueAction" xmi:id="__yEZ8OP4EfGjkJtVDhDoGQ" name="resize720" incoming="__yGPIOP4EfGjkJtVDhDoGQ" outgoing="__yGPIeP4EfGjkJtVDhDoGQ __yGPIuP4EfGjkJtVDhDoGQ">
       <language>shell</language>
-      <body>ffmpeg -i input.mp4 -vf scale=1280:720 
-      scaled.mp4</body>
+      <body>ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4</body>
     </node>
     <node xmi:type="uml:OpaqueAction" xmi:id="__yFBAOP4EfGjkJtVDhDoGQ" name="encodeH264" incoming="__yGPIeP4EfGjkJtVDhDoGQ" outgoing="__yGPI-P4EfGjkJtVDhDoGQ">
       <language>shell</language>
