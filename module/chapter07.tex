@@ -198,7 +198,6 @@ Folder \texttt{mde} berperan sebagai inti otomasi berbasis model. Komponen \text
 
 \begin{lstlisting}[language=bash,caption={Listing: Struktur komponen utama folder mde}, label={lst:ch07-1}]
 mde/
-|-- README.md
 |-- models/
 |   |-- environments.yaml
 |   `-- files.yaml
@@ -248,8 +247,7 @@ Gambar~\ref{fig:mde-models-inheritance} menampilkan model variasi environment de
   \textbf{StagingEnvironment}\\
   \rule{\linewidth}{0.2pt}\\
   + name: staging\\
-  + worker\_replicas: 2\\
-  + include\_replicas\_patch: true
+  + worker\_replicas: 2
 };
 
 \node[envbox, below right=14mm and 19mm of base] (prod) {
@@ -311,16 +309,19 @@ env_files:
 Direktori \texttt{transformers} berisi logika transformasi pada \texttt{generate.py}. Fungsi pembentuk context memperlihatkan penggunaan \textit{derived attributes} agar model tetap ringkas tetapi context render tetap lengkap dan konsisten. Listing~\ref{lst:ch07-4} memuat perintahnya.
 
 \begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan fungsi pembentuk context (mde/transformers/generate.py)}, label={lst:ch07-4}]
-def enrich_environment_context(defaults, env_cfg, output_root):
+def enrich_environment_context(defaults: Dict[str, Any], env_cfg: Dict[str, Any], output_root: Path) -> Dict[str, Any]:
     context = merge_dicts(defaults, env_cfg)
 
     name = str(context["name"])
     context["env_name"] = name
 
+    # Derived defaults to keep environment model compact.
     context.setdefault("k8s_overlay", name)
+    context.setdefault("env_value", name)
     context.setdefault("mp3_bucket", f"tts-{name}")
     context.setdefault("internal_token", f"changeme-{name}")
     context.setdefault("tfvars_filename", f"{name}.tfvars")
+    context.setdefault("k8s_root_path", str((output_root / "kubernetes").resolve()))
 
     return context
 \end{lstlisting}
@@ -328,7 +329,7 @@ def enrich_environment_context(defaults, env_cfg, output_root):
 Fungsi evaluasi kondisi berikut memperlihatkan bahwa keputusan render berkas opsional ditentukan oleh nilai context hasil model. Perintahnya ada pada Listing~\ref{lst:ch07-5}.
 
 \begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan evaluasi kondisi file opsional (mde/transformers/generate.py)}, label={lst:ch07-5}]
-def should_render(record, context):
+def should_render(record: Dict[str, Any], context: Dict[str, Any]) -> bool:
     condition = record.get("when")
     if not condition:
         return True
@@ -337,7 +338,7 @@ def should_render(record, context):
 
 \subsection[Komponen templates]{Komponen \texttt{templates}: Materialisasi ke Artefak IaC}\label{subsec:mde-templates}
 
-Direktori \texttt{templates} memuat representasi target deployment dalam format Jinja2. Template Terraform menghasilkan \texttt{main.tf} dan \texttt{*.tfvars}, sedangkan template Kubernetes menghasilkan \texttt{kustomization.yaml}, patch, ingress, dan berkas opsional lain sesuai context. Perintah lengkapnya ada pada Listing~\ref{lst:ch07-6}.
+Direktori \texttt{templates} memuat representasi target deployment dalam format Jinja2. Template Terraform menghasilkan \texttt{main.tf} dan \texttt{*.tfvars}, sedangkan template Kubernetes menghasilkan \texttt{kustomization.yaml}, ConfigMap dan Secret environment, patch, ingress, dan berkas opsional lain sesuai context. Perintah lengkapnya ada pada Listing~\ref{lst:ch07-6}.
 
 \begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan template tfvars (mde/templates/terraform/env/tfvars.j2)}, label={lst:ch07-6}]
 mp3_bucket     = "{{ mp3_bucket }}"
@@ -345,8 +346,13 @@ internal_token = "{{ internal_token }}"
 
 {% if minio_root_user_from_var %}
 minio_root_user = "{{ minio_root_user }}"
-{% endif %}
 
+{% endif %}
+{% if minio_root_password_from_var %}
+# MinIO's default, for this lab only. Change it in real production.
+minio_root_password = "{{ minio_root_password }}"
+
+{% endif %}
 worker_replicas = {{ worker_replicas }}
 \end{lstlisting}
 
@@ -355,18 +361,17 @@ Listing~\ref{lst:ch07-7} menampilkan potongan kode pada Komponen templates.
 \begin{lstlisting}[style=PythonStyle,caption={Listing: Cuplikan template overlay (mde/templates/kubernetes/overlay/kustomization.yaml.j2)}, label={lst:ch07-7}]
 resources:
   - ../../base
+  - configmap-app.yaml
+  - secret-app.yaml
   - ingress-api.yaml
   - ingress-web.yaml
-{% if include_pdb %}
-  - pdb-api.yaml
+{% if include_pdb %}  - pdb-api.yaml
   - pdb-web.yaml
 {% endif %}
-
 patchesStrategicMerge:
   - patch-images.yaml
   - patch-hpa-worker.yaml
-{% if include_replicas_patch %}
-  - patch-replicas.yaml
+{% if include_replicas_patch %}  - patch-replicas.yaml
 {% endif %}
 \end{lstlisting}
 
