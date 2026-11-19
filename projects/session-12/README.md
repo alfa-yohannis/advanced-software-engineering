@@ -134,7 +134,7 @@ These are the numbers in the table of models above. Open `output/elk/flow1.json`
         {"id":"e1","sources":["n1_p1"],"targets":["n2_p0"]}
     ]
 ...
-        "n1":{"name":"resize720","type":"Scaler","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i input.mp4 -vf scale=1280:720 \n      scaled.mp4","width":1280,"height":720},
+        "n1":{"name":"resize720","type":"Scaler","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4","width":1280,"height":720},
 ```
 
 - An edge points at ports, not at nodes, because that is what the metamodel stores. ELK draws the arrow from the port, and the tooltip finds the node through `sourceNode()` and `targetNode()`.
@@ -187,7 +187,7 @@ That is the order of `js/app.js`: the manifest first, then the JSON and the frag
 2. Right-click `MediaflowToHtmlEGXRunner.launch` in the `m2t` project and choose Run As > MediaflowToHtmlEGXRunner. The Console shows the two `Generated ...` lines of step 3. Press F5 on the `output` folder to see the new files.
 3. `m2t_flow1.launch` and `m2t_flow2.launch` run `m2t.egx` through Epsilon's own launcher, on one model each. They look the metamodel up by its namespace URI, `mediaflow`, so register it first: right-click `mediaflow/metamodels/mediaflow.ecore` and choose Register EPackages.
 
-The projects are set to Java 25 (`JavaSE-25` in `META-INF/MANIFEST.MF` and `.classpath`). If Eclipse reports that no JRE matches `JavaSE-25`, add a JDK 25 or newer under Window > Preferences > Java > Installed JREs.
+The projects are set to Java 21 (`JavaSE-21` in `META-INF/MANIFEST.MF` and `.classpath`), and `pom.xml` compiles for Java 17. If Eclipse reports that no JRE matches `JavaSE-21`, add a JDK 21 or newer under Window > Preferences > Java > Installed JREs.
 
 Sessions 8 to 13 each have a project named `mediaflow`, and a workspace holds only one project of a name. Use a separate workspace for each session.
 
@@ -230,7 +230,7 @@ These cost time when the templates were written. The first three were checked ag
 | `... has no org.eclipse.epsilon.egl.engine jar` | Epsilon is not installed in that Eclipse. Install it as described in "Before you start", or point `ECLIPSE_HOME` to an Eclipse that has it. |
 | `javac: command not found` | Only a Java runtime is installed. Install a JDK. |
 | `NoClassDefFoundError: org/apache/commons/collections/list/UnmodifiableList`, `com/google/common/collect/TreeBasedTable` or `org/antlr/runtime/TokenSource` | A jar is missing from a classpath you built yourself. Epsilon needs Apache Commons Collections, Guava and ANTLR 3 next to its own jars. `run-m2t.sh` adds all three. |
-| `No .xmi inputs found in input` | You are not in the `m2t` folder, or `input/` holds no XMI file. Go back to step 1. |
+| `No .xmi inputs found in input`, exit status 2 | You are not in the `m2t` folder, or `input/` holds no XMI file. Go back to step 1. |
 | `Parse error(s) in file ...` or `EGX parse failed` | A template or the EGX file has a syntax error. The message names the file and the line. See also the pitfalls above. |
 | The page shows only its header, and the drop-down is empty | Either the page was opened from disk, and the browser console says `has been blocked by CORS policy`, or elk.js did not load, and the console says `Uncaught ReferenceError: ELK is not defined`. Open the page through the server of step 5, on a machine that can reach `cdn.jsdelivr.net`. |
 | A new model is missing from the drop-down | Add its graph name to `output/manifest.json` and reload the page. |

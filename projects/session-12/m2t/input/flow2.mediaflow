@@ -4,8 +4,8 @@ graph flow2 {
     port inputOut OUT
   }
 
-  scaler resize720 backend=FFMPEG command="ffmpeg -i input.mp4 -vf scale=1280:720 
-      scaled.mp4" replicas=1 width=1280 height=720 {
+  scaler resize720 backend=FFMPEG command="ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4"
+      replicas=1 width=1280 height=720 {
     port resizeIn IN
     port resizeOutH264 OUT
     port resizeOutVp9 OUT

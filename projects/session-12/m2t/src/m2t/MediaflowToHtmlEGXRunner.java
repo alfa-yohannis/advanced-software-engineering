@@ -33,15 +33,18 @@ public class MediaflowToHtmlEGXRunner {
         Files.createDirectories(Paths.get(outputDir));
 
         List<Path> inputs = new ArrayList<>();
-        try (DirectoryStream<Path> stream =
-                 Files.newDirectoryStream(Paths.get(inputDir), "*.xmi")) {
-            for (Path p : stream) inputs.add(p);
+        if (Files.isDirectory(Paths.get(inputDir))) {
+            try (DirectoryStream<Path> stream =
+                     Files.newDirectoryStream(Paths.get(inputDir), "*.xmi")) {
+                for (Path p : stream) inputs.add(p);
+            }
         }
         Collections.sort(inputs);
 
         if (inputs.isEmpty()) {
-            System.out.println("No .xmi inputs found in " + inputDir);
-            return;
+            // Fail, so that "validate && generate" stops when the path is wrong.
+            System.err.println("No .xmi inputs found in " + inputDir);
+            System.exit(2);
         }
 
         for (Path input : inputs) {

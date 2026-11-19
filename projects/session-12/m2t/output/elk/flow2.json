@@ -28,7 +28,7 @@
   },
   "nodeMeta": {
     "n0":{"name":"inputVideo","type":"Resource","uri":"file:///home/alfa/videos/input.mp4","external":true,"mediaType":"VIDEO"},
-        "n1":{"name":"resize720","type":"Scaler","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i input.mp4 -vf scale=1280:720 \n      scaled.mp4","width":1280,"height":720},
+        "n1":{"name":"resize720","type":"Scaler","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i input.mp4 -vf scale=1280:720 scaled.mp4","width":1280,"height":720},
         "n2":{"name":"encodeH264","type":"Transcoder","backend":"FFMPEG","replicas":1,"command":"ffmpeg -i scaled.mp4 -c:v libx264 -c:a aac output-h264.mp4","videoCodec":"libx264","audioCodec":"aac","container":"mp4","bitrate":2000},
         "n3":{"name":"encodeVp9","type":"Transcoder","backend":"GSTREAMER","replicas":1,"command":"gst-launch-1.0 filesrc location=scaled.mp4 ! decodebin ! vp9enc bitrate=2500 ! webmmux ! filesink location=output-vp9.webm","videoCodec":"vp9","audioCodec":"opus","container":"webm","bitrate":2500},
         "n4":{"name":"outputVideo1","type":"Resource","uri":"file:///home/alfa/videos/output-h264.mp4","external":true,"mediaType":"VIDEO"},
