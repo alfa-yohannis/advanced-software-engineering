@@ -937,6 +937,8 @@ Require-Bundle: org.eclipse.epsilon.common;bundle-version="2.9.0",
  com.google.guava,
  org.apache.commons.collections,
  mediaflow;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: m2m
 \end{lstlisting}
 
 \noindent Listing~\ref{lst:ch11-manifest} menunjukkan bahwa proyek ini bergantung pada tiga keluarga plugin Eclipse: Epsilon 2.9.0 (untuk ETL), ATL/EMFTVM 3.0.0 (untuk ATL), dan UML2 5.6.0 (metamodel target). Plugin \texttt{mediaflow} menyediakan kelas EMF yang dihasilkan dari \texttt{mediaflow.ecore}.

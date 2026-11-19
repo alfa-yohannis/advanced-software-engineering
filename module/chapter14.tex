@@ -203,7 +203,8 @@ session-14/
 |-- README.md                         # Dokumentasi proyek
 |-- CLAUDE.md                         # Instruksi konteks untuk Claude CLI
 |-- GEMINI.md                         # Instruksi konteks untuk Gemini CLI
-|-- config.json                       # Kredensial dan URL SIAKAD
+|-- config.example.json               # Templat konfigurasi SIAKAD
+|-- config.json                       # Salinan templat berisi kredensial (diabaikan Git)
 |-- schedule-data/                    # Data jadwal CSV (satu per mata kuliah)
 |   +-- advanced_software_engineering_and_devops.csv
 |-- mcp-servers/                      # Server MCP (tool layer)
@@ -391,7 +392,7 @@ Server \texttt{siakad-browser} menyediakan 15 \textit{tools} yang mengenkapsulas
 
 \begin{lstlisting}[
   style=PythonStyle,
-  caption={Manajemen state browser global dan lazy initialization},
+  caption={Manajemen state browser global dan lazy initialization (diringkas dari \texttt{server.py})},
   label={lst:ch14-browser-state},
   basicstyle=\ttfamily\scriptsize
 ]
@@ -430,7 +431,7 @@ async def _ensure_browser() -> Page:
 
 \begin{lstlisting}[
   style=PythonStyle,
-  caption={Implementasi tool \texttt{login\_siakad} dengan multi-selector dan error screenshot},
+  caption={Implementasi tool \texttt{login\_siakad} dengan multi-selector dan error screenshot (diringkas dari \texttt{server.py})},
   label={lst:ch14-login-tool},
   basicstyle=\ttfamily\scriptsize
 ]
@@ -467,7 +468,7 @@ Tool \texttt{set\_date\_picker} menggunakan strategi tiga lapis (\textit{three-l
 
 \begin{lstlisting}[
   style=PythonStyle,
-  caption={Strategi tiga lapis pada tool \texttt{set\_date\_picker}},
+  caption={Strategi tiga lapis pada tool \texttt{set\_date\_picker} (diringkas dari \texttt{server.py})},
   label={lst:ch14-datepicker},
   basicstyle=\ttfamily\scriptsize
 ]
@@ -521,35 +522,48 @@ Tool untuk interaksi tabel jadwal menggunakan \textit{JavaScript evaluation} di 
   basicstyle=\ttfamily\scriptsize
 ]
 @mcp.tool()
-async def find_schedule_row(mata_kuliah: str,
-                            kelompok_kelas: str) -> str:
-    """Find table row by mata kuliah and kelompok kelas."""
+async def find_schedule_row(mata_kuliah: str, kelompok_kelas: str) -> str:
+    """Find the correct table row index by matching mata kuliah and kelompok kelas."""
     page = await _ensure_browser()
-    result = await page.evaluate("""(params) => {
-        const [targetMK, targetKelas] = params;
-        const matches = [];
-        document.querySelectorAll('table tr').forEach((row, i) => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 6) {
-                const mk = cells[1]?.innerText.trim() || '';
-                const kelas = cells[6]?.innerText.trim() || '';
-                if (mk.toLowerCase().includes(
-                        targetMK.toLowerCase()) &&
-                    kelas.toLowerCase().includes(
-                        targetKelas.toLowerCase())) {
-                    matches.push({row_index: i,
-                        mata_kuliah: mk, kelompok_kelas: kelas});
-                }
-            }
-        });
-        return matches;
-    }""", [mata_kuliah, kelompok_kelas])
-    return json.dumps({"matches": result,
-        "recommended_row_index": result[0]["row_index"]
-    } if result else {"error": "No match"})
+    try:
+        result = await page.evaluate("""(params) => {
+            const [targetMK, targetKelas] = params;
+            const tables = document.querySelectorAll('table');
+            const matches = [];
+            tables.forEach(table => {
+                const rows = table.querySelectorAll('tr');
+                let dataRowIndex = 0;
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 6) {
+                        const mk = cells[1] ? cells[1].innerText.trim() : '';
+                        const kelas = cells[6] ? cells[6].innerText.trim() : '';
+                        if (mk.toLowerCase().includes(targetMK.toLowerCase()) &&
+                            kelas.toLowerCase().includes(targetKelas.toLowerCase())) {
+                            matches.push({
+                                row_index: dataRowIndex,
+                                mata_kuliah: mk,
+                                kelompok_kelas: kelas,
+                                tanggal: cells[2] ? cells[2].innerText.trim() : '',
+                                jam: cells[3] ? cells[3].innerText.trim() : ''
+                            });
+                        }
+                        dataRowIndex++;
+                    }
+                });
+            });
+            return matches;
+        }""", [mata_kuliah, kelompok_kelas])
+        if not result:
+            return "No matching row found ..."
+        return json.dumps({
+            "matches": result,
+            "recommended_row_index": result[0]["row_index"]
+        }, indent=2, ensure_ascii=False)
+    # ...
 \end{lstlisting}
 
-\noindent Listing~\ref{lst:ch14-find-row} menunjukkan bagaimana JavaScript yang dievaluasi langsung di dalam browser mem-parsing tabel HTML dan melakukan \textit{case-insensitive substring matching}. Hasil berupa \texttt{row\_index} yang kemudian digunakan oleh tool \texttt{click\_absensi\_button} untuk mengklik tombol yang tepat. Perintah lengkapnya ada pada Listing~\ref{lst:ch14-fill-form}.
+\noindent Listing~\ref{lst:ch14-find-row} menunjukkan bagaimana JavaScript yang dievaluasi langsung di dalam browser mem-parsing tabel HTML dan melakukan \textit{case-insensitive substring matching}. Hasil berupa \texttt{row\_index}, yaitu urutan baris data (baris dengan sedikitnya enam sel) di dalam tabelnya, bukan urutan seluruh baris \texttt{tr}, sehingga baris header tidak ikut terhitung. Indeks inilah yang kemudian digunakan oleh tool \texttt{click\_absensi\_button} untuk mengklik tombol yang tepat. Perintah lengkapnya ada pada Listing~\ref{lst:ch14-fill-form}.
 
 \begin{lstlisting}[
   style=PythonStyle,

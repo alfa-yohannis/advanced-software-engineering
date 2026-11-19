@@ -669,8 +669,8 @@ Terraform tidak mengelola autoscaling runtime aplikasi.
 \subsection{Rolling Update Tanpa Downtime} Potongan kodenya ada pada Listing~\ref{lst:ch06-39}.
 
 \begin{lstlisting}[language=bash, caption={Potongan kode pada Rolling Update Tanpa Downtime}, label={lst:ch06-39}]
-kubectl set image -n tts deploy/worker api=session05-worker:new-version
-kubectl rollout status -n tts deploy/api
+kubectl set image -n tts deploy/worker worker=session05-worker:new-version
+kubectl rollout status -n tts deploy/worker
 kubectl get pods -n tts -w
 \end{lstlisting}
 
