@@ -294,13 +294,14 @@ IaC merupakan pilar penting dalam praktik DevOps modern karena memungkinkan inte
 
 Pipeline CI/CD\index{CI/CD} dapat menjalankan provisioning otomatis sebelum pengujian integrasi atau deployment.
 
-Contoh integrasi (Listing~\ref{lst:ch05-11}):
+Contoh integrasi dari folder proyek sesi 5 (Listing~\ref{lst:ch05-11}). Terraform berjalan di folder environment, sedangkan pengujian berjalan di folder \texttt{app}, dan \texttt{-auto-approve} diperlukan karena pipeline tidak dapat menjawab konfirmasi:
 
-\begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Integrasi dengan CI/CD}, label={lst:ch05-11}]
+\begin{lstlisting}[language=bash, caption={Langkah pipeline: provisioning, uji integrasi, lalu destroy}, label={lst:ch05-11}]
+cd iac/terraform/dev
 terraform init
-terraform apply -var-file=dev.tfvars
-pytest tests/integration
-terraform destroy -var-file=dev.tfvars
+terraform apply -auto-approve -var-file=dev.tfvars
+(cd ../../../app && python -m pytest -q tests/integration)
+terraform destroy -auto-approve -var-file=dev.tfvars
 \end{lstlisting}
 
 Dengan pola ini, environment pengujian dapat dibuat secara dinamis dan dihancurkan kembali setelah selesai, memastikan reproducibility.
@@ -855,7 +856,7 @@ resource "docker_image" "api" {
 }
 \end{lstlisting}
 
-Service discovery dibuat stabil dengan network alias, misalnya \texttt{aliases = ["api"]}. Dengan ini, komponen lain selalu memanggil \texttt{http://api:8000} di network internal, walaupun nama container sebenarnya \texttt{tts-dev-api} atau \texttt{tts-prod-api}. Kodenya ada pada Listing~\ref{lst:ch05-35}.
+Service discovery dibuat stabil dengan network alias, misalnya \texttt{aliases = ["api"]}. Dengan ini, komponen lain selalu memanggil \texttt{http://api:8000} di network internal, walaupun nama container sebenarnya \texttt{tts-dev-api} atau \texttt{tts-production-api}. Kodenya ada pada Listing~\ref{lst:ch05-35}.
 
 \begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada main.tf (4)}, label={lst:ch05-35}]
 resource "docker_container" "api" {
@@ -912,12 +913,19 @@ output "urls" {
 Root module di \texttt{dev/staging/prod} cukup memanggil modul yang sama dan mengirim variabel. Perbedaan environment umumnya hanya pada \texttt{env}, \texttt{ports}, serta \texttt{worker\_replicas}/\texttt{mount\_models}. Potongan kodenya ada pada Listing~\ref{lst:ch05-39}.
 
 \begin{lstlisting}[language=terraform, caption={Potongan kode Terraform pada Pemanggilan Modul dari Root Module}, label={lst:ch05-39}]
-module "tts_stack" {
-  source       = "../../modules/tts_stack"
-  env          = var.env
-  project_root = var.project_root
-  ports        = var.ports
+module "tts" {
+  source = "../modules/tts_stack"
 
+  env          = "dev"
+  project_root = abspath("${path.module}/../../..")
+
+  ports = {
+    # ...
+  }
+
+  mp3_bucket     = var.mp3_bucket
+  internal_token = var.internal_token
+  # ...
   worker_replicas = var.worker_replicas
   mount_models    = var.mount_models
 }
@@ -929,9 +937,9 @@ Folder \texttt{dev} berperan sebagai \textit{root module} untuk environment deve
 
 \subsubsection{\texttt{main.tf}: Root Module yang Memanggil \texttt{modules/tts\_stack}}
 
-Bagian awal biasanya mendefinisikan variabel yang akan diisi dari \texttt{dev.tfvars}. Dua variabel yang paling penting untuk studi kasus ini adalah \texttt{mp3\_bucket} (nama bucket MinIO untuk output MP3) dan \texttt{internal\_token} (token otorisasi internal antarkomponen API--worker). Listing~\ref{lst:ch05-40} memuat isi berkasnya.
+Bagian awal biasanya mendefinisikan variabel yang akan diisi dari \texttt{dev.tfvars}. Dua variabel yang paling penting untuk studi kasus ini adalah \texttt{mp3\_bucket} (nama bucket MinIO untuk output MP3) dan \texttt{internal\_token} (token otorisasi internal antarkomponen API--worker). Listing~\ref{lst:ch05-40} memuat deklarasinya.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars}, label={lst:ch05-40}]
+\begin{lstlisting}[language=terraform, caption={Potongan main.tf: variabel yang diisi dari dev.tfvars}, label={lst:ch05-40}]
 variable "mp3_bucket"     { type = string }
 variable "internal_token" { type = string }
 \end{lstlisting}
@@ -952,7 +960,7 @@ variable "mount_models" {
 
 Inti \texttt{main.tf} adalah pemanggilan modul \texttt{tts}. Parameter \texttt{env = "dev"} membuat semua resource akan diprefix \texttt{tts-dev-*}. Parameter \texttt{project\_root} dihitung dengan \texttt{abspath(...)} agar selalu menjadi path absolut ke root proyek, sehingga build context Docker (API/Web/Worker) dan file mount (\texttt{nginx.conf}, \texttt{models/}) dapat ditemukan secara konsisten terlepas dari lokasi eksekusi Terraform. Isi berkasnya ada pada Listing~\ref{lst:ch05-42}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas main.tf}, label={lst:ch05-42}]
+\begin{lstlisting}[language=terraform, caption={Potongan awal main.tf}, label={lst:ch05-42}]
 module "tts" {
   source = "../modules/tts_stack"
 
@@ -976,28 +984,28 @@ ports = {
 
 Kemudian, \texttt{mp3\_bucket} dan \texttt{internal\_token} diteruskan dari variabel root module (\texttt{var.*}) sehingga nilainya bisa dikontrol dari \texttt{dev.tfvars}. Pola ini penting karena token dan nama bucket biasanya berbeda antar environment. Isinya ada pada Listing~\ref{lst:ch05-44}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (2)}, label={lst:ch05-44}]
+\begin{lstlisting}[language=terraform, caption={Potongan main.tf: bucket dan token dari variabel}, label={lst:ch05-44}]
 mp3_bucket     = var.mp3_bucket
 internal_token = var.internal_token
 \end{lstlisting}
 
 Kredensial MinIO dituliskan eksplisit agar perilakunya identik dengan \texttt{docker-compose.yml} (sering kali \texttt{minioadmin/minioadmin} di dev). Walaupun modul sudah punya default, menuliskan eksplisit di root module membantu pembaca (mahasiswa) melihat bahwa nilai ini adalah bagian dari konfigurasi environment. Isi berkasnya ada pada Listing~\ref{lst:ch05-45}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas docker-compose.yml}, label={lst:ch05-45}]
+\begin{lstlisting}[language=terraform, caption={Potongan main.tf: login MinIO}, label={lst:ch05-45}]
 minio_root_user     = "minioadmin"
 minio_root_password = "minioadmin"
 \end{lstlisting}
 
 Konfigurasi Piper diisi sesuai lokasi file config di dalam container (\texttt{/models/...json}) dan parameter \texttt{length\_scale}. Di dev, nilainya biasanya default untuk menjaga eksperimen mudah direproduksi. Listing~\ref{lst:ch05-46} memuat isi berkasnya.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas /models/...json}, label={lst:ch05-46}]
+\begin{lstlisting}[language=terraform, caption={Potongan main.tf: konfigurasi Piper}, label={lst:ch05-46}]
 piper_model_config_path = "/models/en_GB-alan-medium.onnx.json"
 piper_length_scale      = "1.0"
 \end{lstlisting}
 
 Terakhir, parameter untuk scaling dan mount model diteruskan dari variabel root module agar dapat dioverride lewat \texttt{dev.tfvars} tanpa menyentuh kode. Isinya ada pada Listing~\ref{lst:ch05-47}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (3)}, label={lst:ch05-47}]
+\begin{lstlisting}[language=terraform, caption={Potongan main.tf: jumlah worker dan mount model}, label={lst:ch05-47}]
 worker_replicas = var.worker_replicas
 mount_models    = var.mount_models
 \end{lstlisting}
@@ -1014,9 +1022,9 @@ output "urls" {
 
 File \texttt{dev.tfvars} menyimpan nilai variabel untuk environment dev. Ini memisahkan \textit{konfigurasi} dari \textit{kode}, sehingga \texttt{main.tf} tetap generik dan bersih. Listing~\ref{lst:ch05-49} memuat isi berkasnya.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (4)}, label={lst:ch05-49}]
-mp3_bucket     = "tts-dev"
-internal_token = "changeme-dev"
+\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars}, label={lst:ch05-49}]
+mp3_bucket      = "tts-dev"
+internal_token  = "changeme-dev"
 
 worker_replicas = 1
 mount_models    = false
@@ -1028,7 +1036,7 @@ Dengan konfigurasi ini, output audio akan masuk ke bucket \texttt{tts-dev}, komu
 
 Praktik yang umum adalah menjalankan Terraform dari folder \texttt{dev} sambil menunjuk \texttt{dev.tfvars}, sehingga root module membaca nilai-nilai environment dev dan menerapkan resource Docker via provider \texttt{kreuzwerker/docker}. Isinya ada pada Listing~\ref{lst:ch05-50}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas dev.tfvars (5)}, label={lst:ch05-50}]
+\begin{lstlisting}[language=bash, caption={Menjalankan environment dev}, label={lst:ch05-50}]
 # dijalankan dari iac/terraform/dev
 terraform init
 terraform apply -var-file=dev.tfvars
@@ -1044,7 +1052,7 @@ Folder \texttt{staging} adalah root module untuk environment staging. Polanya sa
 
 Di staging, \texttt{mp3\_bucket} dan \texttt{internal\_token} tetap didefinisikan sebagai variabel root module supaya nilainya dapat dipasok dari \texttt{staging.tfvars}. Ini membuat \texttt{main.tf} bersih dan reusable. Isi berkasnya ada pada Listing~\ref{lst:ch05-51}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas staging.tfvars}, label={lst:ch05-51}]
+\begin{lstlisting}[language=terraform, caption={Potongan staging/main.tf: variabel yang diisi dari staging.tfvars}, label={lst:ch05-51}]
 variable "mp3_bucket"     { type = string }
 variable "internal_token" { type = string }
 \end{lstlisting}
@@ -1065,7 +1073,7 @@ variable "mount_models" {
 
 Pemanggilan modul dilakukan melalui \texttt{module "tts"}. Parameter \texttt{env = "staging"} akan mempengaruhi prefix penamaan resource (\texttt{tts-staging-*}) dan nama network (\texttt{tts-staging}). Parameter \texttt{project\_root} memakai \texttt{abspath(...)} agar build context Docker (API/Web/Worker) dan path mount (nginx.conf, models) dapat di-resolve dengan benar. Isinya ada pada Listing~\ref{lst:ch05-53}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas nginx.conf}, label={lst:ch05-53}]
+\begin{lstlisting}[language=terraform, caption={Potongan awal staging/main.tf}, label={lst:ch05-53}]
 module "tts" {
   source       = "../modules/tts_stack"
   env          = "staging"
@@ -1102,7 +1110,7 @@ minio_root_password = "minioadmin"
 
 Konfigurasi Piper tetap mengarah ke file config di \texttt{/models}. Karena \texttt{mount\_models = true}, folder \texttt{app/models} di host akan dimount ke \texttt{/models} di container worker. Artinya, file \texttt{en\_GB-alan-medium.onnx.json} harus benar-benar ada di host pada path proyek. Isi berkasnya ada pada Listing~\ref{lst:ch05-57}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas \_GB-alan-medium.onnx.json}, label={lst:ch05-57}]
+\begin{lstlisting}[language=terraform, caption={Potongan staging/main.tf: konfigurasi Piper}, label={lst:ch05-57}]
 piper_model_config_path = "/models/en_GB-alan-medium.onnx.json"
 piper_length_scale      = "1.0"
 \end{lstlisting}
@@ -1126,7 +1134,7 @@ output "urls" {
 
 File \texttt{staging.tfvars} memuat nilai variabel khusus staging. Bucket dipisahkan dari dev agar artefak (MP3) tidak tercampur, token dibedakan agar trafik antar environment tidak saling ``terpercaya'' secara tidak sengaja, dan worker dinaikkan menjadi 2 untuk menguji concurrency. Isi berkasnya ada pada Listing~\ref{lst:ch05-60}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas staging.tfvars (2)}, label={lst:ch05-60}]
+\begin{lstlisting}[language=terraform, caption={Isi berkas staging.tfvars}, label={lst:ch05-60}]
 mp3_bucket     = "tts-staging"
 internal_token = "changeme-staging"
 
@@ -1182,7 +1190,7 @@ variable "mount_models" {
 
 Kredensial MinIO dibuat sebagai variabel terpisah dan juga ditandai \texttt{sensitive}. Praktiknya, nilai ini diisi melalui \texttt{production.tfvars} (atau lewat mekanisme secret management di CI/CD), bukan disisipkan langsung di kode. Listing~\ref{lst:ch05-64} memuat isi berkasnya.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas production.tfvars}, label={lst:ch05-64}]
+\begin{lstlisting}[language=terraform, caption={Potongan prod/main.tf: variabel login MinIO yang sensitif}, label={lst:ch05-64}]
 variable "minio_root_user" {
   type      = string
   sensitive = true
@@ -1257,12 +1265,12 @@ output "urls" {
 
 File \texttt{production.tfvars} menyimpan nilai variabel khusus production. Bucket dipisahkan menjadi \texttt{tts-prod} agar artefak MP3 tidak tercampur dengan environment lain. Token internal dibedakan dan dianggap rahasia. Pada contoh ini, user MinIO tetap default, dan password disebut ``sama dengan username'' (default MinIO) untuk kebutuhan demo, tetapi seharusnya diubah pada produksi nyata. Isi berkasnya ada pada Listing~\ref{lst:ch05-72}.
 
-\begin{lstlisting}[language=terraform, caption={Isi berkas production.tfvars (2)}, label={lst:ch05-72}]
-mp3_bucket     = "tts-prod"
-internal_token = "changeme-production"
+\begin{lstlisting}[language=terraform, caption={Isi berkas production.tfvars}, label={lst:ch05-72}]
+mp3_bucket      = "tts-prod"
+internal_token  = "changeme-production"
 
 minio_root_user     = "minioadmin"
-minio_root_password = "minioadmin" # ganti di produksi nyata
+minio_root_password = "minioadmin" # MinIO's default, for this lab only. Change it in real production.
 
 worker_replicas = 4
 mount_models    = false

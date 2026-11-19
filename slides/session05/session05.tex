@@ -136,7 +136,7 @@
 	\begin{itemize}
 		\item Terraform adalah alat \textbf{Infrastructure as Code (IaC)} deklaratif berbasis \textbf{HCL}.
 		\item Infrastruktur didefinisikan dalam file \texttt{.tf} sebagai \textit{desired state}.
-		\item Alur kerja utama: \texttt{init} → \texttt{plan} (lihat diff) → \texttt{apply} (eksekusi).
+		\item Alur kerja utama: \texttt{init} $\rightarrow$ \texttt{plan} (lihat diff) $\rightarrow$ \texttt{apply} (eksekusi).
 		\item Konsep kunci: \textbf{provider} (Docker, AWS, dll.), \textbf{resource}, \textbf{module}, \textbf{variables}, \textbf{outputs}.
 		\item Menggunakan \textbf{state file} untuk menghitung perubahan dan mendeteksi drift.
 		\item Mendukung reproducibility melalui \texttt{destroy} dan \texttt{apply}.
@@ -358,9 +358,9 @@ iac/
 \begin{itemize}
     \item \textbf{modules/tts\_stack}: enkapsulasi seluruh resource Docker untuk satu environment.
     \begin{itemize}
-        \item \texttt{variables.tf} → kontrak input (env, ports, worker\_replicas, mount\_models).
-        \item \texttt{main.tf} → implementasi resource (network, volume, image, container).
-        \item \texttt{outputs.tf} → endpoint layanan setelah \texttt{apply}.
+        \item \texttt{variables.tf} $\rightarrow$ kontrak input (env, ports, worker\_replicas, mount\_models).
+        \item \texttt{main.tf} $\rightarrow$ implementasi resource (network, volume, image, container).
+        \item \texttt{outputs.tf} $\rightarrow$ endpoint layanan setelah \texttt{apply}.
     \end{itemize}
     \item Prefix berbasis \texttt{env} (\texttt{tts-dev-*}, \texttt{tts-staging-*}, \texttt{tts-production-*})
           mencegah konflik saat multi-environment berjalan di satu host.
@@ -370,9 +370,9 @@ iac/
         \item Mengisi variabel via \texttt{*.tfvars}.
         \item Mengatur perbedaan port, bucket, token, dan skala worker.
     \end{itemize}
-    \item Dev → default \& ringan;  
-          Staging → port digeser + 2 worker;  
-          Prod → port dedicated + 4 worker + variabel sensitif.
+    \item Dev $\rightarrow$ default \& ringan;  
+          Staging $\rightarrow$ port digeser + 2 worker;  
+          Prod $\rightarrow$ port dedicated + 4 worker + variabel sensitif.
 \end{itemize}
 \end{frame}
 
@@ -386,7 +386,7 @@ iac/
           perbedaan hanya pada variabel (port, replika, bucket, token).
 
     \item \textbf{Provisioning terkontrol}: 
-          \texttt{init → plan → apply} menampilkan diff sebelum perubahan dieksekusi.
+          \texttt{init $\rightarrow$ plan $\rightarrow$ apply} menampilkan diff sebelum perubahan dieksekusi.
 
     \item \textbf{Skalabilitas horizontal}: 
           scaling worker cukup mengubah \texttt{worker\_replicas}; 
