@@ -402,12 +402,12 @@ Prinsip: \textbf{base sama} $\rightarrow$ \textbf{patch berbeda} $\rightarrow$ m
 \textbf{Direktori \texttt{base}}
 \begin{itemize}
     \item \textbf{Environment-agnostic} (model dasar).
-    \item Namespace → isolasi resource.
-    \item ConfigMap \& Secret → pisahkan konfigurasi dan kredensial.
+    \item Namespace $\rightarrow$ isolasi resource.
+    \item ConfigMap \& Secret $\rightarrow$ pisahkan konfigurasi dan kredensial.
     \item Deployment stateless: API, Web, Worker, Redis.
-    \item StatefulSet + PVC → MinIO (durabilitas data).
-    \item Service + Ingress → abstraksi jaringan.
-    \item HPA + Job → autoscaling dan bootstrap otomatis.
+    \item StatefulSet + PVC $\rightarrow$ MinIO (durabilitas data).
+    \item Service + Ingress $\rightarrow$ abstraksi jaringan.
+    \item HPA + Job $\rightarrow$ autoscaling dan bootstrap otomatis.
 \end{itemize}
 
 % ===== RIGHT COLUMN =====
@@ -419,7 +419,7 @@ Prinsip: \textbf{base sama} $\rightarrow$ \textbf{patch berbeda} $\rightarrow$ m
     \item Patch image tag (promosi CI/CD).
     \item Patch replica (kapasitas per env).
     \item Domain berbeda: dev, staging, prod.
-    \item Prod → tambah PodDisruptionBudget (high availability).
+    \item Prod $\rightarrow$ tambah PodDisruptionBudget (high availability).
 \end{itemize}
 
 \vspace{6pt}
