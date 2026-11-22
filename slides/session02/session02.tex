@@ -215,7 +215,7 @@ pip install prometheus-client psutil
 \end{frame}
 
 \begin{frame}[fragile]{Shared Library Metrik}
-	\vspace{20pt}
+	\vspace{10pt}
 	\begin{columns}[t]
 		\column{0.5\textwidth}
 		\begin{lstlisting}[style=PythonStyle,basicstyle=\ttfamily\scriptsize]
@@ -258,7 +258,7 @@ MJPEG_CLIENTS = Gauge(
 
 
 \begin{frame}[fragile]{Inisialisasi Server Metrik}
-	\vspace{20pt}
+	\vspace{10pt}
 	\begin{lstlisting}[style=PythonStyle, basicstyle=\ttfamily\scriptsize]
 from shared.observability import (  # noqa: E402
     init as obs_init,
@@ -454,9 +454,9 @@ Prometheus server URL : http://prometheus:9090
 \end{frame}
 
 \begin{frame}{Titik Observasi dan Antarmuka Sistem}
-	\vspace{20pt}
+	\vspace{18pt}
 	\begin{columns}[t]
-		\column{0.6\textwidth}
+		\column{0.64\textwidth}
 		\textbf{Antarmuka Aplikasi}
 		\begin{itemize}
 			\item \url{http://localhost:8000/}  
@@ -474,7 +474,7 @@ Prometheus server URL : http://prometheus:9090
 			\item Web Server: \url{http://localhost:9104/metrics}
 		\end{itemize}
 		
-		\column{0.4\textwidth}
+		\column{0.36\textwidth}
 		\textbf{Layanan Observabilitas}
 		\begin{itemize}
 			\item Prometheus: \url{http://localhost:9090}  
