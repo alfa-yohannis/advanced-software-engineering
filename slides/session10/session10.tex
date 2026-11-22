@@ -372,7 +372,7 @@ Sinkronisasi diagram--model XMI adalah sifat tiap diagram di \texttt{.aird}, akt
 \end{frame}
 
 \begin{frame}[fragile]{Scaler dan Transcoder: Ellipse Node}
-\vspace{4pt}
+\vspace{12pt}
 \begin{columns}[T]
 \column{0.52\textwidth}
 \begin{lstlisting}[language=xml, basicstyle=\ttfamily\tiny]
@@ -392,7 +392,6 @@ Sinkronisasi diagram--model XMI adalah sifat tiap diagram di \texttt{.aird}, akt
     <color href="environment:/...light_green"/>
   </style>
 </nodeMappings>
-
 <!-- Transcoder: ellipse oranye -->
 <nodeMappings name="TranscoderNode" ...
     domainClass="mediaflow::Transcoder">
@@ -524,7 +523,7 @@ Nilai label diturunkan langsung dari atribut model --- berubah di model, langsun
 \vspace{10pt}
 \textbf{Yang terjadi saat drag port ke port:}
 \begin{enumerate}
-  \item \texttt{source.eContainer().eContainer()} menavigasi ke \texttt{Graph} induk (Port $\subset$ Node $\subset$ Graph).
+  \item \texttt{source.eContainer()}\allowbreak\texttt{.eContainer()} menavigasi ke \texttt{Graph} induk (Port $\subset$ Node $\subset$ Graph).
   \item \texttt{CreateInstance} membuat \texttt{mediaflow::Edge}.
   \item Nama edge di-generate otomatis dari nama port.
   \item Referensi \texttt{source} dan \texttt{target} diisi ke objek Port.
@@ -551,9 +550,9 @@ Diagram dihasilkan oleh Eclipse Sirius dari model XMI melalui \texttt{mediaflow.
 \end{frame}
 
 \begin{frame}{Diagram \texttt{flow2}: Pipeline Bercabang (Sirius)}
-\vspace{13pt}
+\vspace{8pt}
 \centering
-\includegraphics[width=0.6\textwidth]{../../figures/flow2_diagram.pdf}
+\includegraphics[width=0.55\textwidth]{../../figures/flow2_diagram.pdf}
 
 \vspace{4pt}
 \small
@@ -633,7 +632,7 @@ Topologi bercabang langsung terlihat dari diagram tanpa perlu membaca teks XMI.
 
 \begin{frame}{Risiko dan Pitfall Umum}
 \vspace{10pt}
-\begin{enumerate}
+\begin{enumerate}\small
   \item \textbf{Desinkronisasi representasi.} Jika XMI diedit langsung di luar Sirius, diagram perlu di-refresh manual.
   \item \textbf{Ekspresi AQL salah.} Kesalahan pada \texttt{labelExpression} atau \texttt{semanticCandidatesExpression} menyebabkan elemen tidak muncul tanpa error yang jelas.
   \item \textbf{Dependensi plugin kompleks.} Ketidaksesuaian versi Sirius dan EMF dapat menyebabkan viewpoint gagal terdaftar.
@@ -654,7 +653,7 @@ Topologi bercabang langsung terlihat dari diagram tanpa perlu membaca teks XMI.
 \vspace{4pt}
 \centering
 \scriptsize
-\begin{tabular}{|>{\raggedright\arraybackslash}p{0.15\textwidth}|>{\raggedright\arraybackslash}p{0.38\textwidth}|>{\raggedright\arraybackslash}p{0.38\textwidth}|}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.15\textwidth}|>{\raggedright\arraybackslash}p{0.365\textwidth}|>{\raggedright\arraybackslash}p{0.365\textwidth}|}
 \hline
 \rowcolor{blue!12}
 \textbf{Aspek} & \textbf{Visual DSL (Sirius)} & \textbf{Textual DSL (Xtext/Langium)} \\
@@ -678,7 +677,7 @@ Keterbacaan & Intuitif untuk topologi bercabang. & Mudah untuk model kecil--mene
 \vspace{4pt}
 \centering
 \scriptsize
-\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \rowcolor{blue!12}
 \textbf{Aspek} & \textbf{Visual DSL} & \textbf{Textual DSL} \\
@@ -704,7 +703,7 @@ Skenario ideal & Topologi kompleks yang perlu divisualisasikan. & Model yang div
 \end{frame}
 
 \begin{frame}{Kapan Memilih Visual DSL?}
-\vspace{6pt}
+\vspace{10pt}
 \begin{columns}[T]
 \column{0.33\textwidth}
 \textbf{Pilih Visual DSL}\\(Sirius)
@@ -743,7 +742,7 @@ Skenario ideal & Topologi kompleks yang perlu divisualisasikan. & Model yang div
 \end{frame}
 
 \begin{frame}{Kesimpulan Sesi}
-\vspace{6pt}
+\vspace{12pt}
 \begin{itemize}
   \item Visual DSL adalah pendekatan komplementer terhadap Textual DSL: keduanya bertumpu pada metamodel yang sama (\texttt{mediaflow.ecore}), tetapi menawarkan antarmuka authoring yang berbeda.
   \item Eclipse Sirius menyediakan \textit{viewpoint workbench} berbasis \texttt{.odesign}: deklaratif, terikat ke EMF, dan mendukung palet alat drag-and-drop tanpa kode Java yang berlebihan.
