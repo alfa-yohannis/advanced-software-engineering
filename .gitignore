@@ -581,3 +581,6 @@ projects/session-13/module
 projects/session-13/slides
 projects/session-13/mediaflow/module
 projects/session-13/mediaflow/slides
+
+## Lecture videos built by slides_narrator (large binaries, rebuilt on demand)
+videos/

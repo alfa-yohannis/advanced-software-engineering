@@ -357,7 +357,7 @@ mde/
 \end{frame}
 
 \begin{frame}{Model dari Definisi Variasi Environment}
-\vspace{20pt}
+\vspace{16pt}
 \centering
 \begin{tikzpicture}[
   classbox/.style={draw, rounded corners=2pt, align=left, font=\scriptsize, inner sep=4pt},
@@ -373,14 +373,14 @@ mde/
   + include\_pdb: false
 };
 
-\node[envbox, below left=14mm and 19mm of base] (dev) {
+\node[envbox, below left=11mm and 17mm of base] (dev) {
   \textbf{DevEnvironment}\\
   \rule{\linewidth}{0.2pt}\\
   + name: dev\\
   + (tanpa override)
 };
 
-\node[envbox, below=14mm of base] (stg) {
+\node[envbox, below=11mm of base] (stg) {
   \textbf{StagingEnvironment}\\
   \rule{\linewidth}{0.2pt}\\
   + name: staging\\
@@ -388,7 +388,7 @@ mde/
   + include\_replicas\_patch: true
 };
 
-\node[envbox, below right=14mm and 19mm of base] (prod) {
+\node[envbox, below right=11mm and 17mm of base] (prod) {
   \textbf{ProdEnvironment}\\
   \rule{\linewidth}{0.2pt}\\
   + name: prod\\

@@ -9,7 +9,9 @@
 			\ifx
 				\insertframesubtitle\@empty%
 				\node at (13.5,0.3) {\includegraphics[width=75.9375pt, height=32.625pt]{../theme/classFiles/logo_universitas}};
-				{\node[anchor=west, black, font=\huge, fill=white] at (1.2,0.25){\textbf{\insertframetitle}};}
+				% \Large, not \huge: the title is drawn on white over the logo, and at
+				% \huge most titles ran past 12 cm and covered it.
+				{\node[anchor=west, black, font=\Large, fill=white] at (1.2,0.25){\textbf{\insertframetitle}};}
 			\else%
 				{
 					\node[anchor=west, black,font=\Large] at (1.2,0.5){\textbf{\insertframetitle}};%
