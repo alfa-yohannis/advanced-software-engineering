@@ -105,11 +105,10 @@
 \end{frame}
 
 \begin{frame}{Required Software}
-	\vspace{10pt}
+	\vspace{20pt}
 	\begin{columns}[t]
 		\column{0.52\textwidth}
 		\textbf{Core (Required)}
-		\vspace{6pt}
 		\begin{itemize}
 			\item \textbf{Docker} (container runtime)
 			\item \textbf{Docker Compose} (multi-container orchestration)
@@ -119,7 +118,6 @@
 		
 		\vspace{6pt}
 		\textbf{Recommended}
-		\vspace{6pt}
 		\begin{itemize}
 			\item \textbf{Visual Studio Code} (editor + integrated terminal)
 			\item VS Code extensions: \textbf{Python}, \textbf{Docker}
@@ -127,15 +125,12 @@
 		
 		\column{0.44\textwidth}
 		\textbf{Optional (Local / Non-containerized)}
-		\vspace{6pt}
 		\begin{itemize}
 			\item \textbf{Python Virtual Environments} (\texttt{venv})
 			\item \textbf{pip} (package installer)
 		\end{itemize}
 		
-		\vspace{10pt}
 		\textbf{Platforms}
-		\vspace{6pt}
 		\begin{itemize}
 			\item Windows / macOS / Linux (Ubuntu recommended for CLI work)
 		\end{itemize}
@@ -148,30 +143,37 @@
 
 \section{Course Session Overview}
 \begin{frame}{Course Sessions Overview}
+	\vspace{6pt}
+	\footnotesize
 	\begin{columns}[t]
 		\column{0.5\textwidth}
 		\begin{enumerate}
-			\item \textbf{Session-01}. Running Systems Before Design
-			\item \textbf{Session-02}. Observability Before Architecture
-			\item \textbf{Session-03}. Runtime Control, Security, and Policies
-			\item \textbf{Session-04}. CI/CD and Script Explosion
-			\item \textbf{Session-05}. Runtime Models and Executable Behavior
-			\item \textbf{Session-06}. Metamodeling Fundamentals
-			\item \textbf{Session-07}. Textual DSL Engineering
+			\setlength{\itemsep}{1pt}
+			\item \textbf{Session-01}. Running Systems before Design
+			\item \textbf{Session-02}. Observability
+			\item \textbf{Session-03}. Security in Software Systems
+			\item \textbf{Session-04}. Continuous Integration and Deployment
+			\item \textbf{Session-05}. Infrastructure as Code
+			\item \textbf{Session-06}. Software Infrastructure Orchestration
+			\item \textbf{Session-07}. Model-based Software Infrastructure
 		\end{enumerate}
 		
 		\column{0.5\textwidth}
 		\begin{enumerate}
+			\setlength{\itemsep}{1pt}
 			\setcounter{enumi}{7}
-			\item \textbf{Session-08}. Visual Language Engineering for Runtime Models
-			\item \textbf{Session-09}. Projectional Language Engineering
-			\item \textbf{Session-10}. Semantic Design of Executable Models
-			\item \textbf{Session-11}. Model-to-Model Transformation and Refinement
-			\item \textbf{Session-12}. Constraints and Model Validation
-			\item \textbf{Session-13}. Model-to-Text Generation and DevSecOps Execution
+			\item \textbf{Session-08}. Model-driven Software Engineering
+			\item \textbf{Session-09}. Textual Domain-Specific Language
+			\item \textbf{Session-10}. Visual Domain-Specific Language
+			\item \textbf{Session-11}. Model-to-Model Transformation
+			\item \textbf{Session-12}. Model-to-Text Transformation
+			\item \textbf{Session-13}. Model Validation
+			\item \textbf{Session-14}. Multi-agent Software Systems
 		\end{enumerate}
-		{\scriptsize Running systems to automated systems generation}
 	\end{columns}
+	
+	\vspace{6pt}
+	{\scriptsize Running systems to automated systems generation}
 \end{frame}
 
 \begin{frame}{Introduction of This Session}
@@ -240,7 +242,7 @@
 \begin{frame}{From Code Execution to Orchestration}
 	\vspace{20pt}
 	\centering
-	\scalebox{0.75}{
+	\scalebox{0.68}{
 	\begin{tikzpicture}[
 	  font=\small,
 	  node distance=7mm,
