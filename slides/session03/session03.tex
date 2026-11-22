@@ -233,7 +233,7 @@
 
 
 \begin{frame}{Tahap Build, Deployment, \& Runtime}
-	\vspace{10pt}
+	\vspace{18pt}
 	\begin{columns}[T]
 		\column{0.3\textwidth}
 		\textbf{3. Build \& Artifact}
@@ -260,7 +260,7 @@
 		\end{itemize}
 	\end{columns}
 	
-	\vspace{12pt}
+	\vspace{6pt}
 	{\footnotesize Pertemuan kali ini menekankan \textbf{runtime control}: bagaimana kontrol mengubah perilaku sistem yang sedang berjalan}
 \end{frame}
 
@@ -324,7 +324,7 @@
 \begin{frame}{Arsitektur Sistem dengan Enkripsi Payload}
 	\vspace{14pt}
 	\centering
-	\scalebox{0.8}{
+	\scalebox{0.74}{
 	\begin{tikzpicture}[
 	  font=\small\bfseries,
 	  node distance=9mm and 12mm,
@@ -400,7 +400,7 @@
 
 \begin{frame}{Arsitektur Sistem Studi Kasus}
 	\vspace{10pt}
-	\begin{itemize}
+	\begin{itemize}\small
 		\item Sistem menggunakan pola komunikasi \emph{publish--subscribe} dengan broker sebagai perantara pertukaran pesan.
 		\item Produsen dan konsumen data tidak saling mengenal secara langsung, sehingga sistem bersifat terbuka dan berikatan longgar.
 		\item Broker berperan netral: meneruskan pesan berdasarkan topik tanpa memahami atau memodifikasi isi payload.
@@ -417,9 +417,9 @@
 		\Huge{\textbf{Eksperimen dan Validasi Kontrol Keamanan Runtime}}
 	\end{frame}
 
-\begin{frame}{\LARGE{Langkah\textsuperscript{2} Eksperimen Kontrol Keamanan Runtime}}
+\begin{frame}{Langkah Eksperimen Keamanan Runtime}
 	\vspace{10pt}
-	\begin{enumerate}
+	\begin{enumerate}\small
 		\item \textbf{Menjalankan sistem tanpa kontrol keamanan},
 		      sehingga payload yang melewati broker dapat diamati dan dibaca sebagai data mentah.
 		\item \textbf{Menambahkan kontrol enkripsi payload}
@@ -465,45 +465,39 @@ cd projects/session-03/python
 \subsection*{Konfigurasi Kunci pada \texttt{docker-compose.yml}}
 
 \begin{frame}[fragile]{Konfigurasi Kunci Enkripsi pada Layanan}
+	\vspace{12pt}
 	\begin{columns}[T]
-		\column{0.55\textwidth}
+		\column{0.5\textwidth}
 		\begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny, caption={docker-compose.yml (excerpt): PAYLOAD\_KEY from .env}]
-# PAYLOAD_KEY comes from .env in this folder. Git ignores .env, so every copy of
-# the repository creates its own (README, step 2). The broker gets no key.
 services:
   broker-session03:
     # ...
   capturer-session03:
     # ...
     environment:
-      # ...
       PAYLOAD_KEY: ${PAYLOAD_KEY}
-    # ...
   transformer-session03:
     # ...
     environment:
-      # ...
       PAYLOAD_KEY: ${PAYLOAD_KEY}
-    # ...
   web_server-session03:
     # ...
     environment:
-      # ...
       PAYLOAD_KEY: ${PAYLOAD_KEY}
-    # ...
 \end{lstlisting}
 
-		\column{0.45\textwidth}
-		\begin{itemize}
+		\column{0.5\textwidth}
+		\begin{itemize}\small
 			\item Kunci diberikan hanya pada komponen yang memproduksi atau mengonsumsi payload.
 			\item Broker tidak menerima kunci enkripsi.
 			\item Compose mengisi \texttt{\$\{PAYLOAD\_KEY\}} dari \texttt{.env}, bukan dari berkas yang dilacak Git.
 			\item Kebijakan keamanan diwujudkan melalui konfigurasi runtime.
 			\item Tidak ada perubahan pada kode aplikasi.
 		\end{itemize}
-
-	{\footnotesize Jalankan: \texttt{sudo docker compose up --build -d}. Pembatasan akses data dicapai melalui distribusi kunci, bukan melalui kepercayaan pada komponen perantara}
 	\end{columns}
+
+	\vspace{4pt}
+	{\footnotesize Jalankan: \texttt{sudo docker compose up --build -d}. Pembatasan akses data dicapai melalui distribusi kunci, bukan melalui kepercayaan pada komponen perantara}
 \end{frame}
 
 \subsection*{Dependensi Python pada Dockerfile}
@@ -522,7 +516,7 @@ RUN pip install --no-cache-dir \
     psutil \
     cryptography
 ...
-		\end{lstlisting}
+\end{lstlisting}
 		
 		\column{0.4\textwidth}
 		\begin{itemize}
@@ -555,7 +549,7 @@ def encrypt_bytes(data: bytes) -> bytes:
 
 def decrypt_bytes(token: bytes) -> bytes:
     return _cipher.decrypt(token)
-		\end{lstlisting}
+\end{lstlisting}
 		
 		\column{0.3\textwidth}
 		\begin{itemize}
@@ -586,7 +580,7 @@ enc_out_header = encrypt_bytes(out_header_b)
 enc_jpeg_out = encrypt_bytes(jpeg_out)
 # ...
 pub.send_multipart([PUB_TOPIC, enc_out_header, enc_jpeg_out])
-		\end{lstlisting}
+\end{lstlisting}
 		
 		\column{0.3\textwidth}
 		\begin{itemize}
@@ -627,7 +621,7 @@ except InvalidToken:
     pass
 
 print("OK: encryption on, wrong key fails, correct key succeeds.")
-		\end{lstlisting}
+\end{lstlisting}
 		
 		\column{0.4\textwidth}
 		\begin{itemize}
@@ -663,7 +657,7 @@ if len(parts) >= 3:
     payload_part = parts[2]
     looks_json = is_json_object(header_part)
     looks_jpeg = is_probably_jpeg(payload_part)
-		\end{lstlisting}
+\end{lstlisting}
 		
 		\column{0.3\textwidth}
 		\begin{itemize}
@@ -681,7 +675,7 @@ if len(parts) >= 3:
 \subsection*{Validasi Observasional: Perbandingan Output Sniffer}
 
 \begin{frame}[fragile]{Output Sniffer: Sebelum vs Sesudah Enkripsi}
-	\vspace{6pt}
+	\vspace{14pt}
 	\begin{columns}[t]
 		\column{0.5\textwidth}
 		\textbf{Tanpa Enkripsi (pipeline sesi 2)}
@@ -691,7 +685,7 @@ if len(parts) >= 3:
   part[2] len=107045 hex16=ffd8ffe000104a464946000101000001 utf8=<not utf8>
   => header looks like JSON (PLAINTEXT)
   => payload looks like JPEG (PLAINTEXT ffd8ff)
-		\end{lstlisting}
+\end{lstlisting}
 		\begin{itemize}
 			\item Byte awal \texttt{FF D8 FF}
 			\item Dikenal sebagai \emph{JPEG signature}
@@ -706,7 +700,7 @@ if len(parts) >= 3:
   part[1] len=376 hex16=6741414141414271764e6873714c3249 utf8='gAAAAABqvNhs...'
   part[2] len=141028 hex16=6741414141414271764e687361587765 utf8='gAAAAABqvNhs...'
   => header+payload do NOT look like JSON/JPEG (LIKELY ENCRYPTED)
-		\end{lstlisting}
+\end{lstlisting}
 		\begin{itemize}
 			\item Tidak ada pola tetap
 			\item Signature format hilang
@@ -715,7 +709,7 @@ if len(parts) >= 3:
 		\end{itemize}
 	\end{columns}
 	
-	\vspace{10pt}
+	\vspace{6pt}
 	{\footnotesize JPEG dapat dikenali melalui \emph{magic bytes} \texttt{FF D8 FF}; enkripsi menghilangkan pola ini}
 \end{frame}
 
