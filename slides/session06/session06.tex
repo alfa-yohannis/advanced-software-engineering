@@ -173,7 +173,7 @@ ketersediaan, dan elastisitas aplikasi secara kontinu.
 	\Huge{\textbf{Arsitektur dan Cara Kerja Kubernetes}}
 \end{frame}
 
-\begin{frame}{\LARGE{Arsitektur Kubernetes: Control Plane vs Worker Node}}
+\begin{frame}{Kubernetes: Control Plane vs Worker Node}
 \vspace{15pt}
 \centering
 \scalebox{0.45}{
@@ -317,7 +317,7 @@ membandingkan \textit{actual state} dengan \textit{desired state} secara kontinu
 
 \vspace{6pt}
 \textbf{Alur Kerja:}
-\begin{enumerate}
+\begin{enumerate}\small
     \item Pengguna menulis konfigurasi YAML (mis. Deployment 3 replica).
     \item Konfigurasi dikirim ke \textbf{kube-apiserver}.
     \item State disimpan di \textbf{etcd}.
@@ -327,7 +327,7 @@ membandingkan \textit{actual state} dengan \textit{desired state} secara kontinu
 
 \vspace{6pt}
 \textbf{Karakteristik:}
-\begin{itemize}
+\begin{itemize}\small
     \item Deklaratif, Self-healing, Adaptif terhadap perubahan beban, Beroperasi kontinu, bukan sekali eksekusi.
 \end{itemize}
 \end{frame}
@@ -345,7 +345,7 @@ membandingkan \textit{actual state} dengan \textit{desired state} secara kontinu
 % ===== LEFT COLUMN =====
 \column{0.52\textwidth}
 \textbf{Base (Reusable Definition)}
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
 kubernetes/
 |-- base
 |   |-- namespace.yaml
@@ -368,7 +368,7 @@ kubernetes/
 % ===== RIGHT COLUMN =====
 \column{0.48\textwidth}
 \textbf{Overlays (Environment-Specific)}
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
 `-- overlays
     |-- dev
     |   |-- patch-env.yaml
@@ -627,7 +627,7 @@ kubectl get deploy -n tts api \
 \end{columns}
 \end{frame}
 
-\begin{frame}[fragile]{\LARGE{(8) Stateful Resilience: MinIO + Persistent Volume}}
+\begin{frame}[fragile]{(8) Stateful Resilience: MinIO + PV}
 \vspace{10pt}
 \begin{columns}[T]
 \column{0.52\textwidth}
@@ -953,6 +953,7 @@ terraform apply
 
 \end{columns}
 
+\vspace{6pt}
 Kubernetes tidak dapat membuat VM cloud.
 \end{frame}
 
@@ -984,6 +985,7 @@ resource "cloudflare_record" "api" {
 
 \end{columns}
 
+\vspace{6pt}
 Kubernetes tidak mengelola DNS eksternal cloud provider.
 \end{frame}
 
@@ -1096,6 +1098,7 @@ Hanya menghapus resource dalam cluster.
 
 \end{columns}
 
+\vspace{6pt}
 Terraform menghapus fondasi.\\
 Kubernetes hanya isi di atasnya.
 \end{frame}
@@ -1111,7 +1114,7 @@ Kubernetes hanya isi di atasnya.
 \vspace{10pt}
 \footnotesize
 \arrayrulecolor{black}
-\begin{tabular}{|p{.28\textwidth}|p{.32\textwidth}|p{.32\textwidth}|}
+\begin{tabular}{|p{.26\textwidth}|p{.31\textwidth}|p{.31\textwidth}|}
 \hline
 \textbf{Aspek} & \textbf{Kubernetes} & \textbf{Terraform} \\
 \hline
