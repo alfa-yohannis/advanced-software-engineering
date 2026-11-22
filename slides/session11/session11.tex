@@ -260,7 +260,7 @@ Pemetaan bersifat \textbf{kondisional}: satu tipe sumber (\texttt{Resource}) dip
 \vspace{10pt}
 \begin{figure}
 \centering
-\scalebox{0.75}{
+\scalebox{0.68}{
 \begin{tikzpicture}[
   >=Latex,
   node distance=8mm,
@@ -448,7 +448,7 @@ Pemetaan bersifat \textbf{kondisional}: satu tipe sumber (\texttt{Resource}) dip
 \begin{frame}{Model Input: \texttt{flow2.xmi} (Bercabang)}
 \vspace{15pt}
 \centering
-\scalebox{0.85}{
+\scalebox{0.8}{
 \begin{tikzpicture}[>=Latex, node distance=10mm,
   box/.style={draw,rounded corners,minimum width=2cm,minimum height=0.7cm,align=center,font=\scriptsize}]
   \node[box,fill=blue!15] (in) {inputVideo\\(Resource)};
@@ -555,7 +555,7 @@ rule Graph2Model {
 \end{frame}
 
 \begin{frame}[fragile]{ATL: Aturan Kondisional untuk Resource}
-\vspace{7pt}
+\vspace{11pt}
 \begin{columns}[T]
 \column{0.58\textwidth}
 \begin{lstlisting}[language=atl, basicstyle=\ttfamily\tiny]
@@ -613,7 +613,7 @@ Filter pada \texttt{from} menentukan aturan mana yang berlaku berdasarkan predik
 \end{frame}
 
 \begin{frame}[fragile]{ATL: Aturan Scaler, Transcoder, dan Edge}
-\vspace{10pt}
+\vspace{14pt}
 \begin{columns}[T]
     \begin{column}{0.45\textwidth}
 \begin{lstlisting}[language=atl, basicstyle=\ttfamily\tiny]
@@ -625,14 +625,12 @@ rule Scaler2OpaqueAction {
         language <- Sequence{'shell'}
     )
 }
-
 rule Transcoder2OpaqueAction {
     from t : Mediaflow!Transcoder
     to tt : UML!OpaqueAction (
         name <- t.name,  body <- Sequence{t.command},  language <- Sequence{'shell'}
     )
 }
-
 rule Edge2ControlFlow {
     from e : Mediaflow!Edge
     to cf : UML!ControlFlow (
@@ -752,7 +750,7 @@ rule Edge2ControlFlow
 \textbf{Perbedaan dari ATL}
 
 \vspace{4pt}
-\begin{enumerate}
+\begin{enumerate}\small
   \item \textbf{Assignment imperatif}:\\
   \texttt{target.name = source.name}\\
   bukan \texttt{name <- r.name}
@@ -768,6 +766,7 @@ rule Edge2ControlFlow
 \end{frame}
 
 \begin{frame}[fragile]{ETL: Blok Post --- Pembungkusan ke Activity}
+\vspace{10pt}
 \begin{columns}[T]
     \begin{column}{0.5\textwidth}
 \begin{lstlisting}[language=etl, basicstyle=\ttfamily\tiny]
@@ -908,7 +907,6 @@ inputModel.setModelFile(inputPath);
 inputModel.setReadOnLoad(true);
 inputModel.setStoredOnDisposal(false);
 inputModel.load();
-
 // Output model (write-only)
 EmfModel outputModel = new EmfModel();
 outputModel.setName("Out");
@@ -917,7 +915,6 @@ outputModel.setModelFile(outputPath);
 outputModel.setReadOnLoad(false);
 outputModel.setStoredOnDisposal(true);
 outputModel.load();
-
 // Parse and execute
 EtlModule module = new EtlModule();
 module.parse(new File(transformationPath));
@@ -995,7 +992,7 @@ outputModel.store();
 \begin{figure}
 \vspace{20pt}
 \centering
-\scalebox{0.76}{
+\scalebox{0.72}{
 \begin{tikzpicture}[>=Latex, node distance=10mm,
   mfnode/.style={draw, rounded corners=3pt, minimum width=2.4cm, minimum height=0.7cm, align=center, font=\scriptsize},
   port/.style={draw, fill=white, minimum size=4mm, inner sep=0pt, font=\tiny},
@@ -1095,7 +1092,7 @@ outputModel.store();
 \vspace{4pt}
 \centering
 \scriptsize
-\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \rowcolor{blue!12}
 \textbf{Aspek} & \textbf{ATL} & \textbf{ETL (Epsilon)} \\
@@ -1119,7 +1116,7 @@ Runner complexity & Lebih kompleks. & Lebih ringkas (API \texttt{EmfModel}). \\
 \vspace{4pt}
 \centering
 \scriptsize
-\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|>{\raggedright\arraybackslash}p{0.37\textwidth}|}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.16\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|>{\raggedright\arraybackslash}p{0.36\textwidth}|}
 \hline
 \rowcolor{blue!12}
 \textbf{Aspek} & \textbf{ATL} & \textbf{ETL (Epsilon)} \\
@@ -1173,7 +1170,7 @@ Ekosistem & Eclipse M2M, ATL Project. & Platform Epsilon (EOL, EVL, EGL, dll.). 
 \end{frame}
 
 \begin{frame}{Pitfall Umum pada M2M}
-\vspace{6pt}
+\vspace{14pt}
 \begin{enumerate}
   \item \textbf{Ketidaksesuaian versi metamodel.} Metamodel berubah tanpa update aturan transformasi $\rightarrow$ elemen baru tidak tertangani.
   \item \textbf{Resolusi referensi gagal.} Helper mengembalikan \texttt{null} $\rightarrow$ \texttt{ControlFlow} tanpa \texttt{source}/\texttt{target}.
@@ -1192,7 +1189,7 @@ Ekosistem & Eclipse M2M, ATL Project. & Platform Epsilon (EOL, EVL, EGL, dll.). 
 \end{frame}
 
 \begin{frame}{Kesimpulan Sesi}
-\vspace{6pt}
+\vspace{12pt}
 \begin{itemize}
   \item Transformasi model-ke-model (M2M) adalah mekanisme sentral dalam MDE yang menjembatani model pada domain berbeda secara otomatis dan deterministik.
   \item Implementasi MediaFlow $\rightarrow$ UML Activity Diagram memerlukan 6 helper/operation untuk menyelesaikan indirection port-ke-node dan 6 aturan transformasi.
