@@ -112,7 +112,7 @@
 
 \begin{frame}{Apa yang Dimaksud dengan CI/CD?}
 	\vspace{6pt}
-	\begin{itemize}
+	\begin{itemize}\small
 		\item CI/CD adalah pendekatan untuk \textbf{mengotomatisasi} integrasi kode, pengujian, dan penyebaran aplikasi.
 		\item \textit{Continuous Integration} (CI) mengintegrasikan setiap perubahan kode secara rutin ke repository pusat dan memicu build serta pengujian otomatis.
 		\item CI membantu mendeteksi kesalahan lebih awal sebelum masalah berkembang lebih kompleks.
@@ -148,8 +148,8 @@
 	\vspace{6pt}
 	\begin{columns}[T]
 		\column{0.55\textwidth}
-		\vspace{20pt}
-		\begin{itemize}
+		\vspace{6pt}
+		\begin{itemize}\small
 			\item Perubahan kode melalui \textit{commit}, \textit{push}, atau \textit{pull request} memicu workflow CI.
 			\item Workflow CI menjalankan pengujian unit dan integrasi secara otomatis pada runner GitHub-hosted.
 			\item Hanya perubahan yang lolos CI (\texttt{success}) yang dapat melanjutkan ke tahap deployment.
@@ -158,9 +158,8 @@
 		\end{itemize}
 
 		\column{0.45\textwidth}
-		\vspace{-23pt}
 		\centering
-		\scalebox{0.6}{%
+		\resizebox{!}{0.70\textheight}{%
 		\begin{tikzpicture}[
 		  background rectangle/.style={fill=white},
 		  show background rectangle,
@@ -306,7 +305,7 @@ sudo docker compose build
 
 # start all services
 sudo docker compose up
-		\end{lstlisting}
+\end{lstlisting}
 
 		\column{0.4\textwidth}
 		\begin{itemize}
@@ -336,7 +335,7 @@ curl -I http://localhost:8088/mp3/<job-id>.mp3
 
 # open web UI
 http://localhost:8088/
-		\end{lstlisting}
+\end{lstlisting}
 
 		\column{0.4\textwidth}
 		\begin{itemize}
@@ -370,7 +369,7 @@ sudo apt install -y git
 git config --global user.name "Nama Anda"
 git config --global user.email "email@contoh.com"
 git --version
-	\end{lstlisting}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Demo (2/6): Repository dan GitHub CLI}
@@ -388,7 +387,7 @@ cd advanced-software-engineering
 sudo apt install -y gh
 gh auth login
 gh auth status
-	\end{lstlisting}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Demo (3/6): Docker dan Docker Compose}
@@ -406,7 +405,7 @@ sudo usermod -aG docker $USER
 
 docker version
 docker compose version
-	\end{lstlisting}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Demo (4/6): Self-hosted Runner}
@@ -426,7 +425,7 @@ tar xzf actions-runner-linux-x64-2.331.0.tar.gz
 ./config.sh --url https://github.com/<akun-anda>/advanced-software-engineering \
             --token <TOKEN>
 ./run.sh
-	\end{lstlisting}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Demo (5/6): CI ke Deployment}
@@ -447,12 +446,12 @@ gh workflow list
 gh run list --workflow "CI Tests (session-04)"
 gh run list --workflow "CI Tests (session-04)" --branch main --limit 1 --json databaseId --jq '.[0].databaseId'
 gh run watch --exit-status
-	\end{lstlisting}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Demo (6/6): Dari CI Sukses ke Deployment}
-	\vspace{20pt}
-	\begin{itemize}
+	\vspace{8pt}
+	\begin{itemize}\small
 		\item Workflow CI berakhir dengan status \texttt{success} jika lulus unit dan integration tests.
 		\item Setelah CI selesai, GitHub memancarkan event \texttt{workflow\_run} dengan status \texttt{completed}.
 		\item Event \texttt{workflow\_run} digunakan sebagai pemicu formal untuk workflow deploy.
@@ -460,13 +459,13 @@ gh run watch --exit-status
 		\item Job deploy menargetkan \textbf{self-hosted runner} yang memiliki akses langsung ke lingkungan target.
 		\item Runner \textbf{idealnya} melakukan \textit{checkout} branch \texttt{main} agar kode yang dideploy identik dengan kode yang diuji. \textbf{Untuk demo}, contoh ini langsung \textit{build }\& \textit{run} kode lokal.
 	\end{itemize}
-	\begin{lstlisting}[language=bash, basicstyle=\ttfamily\scriptsize]
+	\begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
 - name: Run app locally (compose)
   run: |
     docker compose -f projects/session-04/docker-compose.yml down || true
     docker compose -f projects/session-04/docker-compose.yml up -d --build
     docker compose -f projects/session-04/docker-compose.yml ps
-	\end{lstlisting}
+\end{lstlisting}
 \end{frame}
 
 
