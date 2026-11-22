@@ -72,7 +72,7 @@ Diagram pada Gambar~\ref{fig:mde-metamodel-model-instance} menegaskan dua alur u
 
 \subsection[Pemodelan Tekstual untuk Infrastruktursubsec]{Pemodelan Tekstual untuk Infrastruktur}\label{subsec:mde-pemodelan-tekstual}
 
-Pemodelan tekstual menggunakan format yang mudah dibaca manusia dan mudah diproses mesin, misalnya YAML. Pilihan ini mendukung \textit{version control}, \textit{code review}, dan validasi otomatis. Integrasi dengan pipeline\index{pipeline} CI/CD juga lebih langsung karena tidak membutuhkan tooling visual khusus.
+Pemodelan tekstual menggunakan format yang mudah dibaca manusia dan mudah diproses mesin, misalnya YAML (\textit{YAML Ain't Markup Language}). Pilihan ini mendukung \textit{version control}, \textit{code review}, dan validasi otomatis. Integrasi dengan pipeline\index{pipeline} \textit{Continuous Integration} dan \textit{Continuous Delivery} (CI/CD) juga lebih langsung karena tidak membutuhkan tooling visual khusus.
 
 \subsection[Generasi Kode dalam Alur Kerja DevOpssubsec]{Generasi Kode dalam Alur Kerja DevOps}\label{subsec:mde-generasi-kode}
 
@@ -96,7 +96,7 @@ Penerapan MDE di dunia industri umumnya muncul pada domain dengan kompleksitas s
 
 \subsection[Sektor dan Pola Penggunaansubsec]{Sektor dan Pola Penggunaan}\label{subsec:mde-sektor-penggunaan}
 
-Pada industri otomotif, MDE banyak dipakai untuk rekayasa perangkat lunak kendaraan, arsitektur ECU, dan integrasi sistem berbasis standar seperti AUTOSAR. Pada industri aviasi dan pertahanan, pola penggunaan berfokus pada \textit{model-based systems engineering} untuk desain sistem lintas disiplin, analisis dependensi, dan ketertelusuran kebutuhan hingga implementasi. Pada industri manufaktur dan otomasi, MDE sering dipakai untuk \textit{digital twin}, desain lini produksi, serta rekayasa konfigurasi sistem kontrol.
+Pada industri otomotif, MDE banyak dipakai untuk rekayasa perangkat lunak kendaraan, arsitektur \textit{Electronic Control Unit} (ECU), dan integrasi sistem berbasis standar seperti AUTOSAR (\textit{AUTomotive Open System ARchitecture}). Pada industri aviasi dan pertahanan, pola penggunaan berfokus pada \textit{model-based systems engineering} untuk desain sistem lintas disiplin, analisis dependensi, dan ketertelusuran kebutuhan hingga implementasi. Pada industri manufaktur dan otomasi, MDE sering dipakai untuk \textit{digital twin}, desain lini produksi, serta rekayasa konfigurasi sistem kontrol.
 
 \subsection{Contoh Perusahaan}\label{subsec:mde-contoh-perusahaan}
 
@@ -395,7 +395,7 @@ Generator berjalan secara deterministik: membaca model, menyiapkan context envir
 
 \subsection[Kumpulan Template]{Kumpulan Template (Jinja untuk Terraform dan Kubernetes)}\label{subsec:mde-kumpulan-template}
 
-Template environment Terraform menghasilkan \texttt{main.tf} dan \texttt{*.tfvars}. Template overlay Kubernetes menghasilkan \texttt{kustomization.yaml}, patch image, patch HPA, patch replika opsional, ingress, serta PDB opsional. Satu template dapat dipakai lintas environment karena variasi dikendalikan oleh context model.
+Template environment Terraform menghasilkan \texttt{main.tf} dan \texttt{*.tfvars}. Template overlay Kubernetes menghasilkan \texttt{kustomization.yaml}, patch image, patch \textit{Horizontal Pod Autoscaler} (HPA), patch replika opsional, ingress, serta \textit{Pod Disruption Budget} (PDB) opsional. Satu template dapat dipakai lintas environment karena variasi dikendalikan oleh context model.
 
 \subsection[Output Hasil Generasi]{Output Hasil Generasi (\texttt{outputs/terraform}, \texttt{outputs/kubernetes})}\label{subsec:mde-output-generasi}
 

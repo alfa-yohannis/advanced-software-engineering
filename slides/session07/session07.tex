@@ -119,7 +119,7 @@
 Setelah sesi ini, mahasiswa diharapkan mampu:
 \begin{enumerate}
   \item Memahami konsep \textit{Model-Driven Engineering} (MDE) untuk otomasi infrastruktur.
-  \item Menjelaskan peran model, aturan transformasi, dan template dalam generasi artefak IaC.
+  \item Menjelaskan peran model, aturan transformasi, dan template dalam generasi artefak \textit{Infrastructure as Code} (IaC).
   \item Menganalisis penerapan MDE pada proyek: dari model input hingga output Terraform dan Kubernetes.
 \end{enumerate}
 \end{frame}
@@ -156,30 +156,19 @@ lalu artefak teknis dihasilkan otomatis.
 \end{frame}
 
 \begin{frame}{Metamodel, Model, dan Instance}
-\vspace{8pt}
+\vspace{10pt}
 \centering
-\scalebox{0.65}{%
+\resizebox{0.80\textwidth}{!}{%
 \begin{tikzpicture}[
-  font=\small,
   >=latex,
   thick,
-  box/.style={draw, rounded corners, minimum width=4.6cm, minimum height=2.4cm, align=center},
-  lbl/.style={align=center}
+  box/.style={draw, rounded corners, minimum width=3.2cm, minimum height=1.1cm,
+              align=center, font=\normalsize\bfseries},
+  lbl/.style={align=center, font=\small, fill=white, inner sep=2pt}
 ]
-  \node[box, fill=green!8] (metamodel) {
-    \textbf{Metamodel}\\[2pt]
-    Skema model\\atribut, tipe, relasi
-  };
-
-  \node[box, fill=blue!8, right=20mm of metamodel] (model) {
-    \textbf{Model}\\[2pt]
-    Konfigurasi abstrak\\environment
-  };
-
-  \node[box, fill=orange!10, right=20mm of model, minimum width=5.4cm] (instance) {
-    \textbf{Instance}\\[2pt]
-    Artefak konkret\\Terraform dan Kubernetes
-  };
+  \node[box, fill=green!8] (metamodel) {Metamodel};
+  \node[box, fill=blue!8, right=22mm of metamodel] (model) {Model};
+  \node[box, fill=orange!10, right=22mm of model] (instance) {Instance};
 
   \draw[->] (metamodel.east) -- (model.west) node[midway, above, lbl] {conformance};
   \draw[->] (model.east) -- (instance.west) node[midway, above, lbl] {transformasi};
@@ -187,18 +176,41 @@ lalu artefak teknis dihasilkan otomatis.
 }%
 
 \vspace{8pt}
-\small
-Satu model valid dapat diturunkan menjadi banyak instance deployment
-secara konsisten.
+
+\begin{columns}[t]
+\begin{column}{0.31\textwidth}
+Aturan bentuk model yang sah.
+\begin{itemize}
+  \item Rumah: tiap gambar wajib punya ukuran ruang, simbol pintu dan jendela
+  \item Cetak 3D: tiap desain wajib punya dimensi, ketebalan minimum, format berkas
+\end{itemize}
+\end{column}
+
+\begin{column}{0.31\textwidth}
+Rancangan yang mengikuti aturan itu.
+\begin{itemize}
+  \item Rumah: blueprint rumah tipe 36
+  \item Cetak 3D: rancangan casing sensor
+\end{itemize}
+\end{column}
+
+\begin{column}{0.31\textwidth}
+Wujud konkret hasil transformasi.
+\begin{itemize}
+  \item Rumah: bangunan yang berdiri di satu kavling
+  \item Cetak 3D: casing tercetak yang terpasang di perangkat
+\end{itemize}
+\end{column}
+\end{columns}
 \end{frame}
 
 \begin{frame}{Pemodelan Tekstual dan Generasi Kode}
 \vspace{8pt}
-\textbf{Pemodelan tekstual (YAML):}
+\textbf{Pemodelan tekstual dengan YAML (\textit{YAML Ain't Markup Language}):}
 \begin{itemize}
   \item Mudah dibaca manusia, mudah diproses mesin.
   \item Natural untuk \textit{version control} dan \textit{code review}.
-  \item Mudah diintegrasikan ke pipeline CI/CD.
+  \item Mudah diintegrasikan ke pipeline \textit{Continuous Integration} dan \textit{Continuous Delivery} (CI/CD).
 \end{itemize}
 
 \vspace{6pt}
@@ -251,7 +263,7 @@ secara konsisten.
 \vspace{8pt}
 \textbf{Sektor penggunaan umum:}
 \begin{itemize}
-  \item Otomotif: arsitektur ECU, AUTOSAR, variasi produk kendaraan.
+  \item Otomotif: arsitektur \textit{Electronic Control Unit} (ECU), AUTOSAR (\textit{AUTomotive Open System ARchitecture}), variasi produk kendaraan.
   \item Aviasi/pertahanan: \textit{model-based systems engineering}, traceability requirement.
   \item Manufaktur/otomasi: \textit{digital twin}, konfigurasi sistem kontrol.
 \end{itemize}
@@ -287,38 +299,38 @@ Boeing, ABB, Schneider Electric.
 \end{frame}
 
 \begin{frame}{Arsitektur Pendekatan Berbasis Model}
-\vspace{4pt}
+\vspace{10pt}
 \centering
-\scalebox{0.58}{%
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  font=\small,
   >=latex,
   thick,
-  box/.style={draw, rounded corners, minimum width=4.8cm, minimum height=2cm, align=center},
-  lbl/.style={align=center}
+  box/.style={draw, rounded corners, minimum width=4.4cm, minimum height=2.1cm,
+              align=center, font=\normalsize},
+  lbl/.style={align=center, font=\small, fill=white, inner sep=2pt}
 ]
   \node[box, fill=blue!8] (models) {
     \textbf{Models}\\[2pt]
     \texttt{environments.yaml}\\\texttt{files.yaml}
   };
 
-  \node[box, fill=orange!10, below=5mm of models] (templates) {
+  \node[box, fill=orange!10, below=8mm of models] (templates) {
     \textbf{Templates}\\[2pt]
     Jinja2 Terraform\\dan Kubernetes
   };
 
-  \node[box, fill=green!8, right=25mm of models, minimum width=5.2cm] (transformers) {
+  \node[box, fill=green!8, right=22mm of models] (transformers) {
     \textbf{Transformers}\\[2pt]
     \texttt{generate.py}\\merge context + render
   };
 
-  \node[box, fill=purple!10, right=20mm of transformers, minimum width=5.4cm] (output) {
+  \node[box, fill=purple!10, right=20mm of transformers, minimum width=4.6cm] (output) {
     \textbf{Output IaC}\\[2pt]
     \texttt{outputs/terraform}\\\texttt{outputs/kubernetes}
   };
 
   \draw[->] (models.east) -- (transformers.west) node[midway, above, lbl] {input model};
-  \draw[->] (templates.east) -- (transformers.south west) node[midway, below, lbl, yshift=-8mm] {input template};
+  \draw[->] (templates.east) -- (transformers.south west) node[pos=0.62, below right, lbl] {input template};
   \draw[->] (transformers.east) -- (output.west) node[midway, above, lbl] {generate};
 \end{tikzpicture}
 }%
