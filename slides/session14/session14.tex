@@ -173,7 +173,7 @@ Setelah sesi ini, mahasiswa diharapkan mampu:
 \begin{frame}{Arsitektur Multi-Agent SIAKAD}
 \vspace{6pt}
 \centering
-\includegraphics[width=1.06\textwidth]{../../figures/architecture.pdf}
+\includegraphics[width=\textwidth]{../../figures/architecture.pdf}
 
 \vspace{6pt}
 \small
@@ -313,7 +313,6 @@ Setiap server diimplementasikan sebagai skrip Python yang dijalankan melalui \te
 \column{0.45\textwidth}
 \begin{lstlisting}[language=python, basicstyle=\ttfamily\tiny]
 mcp = FastMCP("siakad-csv-reader")
-
 @mcp.tool()
 def read_attendance_data(file_path: str) -> str:
     df = pd.read_csv(file_path)
@@ -323,9 +322,6 @@ def read_attendance_data(file_path: str) -> str:
         if "tanggal" in col or "date" in col:
             col_mapping["tanggal"] = col
         # ... similarly for mata_kuliah, topik, deskripsi
-
-    # Normalize dates to YYYY-MM-DD: ISO dates first,
-    # then DD/MM/YYYY and the rest with dayfirst=True
     tanggal = pd.to_datetime(df["tanggal"].str[:10],
         format="%Y-%m-%d", errors="coerce")
     other = tanggal.isna()
@@ -339,7 +335,7 @@ def read_attendance_data(file_path: str) -> str:
 \column{0.55\textwidth}
 \vspace{10pt}
 \textbf{4 Tools CSV Reader}
-\begin{enumerate}
+\begin{enumerate}\small
   \item \texttt{list\_schedule\_files(dir)}
   \item \texttt{read\_attendance\_data(path)}
   \item \texttt{get\_attendance\_for\_date(path, date)}
@@ -348,7 +344,7 @@ def read_attendance_data(file_path: str) -> str:
 
 \vspace{8pt}
 \textbf{Fitur kunci}
-\begin{itemize}
+\begin{itemize}\small
   \item Mapping kolom fleksibel (tanggal $\leftrightarrow$ date, topik $\leftrightarrow$ topic).
   \item Konversi tanggal otomatis dari berbagai format.
   \item Support CSV dan Excel.
@@ -489,6 +485,7 @@ Tool menghitung tiga format sekaligus: \texttt{YYYY-MM-DD}, \texttt{MM/DD/YYYY},
 \vspace{20pt}
 \centering
 \scriptsize
+\renewcommand{\arraystretch}{0.92}
 \begin{tabular}{|c|l|p{7.5cm}|}
 \hline
 \rowcolor{blue!12}
@@ -652,20 +649,17 @@ Error handling & Retry dengan task ID baru & Screenshot + fallback selector \\
 
 \begingroup
 \setbeamercolor{background canvas}{bg=white}
-\begin{frame}{}
+\begin{frame}{Diagram Sekuens Interaksi}
     \begin{columns}[c] % 'c' vertically centers the content in both columns
         
         % Left Column: Text
         \begin{column}{0.35\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{../../figures/sequence.pdf}
+            \includegraphics[width=\textwidth, height=0.7\textheight, keepaspectratio]{../../figures/sequence.pdf}
         \end{column}
         
         % Right Column: Figure
         \begin{column}{0.5\textwidth}
-			\textbf{Diagram Sekuens Interaksi}
-			\vspace{10pt}
-
             \textbf{Lima fase:} Inisialisasi $\rightarrow$ Login $\rightarrow$ Pengisian (Loop) $\rightarrow$ Penutupan $\rightarrow$ Laporan.
         \end{column}
         
@@ -738,7 +732,7 @@ Debugging & Mudah; JSON inspectable + screenshot per langkah. & Sulit; konteks d
 \vspace{6pt}
 \centering
 \footnotesize
-\begin{tabular}{|l|l|p{6.5cm}|}
+\begin{tabular}{|l|l|p{6.2cm}|}
 \hline
 \rowcolor{blue!12}
 \textbf{Skrip} & \textbf{Agen} & \textbf{Keterangan} \\
@@ -789,7 +783,7 @@ Debugging & Mudah; JSON inspectable + screenshot per langkah. & Sulit; konteks d
 
 \begin{frame}{Kesimpulan Sesi}
 \vspace{15pt}
-\begin{itemize}
+\begin{itemize}\small
   \item Multi-Agent System berbasis MCP efektif untuk otomasi proses bisnis yang melibatkan antarmuka web dinamis dan data input besar.
   \item Pemisahan peran: \textbf{Claude} (Orchestrator) menangani planning \& task management; \textbf{Gemini} (Worker) menangani browser automation \& visual reasoning.
   \item \textbf{3 server MCP modular:} \texttt{csv-reader} (4 tools), \texttt{browser} (15 tools), \texttt{shared-state} (6 tools) --- total 25 tools.
